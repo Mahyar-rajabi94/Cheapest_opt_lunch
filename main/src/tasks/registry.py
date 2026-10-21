@@ -13,6 +13,7 @@ from src.tasks.coco_mixint import COCOMixintTask
 from src.tasks.coco_noisy import COCONoisyTask
 from src.tasks.nevergrad_noisy import NevergradNoisyTask
 from src.tasks.pymoo_g import PymooGTask
+from src.tasks.yahpo import YAHPOTask
 
 TASKS = {
     # f8: ill-conditioned, axis-aligned curved valley; unimodal.
@@ -65,4 +66,8 @@ TASKS = {
     "mixint_rastrigin10": lambda: COCOMixintTask(15, dim=10),
     # bbob-mixint f17 (V03): Schaffer F7, 8 integer + 2 continuous coordinates; multimodal.
     "mixint_schaffer10": lambda: COCOMixintTask(17, dim=10),
+    # YAHPO rbv2_svm (V04): SVM logloss on OpenML 40981; 6 dims, 2 categorical, 2 conditional on the kernel.
+    "yahpo_svm": lambda: YAHPOTask("rbv2_svm"),
+    # YAHPO rbv2_xgboost (V05): XGBoost logloss on OpenML 40981; 14 dims, 2 categorical, 8 conditional on the booster.
+    "yahpo_xgboost": lambda: YAHPOTask("rbv2_xgboost"),
 }
