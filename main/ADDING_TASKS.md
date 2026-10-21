@@ -54,15 +54,15 @@ From `main/`, smoke-test into a temporary directory first:
 ../.venv/bin/python scripts/run_campaign.py --task <key> --optimizer random_search --seed 0 --budget 20 --outdir /tmp/smoke
 ```
 
-Then run every optimizer over seeds 0–4. Task 001 used these budgets (lower for slow or limited optimizers):
+Then run the sweep (every optimizer, resumable):
 
-| Optimizer | Budget |
-| --- | --- |
-| `random_search`, `sobol`, `cma_es`, `de`, `turbo`, `nelder_mead`, `lbfgsb` | 2000 |
-| `bobyqa` | 500 (Py-BOBYQA slows sharply past ~500 one-at-a-time evals) |
-| `gp_bo` | 100 |
+```bash
+../.venv/bin/python scripts/run_sweep.py --task <key> --workers <n>
+```
 
-Outputs land in `results/<task.name>/<optimizer>/seed_<n>/` (`trace.csv`, `meta.json`). Check `eval_seconds` in the smoke run before choosing budgets for an expensive task.
+Budget 1000 for all optimizers, seeds 0–9. Deterministic optimizers (`bobyqa`, `nelder_mead`, `lbfgsb`) run seed 0 only. Reruns skip completed campaigns; a budget mismatch with existing results errors (use a new `--outdir`).
+
+Outputs land in `results/<task.name>/<optimizer>/seed_<n>/` (`trace.csv`, `meta.json`). Check `eval_seconds` in the smoke run before sweeping an expensive task.
 
 ## 4. Blind Agent Task
 
@@ -109,7 +109,7 @@ Outputs land in `results/<task.name>/<optimizer>/seed_<n>/` (`trace.csv`, `meta.
 - [ ] `src/tasks/<name>.py` with `name`, `direction`, `dim`, `bounds`, `f_opt`, `evaluate`
 - [ ] `TASKS` entry in `scripts/run_campaign.py`
 - [ ] Smoke run passes
-- [ ] Baselines: all optimizers × seeds 0–4
+- [ ] Baselines: `run_sweep.py` (budget 1000, seeds 0–9)
 - [ ] Harness `task_<NNN>.py`, self-contained, no `f_opt`
 - [ ] Brief `task_<NNN>.md`, no identifying details
 - [ ] Sandbox built and leak-checked
