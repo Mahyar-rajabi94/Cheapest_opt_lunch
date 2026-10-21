@@ -10,43 +10,33 @@ A task exists in two forms:
 
 | | Standard task | Blind harness |
 | --- | --- | --- |
-| File | `src/tasks/<name>.py` | `src/agent_harness/task_<NNN>.py` |
+| File | entry in `src/tasks/registry.py` | `src/agent_harness/task_<NNN>.py` |
 | Used by | `scripts/run_campaign.py` (fixed-optimizer baselines) | LLM agent in a sandbox |
 | Knows `f_opt` | Yes (offline regret only) | No |
 | Budget | Capped by the campaign loop | Enforced in code (`BudgetExhausted`) |
-| `evaluate(x)` returns | `(y, elapsed_seconds)` | `y` |
+| `evaluate(x)` returns | `Evaluation(y, g, elapsed)` | `y` |
 
-The blind harness is self-contained on purpose: it must not import from `src/tasks/`, so a sandbox can ship without that folder.
+The blind harness must not import from `src/tasks/`, so a sandbox can ship without that folder. Shared code lives in `src/tasks/base.py` (`Task`) and `src/agent_harness/harness.py` (`BlackBoxHarness`); a new task adds only its objective.
 
-## 1. Task Wrapper
+## 1. Register the Task
 
-Create `src/tasks/<name>.py`, using `src/tasks/rosenbrock.py` as the template. Required interface:
-
-| Attribute / method | Meaning |
-| --- | --- |
-| `name` | Results folder name; encode function, dim, instance (e.g. `rosenbrock_d10_i1`) |
-| `direction` | Always `"min"` (maximization: negate inside `evaluate`) |
-| `dim` | Number of variables |
-| `bounds` | `np.ndarray` of shape `(dim, 2)`, `[lower, upper]` per variable |
-| `f_opt` | Known optimum, for offline regret only; never passed to optimizers |
-| `evaluate(x)` | Returns `(y, elapsed_seconds)` |
-
-IOH/BBOB functions take a few lines: `ioh.get_problem(fid, instance=..., dimension=..., problem_class=ioh.ProblemClass.BBOB)`, and `problem.optimum.y` gives `f_opt`. A custom function needs its own known optimum (or a best-known reference value, documented as such).
-
-## 2. Register
-
-Add one entry to `TASKS` in `scripts/run_campaign.py`:
+Add one entry to `TASKS` in `src/tasks/registry.py`. Any noiseless BBOB function is one line:
 
 ```python
-TASKS = {
-    "rosenbrock10": lambda: RosenbrockTask(dim=10, instance=1, rotated=False),
-    "<key>": lambda: MyTask(dim=10, instance=1),
-}
+"<key>": lambda: BBOBTask("<name>", <function_id>, dim=10),
 ```
 
-Nothing else in that script changes.
+`BBOBTask` names its results folder `<name>_d<dim>_i<instance>` and takes `f_opt` from IOH. Nothing else changes; `run_campaign.py`, `run_sweep.py`, and `slurm/sweep_all.sh` read the registry.
 
-## 3. Baselines
+Non-BBOB families exist: `CEC2017Task` (`src/tasks/cec2017.py`, F5/F6/F8) is `CEC2017Task(<function_id>, dim=<n>)`. It needs `opfunu==1.0.1` (official shifts/rotations only) and `setuptools<81` (opfunu imports `pkg_resources`); install both into `.venv` by hand, they are not in `requirements.txt` because sandboxes do not need them.
+
+Constrained families: `PymooGTask("g4" | "g7")` (`src/tasks/pymoo_g.py`, needs `pymoo==0.6.1.6`) and `COCOConstrainedTask(<function_id>, dim=<n>)` (`src/tasks/coco_constrained.py`, COCO `bbob-constrained`, needs `coco-experiment==2.8.2`, import name `cocoex`). Install both into `.venv` by hand; they are not in `requirements.txt`. A constrained task sets `n_constraints` and implements `_g(x)`, the inequality vector, feasible iff all `g <= 0`. `Evaluation.violation` is `sum(max(g, 0))` and `feasible` is `violation <= 1e-10`. `run_campaign.py` gives optimizers the merit `y` if feasible, else `1e12 + 1e6 * violation + tanh(y)`, and adds `merit`, `violation`, `feasible` columns to `trace.csv`; `y_best_so_far` is the best feasible `y` (blank until the first feasible point) and `meta.json` gains `task_n_constraints`. `f_opt` is the constrained optimum. Plots skip seeds with no feasible point yet and label how many found one.
+
+Noisy families: `COCONoisyTask(<110|111|112>, dim=5)` (`src/tasks/coco_noisy.py`, COCO `bbob-noisy` Rosenbrock with Gaussian/uniform/Cauchy noise, needs `coco-experiment==2.8.2`) and `NevergradNoisyTask("rosenbrock" | "cigar", dim=20)` (`src/tasks/nevergrad_noisy.py`, needs `nevergrad==1.0.12`, installed into `.venv` by hand, not in `requirements.txt`). A noisy task sets `noisy = True`, returns the observation from `_f` and the noise-free value from `_f_true`, and may override `reseed(seed)`, which `run_campaign.py` calls once per campaign. Optimizers see only the observed `y`; `Evaluation.y_true` and a `y_true` column in `trace.csv` record the noise-free value, and `y_best_so_far` is the `y_true` of the point with the lowest observed `y` so far (what returning the best observed point delivers), so plots and regret work unchanged; `meta.json` gains `task_noisy`. COCO's noise RNG is global in its C library, cannot be seeded, and resets on problem construction, so every campaign sees the same noise stream by call index whatever its seed (a deterministic optimizer gives identical traces across seeds). Nevergrad's own noise draws from numpy's global RNG, so `NevergradNoisyTask` fixes the instance (built from global seed 0) and regenerates nevergrad's noise formula from a task-owned RNG seeded by `reseed`.
+
+A new non-BBOB function subclasses `Task` (`src/tasks/base.py`) in a new `src/tasks/<family>.py`: set `name`, `dim`, `bounds` (`np.ndarray`, shape `(dim, 2)`), `f_opt`, and implement `_f(x)`. `Task.evaluate(x)` adds timing and returns an `Evaluation` with `y`, `g` (constraint values, empty if unconstrained) and `elapsed`. Minimize only (negate a maximization inside `_f`). `f_opt` is for offline regret only; if no exact optimum is known, use a best-known reference value and document it as such.
+
+## 2. Smoke Test
 
 From `main/`, smoke-test into a temporary directory first:
 
@@ -54,7 +44,9 @@ From `main/`, smoke-test into a temporary directory first:
 ../.venv/bin/python scripts/run_campaign.py --task <key> --optimizer random_search --seed 0 --budget 20 --outdir /tmp/smoke
 ```
 
-Then run the sweep (every optimizer, resumable):
+## 3. Baselines
+
+Run the sweep (every optimizer, resumable):
 
 ```bash
 ../.venv/bin/python scripts/run_sweep.py --task <key> --workers <n>
@@ -68,38 +60,16 @@ Figures (needs `matplotlib`): `../.venv/bin/python scripts/make_comparison_plots
 
 ## 4. Blind Agent Task
 
-1. **Harness:** copy `src/agent_harness/task_001.py` to `task_<NNN>.py`. Change:
-   - the objective construction in `__init__` (inline it; do not import from `src/tasks/`)
-   - the default `outdir` (`results/agent_task_<NNN>`)
-   - `task_id` in `save()`
-   - the docstring reference to the brief
-
-   Keep `dim`, `bounds`, and `direction` public; never expose `f_opt` or the function name.
-2. **Brief:** copy `agent_briefs/task_001.md` to `task_<NNN>.md`. Update:
-   - Section 1 (dimension, bounds, noise, budget)
-   - Section 2 (harness import and budget)
-   - every `agent_task_001` / `task_001` path
-
-   Describe only properties the agent may know; nothing that identifies the function.
-3. **Sandbox:** create `task_<NNN>_sandbox_<agent>/` at the repo root containing only:
-
-   ```
-   agent_briefs/task_<NNN>.md
-   requirements.txt          # copy from an existing sandbox
-   src/__init__.py
-   src/optimizers/           # copy of main/src/optimizers/
-   src/agent_harness/__init__.py
-   src/agent_harness/task_<NNN>.py
-   results/                  # empty
-   ```
-
-   No `src/tasks/`, no `main/results/`, no other harnesses, nothing that names the function.
-4. **Leak check:** search the sandbox for the function name, BBOB function id, and `f_opt`. Only the harness's objective construction may identify it.
+1. **Harness:** copy `src/agent_harness/task_001.py` to `task_<NNN>.py`. Change only the objective construction (inline it; do not import from `src/tasks/`), the default `outdir` (`results/agent_task_<NNN>`), `task_id`, and the docstring's brief reference. Budget enforcement and logging come from `BlackBoxHarness`. Never expose `f_opt` or the function name.
+2. **Sandbox:** from `main/`, run
 
    ```bash
-   grep -rin "<function name>" task_<NNN>_sandbox_<agent>/
+   ../.venv/bin/python scripts/make_sandbox.py --task-id <NNN> --budget 2000 --outdir ../task_<NNN>_sandbox_<agent>
    ```
 
+   It renders the brief from `agent_briefs/blind_brief_template.md` (dim and bounds from the harness; uniform box, deterministic), copies `requirements.txt`, `src/optimizers/`, and the harness, and creates an empty `results/`. No `src/tasks/`, no other harnesses.
+3. **Leak check:** `make_sandbox.py` searches every sandbox file for registered task names and `f_opt`, and deletes the sandbox on a hit. Also check by hand for anything the template could not know about (e.g. a new function's name not yet in the registry).
+4. **Brief changes:** if the task needs a property the template does not state (noise, non-uniform bounds), edit the rendered brief in the sandbox; describe only properties the agent may know.
 5. **Run:** start a brand-new agent session with the sandbox as its working directory (never one that has seen `main/`). First message only:
 
    > Read `agent_briefs/task_<NNN>.md` and carry out everything it describes.
@@ -108,11 +78,9 @@ Figures (needs `matplotlib`): `../.venv/bin/python scripts/make_comparison_plots
 
 ## Checklist
 
-- [ ] `src/tasks/<name>.py` with `name`, `direction`, `dim`, `bounds`, `f_opt`, `evaluate`
-- [ ] `TASKS` entry in `scripts/run_campaign.py`
+- [ ] `TASKS` entry in `src/tasks/registry.py` (new `Task` subclass only for a non-BBOB family)
 - [ ] Smoke run passes
 - [ ] Baselines: `run_sweep.py` (budget 2000, expensive methods 100, seeds 0–9, on Linux into `results_linux/`)
-- [ ] Harness `task_<NNN>.py`, self-contained, no `f_opt`
-- [ ] Brief `task_<NNN>.md`, no identifying details
-- [ ] Sandbox built and leak-checked
+- [ ] Harness `task_<NNN>.py` (objective only), no `f_opt`
+- [ ] Sandbox built with `make_sandbox.py`; leak check passed
 - [ ] Agent run in a fresh session; scored from `main/`

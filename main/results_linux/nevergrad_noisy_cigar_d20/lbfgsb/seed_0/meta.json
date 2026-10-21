@@ -1,0 +1,19 @@
+{
+  "task_name": "nevergrad_noisy_cigar_d20",
+  "task_dim": 20,
+  "task_direction": "min",
+  "task_f_opt": 0.0,
+  "task_noisy": true,
+  "optimizer_name": "lbfgsb",
+  "optimizer_class": "src.optimizers.lbfgsb.LBFGSB",
+  "seed": 0,
+  "requested_budget": 2000,
+  "evaluations_used": 441,
+  "stopped_early": true,
+  "stop_reason": "L-BFGS-B has already converged (or stopped) and will not propose further points. Final result:   message: ABNORMAL: \n  success: False\n   status: 2\n      fun: 125247929.7251074\n        x: [ 0.000e+00  0.000e+00 ...  0.000e+00  0.000e+00]\n      nit: 0\n      jac: [ 3.319e+15  3.690e+16 ...  5.890e+14  1.028e+16]\n     nfev: 441\n     njev: 21\n hess_inv: <20x20 LbfgsInvHessProduct with dtype=float64>",
+  "start_time_utc": "2026-10-21T18:50:32.781288+00:00",
+  "end_time_utc": "2026-10-21T18:50:32.822632+00:00",
+  "total_wall_seconds": 0.04135430580936372,
+  "numpy_version": "2.4.6",
+  "scipy_version": "1.17.1"
+}

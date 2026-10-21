@@ -12,10 +12,12 @@ Cheapest_opt_lunch/
 │   ├── CLAUDE.md               imports the same instructions for Claude
 │   ├── task_definitions/       created by the agent during planning
 │   │   └── <run_id>.md         synthesized problem, reviewed by the user
+│   ├── src/tasks/registry.py   every baseline task, one line each
+│   ├── scripts/make_sandbox.py builds a blind sandbox for task_<NNN>
 │   └── agent_briefs/
 │       ├── task_001.md         optional saved example; not required to run
 │       ├── task_template.md    optional example of problem details
-│       └── task_002–004.md     retained legacy benchmark briefs
+│       └── blind_brief_template.md  blind brief, rendered by make_sandbox.py
 ├── task_001_sandbox_claud/      self-contained Claude sandbox copy
 ├── task_001_sandbox_openai/     self-contained Codex sandbox copy
 ├── task_002_sandbox/            retained Task 002 benchmark sandbox
