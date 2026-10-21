@@ -1,0 +1,18 @@
+{
+  "task_name": "yahpo_rbv2_svm_40981",
+  "task_dim": 6,
+  "task_direction": "min",
+  "task_f_opt": 0.25901198387145996,
+  "optimizer_name": "nelder_mead",
+  "optimizer_class": "src.optimizers.nelder_mead.NelderMead",
+  "seed": 0,
+  "requested_budget": 2000,
+  "evaluations_used": 428,
+  "stopped_early": true,
+  "stop_reason": "Nelder-Mead has already converged (or stopped) and will not propose further points. Final result:        message: Optimization terminated successfully.\n       success: True\n        status: 0\n           fun: 0.26243388652801514\n             x: [ 6.645e-01  4.260e-01  4.017e-01  8.592e-01  1.848e-01\n                  8.394e-01]\n           nit: 210\n          nfev: 428\n final_simplex: (array([[ 6.645e-01,  4.260e-01, ...,  1.848e-01,\n                         8.394e-01],\n                       [ 6.644e-01,  4.259e-01, ...,  1.848e-01,\n                         8.394e-01],\n                       ...,\n                       [ 6.645e-01,  4.259e-01, ...,  1.848e-01,\n                         8.394e-01],\n                       [ 6.645e-01,  4.259e-01, ...,  1.848e-01,\n                         8.394e-01]], shape=(7, 6)), array([ 2.624e-01,  2.624e-01,  2.624e-01,  2.624e-01,\n                        2.624e-01,  2.624e-01,  2.624e-01]))",
+  "start_time_utc": "2026-10-21T19:52:33.071330+00:00",
+  "end_time_utc": "2026-10-21T19:52:33.152427+00:00",
+  "total_wall_seconds": 0.08111806493252516,
+  "numpy_version": "2.4.6",
+  "scipy_version": "1.17.1"
+}

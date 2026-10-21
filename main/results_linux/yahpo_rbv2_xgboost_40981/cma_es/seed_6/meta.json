@@ -1,0 +1,18 @@
+{
+  "task_name": "yahpo_rbv2_xgboost_40981",
+  "task_dim": 14,
+  "task_direction": "min",
+  "task_f_opt": 0.08344290405511856,
+  "optimizer_name": "cma_es",
+  "optimizer_class": "src.optimizers.cma_es.CMAES",
+  "seed": 6,
+  "requested_budget": 2000,
+  "evaluations_used": 2000,
+  "stopped_early": false,
+  "stop_reason": null,
+  "start_time_utc": "2026-10-21T19:52:32.530629+00:00",
+  "end_time_utc": "2026-10-21T19:52:32.983998+00:00",
+  "total_wall_seconds": 0.4533873590407893,
+  "numpy_version": "2.4.6",
+  "scipy_version": "1.17.1"
+}
