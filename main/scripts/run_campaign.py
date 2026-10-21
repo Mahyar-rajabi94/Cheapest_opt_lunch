@@ -45,7 +45,10 @@ from src.optimizers.turbo import TuRBO
 from src.tasks.bent_cigar import BentCigarTask
 from src.tasks.rastrigin import RastriginTask
 from src.tasks.rosenbrock import RosenbrockTask
+from src.tasks.sharp_ridge import SharpRidgeTask
 from src.tasks.sphere import SphereTask
+from src.tasks.step_ellipsoid import StepEllipsoidTask
+from src.tasks.weierstrass import WeierstrassTask
 
 # Registries: add a new task or optimizer here; nothing else in this file
 # needs to change.
@@ -54,6 +57,11 @@ TASKS = {
     "rastrigin10": lambda: RastriginTask(dim=10, instance=1),
     "bent_cigar10": lambda: BentCigarTask(dim=10, instance=1),
     "sphere10": lambda: SphereTask(dim=10, instance=1),
+    "rosenbrock20": lambda: RosenbrockTask(dim=20, instance=1, rotated=False),
+    "rosenbrock40": lambda: RosenbrockTask(dim=40, instance=1, rotated=False),
+    "step_ellipsoid10": lambda: StepEllipsoidTask(dim=10, instance=1),
+    "sharp_ridge10": lambda: SharpRidgeTask(dim=10, instance=1),
+    "weierstrass10": lambda: WeierstrassTask(dim=10, instance=1),
 }
 
 OPTIMIZERS = {
