@@ -80,6 +80,7 @@ Figures (needs `matplotlib`): `../.venv/bin/python scripts/make_comparison_plots
 
 - [ ] `TASKS` entry in `src/tasks/registry.py` (new `Task` subclass only for a non-BBOB family)
 - [ ] Smoke run passes
+- [ ] Row in `TASKS.md`: what the task tests, baseline winners, and any gap
 - [ ] Baselines: `run_sweep.py` (budget 2000, expensive methods 100, seeds 0–9, on Linux into `results_linux/`)
 - [ ] Harness `task_<NNN>.py` (objective only), no `f_opt`
 - [ ] Sandbox built with `make_sandbox.py`; leak check passed
