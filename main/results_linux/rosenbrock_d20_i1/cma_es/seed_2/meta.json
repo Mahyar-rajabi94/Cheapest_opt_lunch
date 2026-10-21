@@ -1,0 +1,18 @@
+{
+  "task_name": "rosenbrock_d20_i1",
+  "task_dim": 20,
+  "task_direction": "min",
+  "task_f_opt": 149.15,
+  "optimizer_name": "cma_es",
+  "optimizer_class": "src.optimizers.cma_es.CMAES",
+  "seed": 2,
+  "requested_budget": 2000,
+  "evaluations_used": 2000,
+  "stopped_early": false,
+  "stop_reason": null,
+  "start_time_utc": "2026-10-21T18:54:49.762620+00:00",
+  "end_time_utc": "2026-10-21T18:54:49.886987+00:00",
+  "total_wall_seconds": 0.12438783887773752,
+  "numpy_version": "2.4.6",
+  "scipy_version": "1.17.1"
+}
