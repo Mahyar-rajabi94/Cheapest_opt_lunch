@@ -14,7 +14,8 @@ This file names task identities. Keep it in `main/`; never copy it into a sandbo
 | Multimodality | `rastrigin10`, `cec_rastrigin30`, `weierstrass10`, `constrained_rastrigin10` |
 | Plateaus / zero gradient | `step_ellipsoid10`, `noncont_rastrigin30` |
 | Nondifferentiability | `sharp_ridge10` |
-| Wide box ([-100, 100]), D ≥ 30 | `cec_rastrigin30`, `noncont_rastrigin30`, `schaffer30`, `schaffer50` |
+| Wide box ([-100, 100]), D = 30 | `cec_rastrigin30`, `noncont_rastrigin30` |
+| High dimension (D = 30, 50), nonseparable | `schaffer30`, `schaffer50` |
 | Inequality constraints | `pymoo_g04`, `pymoo_g07`, `constrained_*` |
 | Finding any feasible point | `pymoo_g07` |
 | Non-uniform box | `pymoo_g04`, `pymoo_g07` |
@@ -22,7 +23,7 @@ This file names task identities. Keep it in `main/`; never copy it into a sandbo
 
 ## Per Task
 
-Folder: `results_linux/<folder>/`. "Random" is the median random-search regret over 500 uniform points; "center" is the regret at the box center, where deterministic optimizers (`lbfgsb`, `nelder_mead`, `bobyqa`) start. Winners are median regret over seeds of the baselines in `results_linux/`, at 100 and 2000 evaluations (GP-BO, TuRBO, BOBYQA capped at 100).
+Folder: `results_linux/<folder>/`. "Random" is the median random-search regret over 500 uniform points; "center" is the regret at the box center, where deterministic optimizers (`lbfgsb`, `nelder_mead`, `bobyqa`) start. Winners are median regret over seeds of the baselines in `results_linux/`, at 100 and 2000 evaluations (GP-BO, TuRBO, BOBYQA capped at 100). "Pending" marks a task whose baseline sweep has not run yet; its numbers are from a scratch check (random search, CMA-ES, DE on 3 seeds; L-BFGS-B, Nelder–Mead on seed 0).
 
 ### Unconstrained, Noiseless
 
@@ -39,8 +40,8 @@ Folder: `results_linux/<folder>/`. "Random" is the median random-search regret o
 | `sharp_ridge10` | `sharp_ridge_d10_i1` | BBOB f13 | 10 | [-5, 5] | Nondifferentiable ridge; in practice finite-difference L-BFGS-B still wins, ranking ≈ `bent_cigar10`. | BOBYQA (23) | L-BFGS-B (0.22) |
 | `cec_rastrigin30` | `cec2017_f5_d30` | CEC-2017 F5 | 30 | [-100, 100] | Rastrigin at D=30 on a wide box. | L-BFGS-B ≈ GP-BO (~365) | CMA-ES (233) |
 | `noncont_rastrigin30` | `cec2017_f8_d30` | CEC-2017 F8 | 30 | [-100, 100] | F5 with rounded steps: plateaus on top of multimodality; stalls L-BFGS-B (518 vs 303 on F5). | GP-BO (361) | CMA-ES (236) |
-| `schaffer30` | `cec2017_f6_d30` | CEC-2017 F6 | 30 | [-100, 100] | Expanded Schaffer F6, nonseparable needle-like multimodality. | all ≈ random (14.0–14.9) | all ≈ random (13.7–14.8) |
-| `schaffer50` | `cec2017_f6_d50` | CEC-2017 F6 | 50 | [-100, 100] | Same at D=50. | all ≈ random (23.9–25.3) | all ≈ random (23.4–25.3) |
+| `schaffer30` | `cec2017_f6_d30_b5` | CEC-2017 F6 | 30 | [-5, 5] | Expanded Schaffer F6, nonseparable rippled multimodality; CMA-ES and DE stay at random level. | Pending (L-BFGS-B 7.3, random 10.5) | Pending (L-BFGS-B 0.98, random 8.2) |
+| `schaffer50` | `cec2017_f6_d50_b5` | CEC-2017 F6 | 50 | [-5, 5] | Same at D=50; each finite-difference gradient costs 51 evaluations, so L-BFGS-B is worse than random at 100 and best at 2000. | Pending (random 19.5, L-BFGS-B 27) | Pending (L-BFGS-B 3.1, random 17.5) |
 
 ### Constrained
 
@@ -63,8 +64,8 @@ Optimizers see the observed `y`; scoring uses the noise-free value of the best o
 | `noisy_rosenbrock_gauss5` | `bbob_noisy_f110_d5_i1` | bbob-noisy f110 | 5 | Gaussian, multiplicative, vanishes at the optimum | 0.72 | Moderate noise. | CMA-ES (467) | CMA-ES (4.7) |
 | `noisy_rosenbrock_unif5` | `bbob_noisy_f111_d5_i1` | bbob-noisy f111 | 5 | Uniform, severe, mostly upward | 0.24 | Severe noise; observed values at the center span 2 to 1e6. | BOBYQA (485) | CMA-ES (603) |
 | `noisy_rosenbrock_cauchy5` | `bbob_noisy_f112_d5_i1` | bbob-noisy f112 | 5 | ~+1000 offset, rare Cauchy outliers | 1.00 | In practice near-noiseless: SD at the center is 1.0 over 200 calls. Behaves like a 5-D noiseless Rosenbrock. | BOBYQA (9.0) | CMA-ES (1.2) |
-| `ng_noisy_rosenbrock20` | `nevergrad_noisy_rosenbrock_d20` | nevergrad, noise level 10 | 20 | 10·N(0,1)·(f(x+N(0,I)) − f(x)), symmetric | 0.11 | Noise swamps the signal (SD at center 1.7e5 vs true regret 4.4e3). | Nelder–Mead (4.4e3 = center) | Nelder–Mead (center) |
-| `ng_noisy_cigar20` | `nevergrad_noisy_cigar_d20` | nevergrad, noise level 10 | 20 | Same formula | 0.12 | Same; SD at center 2.0e8 vs true regret 1.9e7. | Nelder–Mead (1.9e7 = center) | L-BFGS-B, Nelder–Mead (center) |
+| `ng_noisy_rosenbrock20` | `nevergrad_noisy_rosenbrock_d20_n0.1` | nevergrad, noise level 0.1, x* uniform in [-4, 4] | 20 | 0.1·N(0,1)·(f(x+N(0,I)) − f(x)), symmetric, nonzero at x* | 0.99 | Curved valley under noise that breaks finite differences: L-BFGS-B and Nelder–Mead stall at the center. | Pending (CMA-ES 2.5e4, random 2.3e5) | Pending (CMA-ES 1.6e3, random 6.9e4) |
+| `ng_noisy_cigar20` | `nevergrad_noisy_cigar_d20_n0.1` | nevergrad, noise level 0.1, x* uniform in [-4, 4] | 20 | Same formula | 1.00 | Ill-conditioning under the same noise; same stall. | Pending (CMA-ES 3.8e7, random 1.2e8) | Pending (CMA-ES 2.1e6, random 6.4e7) |
 
 COCO's noise stream repeats by call index across seeds, so seed spread on the `noisy_rosenbrock_*` tasks understates the true variance.
 
@@ -74,10 +75,17 @@ Tasks that add little beyond the set as it stands, at the 100/2000 budgets:
 
 | Task(s) | Issue |
 | --- | --- |
-| `schaffer30`, `schaffer50` | No signal: every method, including random search, ends within ~1 of the center and random-sample regret. Every method scores r ≈ 1 in the global metric. `schaffer50` duplicates `schaffer30`. |
-| `ng_noisy_rosenbrock20`, `ng_noisy_cigar20` | Degenerate: observed and true values are nearly uncorrelated, so the "winner" is whoever never leaves the start point (Nelder–Mead's simplex collapses at the center; L-BFGS-B stops). A method that explores selects a noise outlier, e.g. CMA-ES seed 0 picks a point observed at −9.6e6 whose true regret is 4.3e5. Ranks reward not moving, not noise handling. |
 | `noisy_rosenbrock_cauchy5` | Not noisy in practice (rank corr. 1.00); repeats noiseless Rosenbrock at D=5. |
 | `constrained_*` (3 tasks) | Same winner (CMA-ES at 2000) and similar ranks on all three; the objective varies, but the baselines do not separate them. |
 | `sharp_ridge10` | Ranking matches `bent_cigar10`; the nondifferentiability does not change which method wins. |
 
-Tasks that each add a distinct behavior: `step_ellipsoid10` and `noncont_rastrigin30` (gradient methods stall), `weierstrass10` (start point worse than random), `pymoo_g07` (feasibility search), `pymoo_g04` (boundary optimum, Nelder–Mead competitive), `noisy_rosenbrock_unif5` (severe noise flips the B=100 winner to BOBYQA), the `rosenbrock*` scaling series, and BO-favoring early budgets on `rastrigin10` and `step_ellipsoid10`.
+Tasks that each add a distinct behavior: `step_ellipsoid10` and `noncont_rastrigin30` (gradient methods stall), `weierstrass10` (start point worse than random), `pymoo_g07` (feasibility search), `pymoo_g04` (boundary optimum, Nelder–Mead competitive), `noisy_rosenbrock_unif5` (severe noise flips the B=100 winner to BOBYQA), `ng_noisy_*` (noise that stalls finite-difference and simplex methods), `schaffer50` (finite-difference cost at D=50 flips L-BFGS-B from worst to best between 100 and 2000), the `rosenbrock*` scaling series, and BO-favoring early budgets on `rastrigin10` and `step_ellipsoid10`.
+
+## Superseded Versions
+
+Their results stay in `results_linux/`; `make_global_metric_plots.py` leaves them out (`SUPERSEDED`).
+
+| Folder | Why replaced |
+| --- | --- |
+| `cec2017_f6_d30`, `cec2017_f6_d50` | CEC's [-100, 100] box. Each term averages 0.5 at any distance from x*, the ripples are ±0.002 at a typical point, and only points within ~1–5 of x* beat random search. Every method stayed at random-search level. Now `_b5`. |
+| `nevergrad_noisy_rosenbrock_d20`, `nevergrad_noisy_cigar_d20` | Noise level 10: noise SD 40x the signal at the center and nonzero at x*, rank correlation ~0.1; the lowest observation came from worse-than-median points. Nevergrad's N(0, I) shift put x* near the box center (center regret 1–11% of random), so methods that never moved won. Now `_n0.1` with x* uniform in [-4, 4]. |
