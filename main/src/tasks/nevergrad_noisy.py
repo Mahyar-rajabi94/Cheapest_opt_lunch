@@ -5,8 +5,12 @@ Requires `nevergrad==1.0.12`; not in requirements.txt, install it into
 
 Nevergrad draws its noise from numpy's global RNG at call time, tangling it
 with optimizer randomness. So the instance (the shift) is fixed, built once
-from global seed 0, and the noise is regenerated here with nevergrad's exact
+from seed 0, and the noise is regenerated here with nevergrad's exact
 formula from a task-owned RNG that `reseed` sets per campaign.
+
+Nevergrad's own shift is N(0, I), which puts the optimum near the box center,
+where several optimizers start, so the shift is redrawn to place x* uniformly
+in [-4, 4] per dimension, as BBOB does.
 """
 
 from __future__ import annotations
@@ -15,7 +19,9 @@ import numpy as np
 
 from src.tasks.base import Task
 
-NOISE_LEVEL = 10.0
+# At nevergrad's usual 10, observed and true values barely rank-correlate
+# (~0.1); at 0.1 they do (~0.99), but noise still breaks finite differences.
+NOISE_LEVEL = 0.1
 # Unrotated nevergrad functions have their optimum at shift + this offset.
 OPTIMUM_OFFSET = {"cigar": 0.0, "rosenbrock": 1.0}
 
@@ -24,8 +30,8 @@ class NevergradNoisyTask(Task):
     """One shifted, unrotated nevergrad function with noise
     NOISE_LEVEL * N(0, 1) * (f(x + N(0, I)) - f(x)).
 
-    The box is [-5, 5] per dimension. The noise-free minimum is 0, so
-    `f_opt` = 0; x* is checked to lie inside the box.
+    The box is [-5, 5] per dimension, with x* uniform in [-4, 4]. The
+    noise-free minimum is 0, so `f_opt` = 0.
     """
 
     noisy = True
@@ -38,16 +44,15 @@ class NevergradNoisyTask(Task):
             name=function_name, block_dimension=dim, noise_level=NOISE_LEVEL, rotation=False
         )
         func.transform_var._initialize()
+        shift = func.transform_var._transforms[0]
+        shift.translation = np.random.default_rng(0).uniform(-4.0, 4.0, dim) - OPTIMUM_OFFSET[function_name]
         self._transform = func._transform
         self._func = func.function_from_transform
 
-        self.name = f"nevergrad_noisy_{function_name}_d{dim}"
+        self.name = f"nevergrad_noisy_{function_name}_d{dim}_n{NOISE_LEVEL:g}"
         self.dim = dim
         self.bounds = np.tile([-5.0, 5.0], (dim, 1))
         self.f_opt = 0.0
-        x_star = func.transform_var._transforms[0].translation + OPTIMUM_OFFSET[function_name]
-        if np.any(np.abs(x_star) > 5.0):
-            raise ValueError(f"{self.name}: x* lies outside the box.")
         self.reseed(0)
 
     def reseed(self, seed: int) -> None:
