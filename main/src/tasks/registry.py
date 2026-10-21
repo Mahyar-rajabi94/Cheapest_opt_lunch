@@ -9,6 +9,7 @@ from __future__ import annotations
 from src.tasks.bbob import BBOBTask
 from src.tasks.cec2017 import CEC2017Task
 from src.tasks.coco_constrained import COCOConstrainedTask
+from src.tasks.coco_mixint import COCOMixintTask
 from src.tasks.coco_noisy import COCONoisyTask
 from src.tasks.nevergrad_noisy import NevergradNoisyTask
 from src.tasks.pymoo_g import PymooGTask
@@ -58,4 +59,10 @@ TASKS = {
     "ng_noisy_rosenbrock20": lambda: NevergradNoisyTask("rosenbrock", dim=20),
     # nevergrad noisy cigar, 20 dims: ill-conditioned (one easy, 19 steep directions) under noise.
     "ng_noisy_cigar20": lambda: NevergradNoisyTask("cigar", dim=20),
+    # bbob-mixint f8 (V01): Rosenbrock, 8 integer + 2 continuous coordinates.
+    "mixint_rosenbrock10": lambda: COCOMixintTask(8, dim=10),
+    # bbob-mixint f15 (V02): rotated Rastrigin, 8 integer + 2 continuous coordinates.
+    "mixint_rastrigin10": lambda: COCOMixintTask(15, dim=10),
+    # bbob-mixint f17 (V03): Schaffer F7, 8 integer + 2 continuous coordinates; multimodal.
+    "mixint_schaffer10": lambda: COCOMixintTask(17, dim=10),
 }
