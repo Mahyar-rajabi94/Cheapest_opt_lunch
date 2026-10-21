@@ -20,6 +20,8 @@ This file names task identities. Keep it in `main/`; never copy it into a sandbo
 | Finding any feasible point | `pymoo_g07` |
 | Non-uniform box | `pymoo_g04`, `pymoo_g07` |
 | Observation noise | `noisy_rosenbrock_*`, `ng_noisy_*` |
+| Integer / mixed variables | `mixint_*` |
+| Categorical + conditional (real HPO) | `yahpo_svm`, `yahpo_xgboost` |
 
 ## Per Task
 
@@ -69,6 +71,20 @@ Optimizers see the observed `y`; scoring uses the noise-free value of the best o
 
 COCO's noise stream repeats by call index across seeds, so seed spread on the `noisy_rosenbrock_*` tasks understates the true variance.
 
+### Variable Type
+
+Optimizers see a continuous box; the task rounds or decodes coordinates, so the objective is piecewise constant along integer and categorical ones. A blind brief must state which coordinates are integer or categorical (`ADDING_TASKS.md` step 4.4). YAHPO `f_opt` is best-known (`src/tasks/yahpo.py`), not exact.
+
+| Key | Folder | Source | D | Variables | Tests | Winner @100 | Winner @2000 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `mixint_rosenbrock10` | `bbob_mixint_f8_d10_i1` | bbob-mixint f8 (V01) | 10 | 8 integer (2–16 levels), 2 continuous [-5, 5] | Rosenbrock valley on a lattice. | CMA-ES ≈ TuRBO ≈ GP-BO (11) | CMA-ES (3.5e-9) |
+| `mixint_rastrigin10` | `bbob_mixint_f15_d10_i1` | bbob-mixint f15 (V02) | 10 | same | Rotated Rastrigin on a lattice. | GP-BO (9.2) | CMA-ES (5.6) |
+| `mixint_schaffer10` | `bbob_mixint_f17_d10_i1` | bbob-mixint f17 (V03) | 10 | same | Schaffer F7 on a lattice; multimodal. | GP-BO (18) | CMA-ES (2.8e-4); next DE (22) |
+| `yahpo_svm` | `yahpo_rbv2_svm_40981` | YAHPO rbv2_svm, OpenML 40981, logloss (V04) | 6 | 2 log-float, 2 categorical, 1 int and 1 log-float active only for one kernel | Real HPO surrogate; small spread (random 0.034 at 100). | BOBYQA (0.0034) | CMA-ES (6.4e-4), DE (8.8e-4) |
+| `yahpo_xgboost` | `yahpo_rbv2_xgboost_40981` | YAHPO rbv2_xgboost, OpenML 40981, logloss (V05) | 14 | 2 categorical, 12 numeric (2 int), 8 active only for tree boosters, 2 only for dart | Conditional HPO; best-known point is at the box edge (dart, max `nrounds`), far below 2^20 Sobol points (0.083 vs 0.242). | GP-BO (0.099) | CMA-ES (0.066), DE (0.071) |
+
+L-BFGS-B is worst at both budgets on all five: finite-difference steps do not cross a rounding boundary, so the gradient is zero along integer and categorical coordinates. It stops within 7–165 evaluations, moving only along continuous ones (not at all on YAHPO).
+
 ## Gaps
 
 Tasks that add little beyond the set as it stands, at the 100/2000 budgets:
@@ -78,8 +94,9 @@ Tasks that add little beyond the set as it stands, at the 100/2000 budgets:
 | `noisy_rosenbrock_cauchy5` | Not noisy in practice (rank corr. 1.00); repeats noiseless Rosenbrock at D=5. |
 | `constrained_*` (3 tasks) | Same winner (CMA-ES at 2000) and similar ranks on all three; the objective varies, but the baselines do not separate them. |
 | `sharp_ridge10` | Ranking matches `bent_cigar10`; the nondifferentiability does not change which method wins. |
+| `mixint_*` (3 tasks) | Same pattern on all three (BO or CMA-ES at 100, CMA-ES at 2000, L-BFGS-B stalled). |
 
-Tasks that each add a distinct behavior: `step_ellipsoid10` and `noncont_rastrigin30` (gradient methods stall), `weierstrass10` (start point worse than random), `pymoo_g07` (feasibility search), `pymoo_g04` (boundary optimum, Nelder–Mead competitive), `noisy_rosenbrock_unif5` (severe noise flips the B=100 winner to BOBYQA), `ng_noisy_*` (noise that stalls finite-difference and simplex methods), `schaffer50` (finite-difference cost at D=50 flips L-BFGS-B from worst to best between 100 and 2000), the `rosenbrock*` scaling series, and BO-favoring early budgets on `rastrigin10` and `step_ellipsoid10`.
+Tasks that each add a distinct behavior: `step_ellipsoid10` and `noncont_rastrigin30` (gradient methods stall), `weierstrass10` (start point worse than random), `pymoo_g07` (feasibility search), `pymoo_g04` (boundary optimum, Nelder–Mead competitive), `noisy_rosenbrock_unif5` (severe noise flips the B=100 winner to BOBYQA), `ng_noisy_*` (noise that stalls finite-difference and simplex methods), `schaffer50` (finite-difference cost at D=50 flips L-BFGS-B from worst to best between 100 and 2000), `yahpo_svm` (BOBYQA wins at 100), `yahpo_xgboost` (conditional space, large gap to best-known at 2000), the `rosenbrock*` scaling series, and BO-favoring early budgets on `rastrigin10` and `step_ellipsoid10`.
 
 ## Superseded Versions
 

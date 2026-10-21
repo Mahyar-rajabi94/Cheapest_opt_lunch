@@ -34,6 +34,18 @@ Constrained families: `PymooGTask("g4" | "g7")` (`src/tasks/pymoo_g.py`, needs `
 
 Noisy families: `COCONoisyTask(<110|111|112>, dim=5)` (`src/tasks/coco_noisy.py`, COCO `bbob-noisy` Rosenbrock with Gaussian/uniform/Cauchy noise, needs `coco-experiment==2.8.2`) and `NevergradNoisyTask("rosenbrock" | "cigar", dim=20)` (`src/tasks/nevergrad_noisy.py`, noise level 0.1, x* redrawn uniformly in [-4, 4]; needs `nevergrad==1.0.12`, installed into `.venv` by hand, not in `requirements.txt`). A noisy task sets `noisy = True`, returns the observation from `_f` and the noise-free value from `_f_true`, and may override `reseed(seed)`, which `run_campaign.py` calls once per campaign. Optimizers see only the observed `y`; `Evaluation.y_true` and a `y_true` column in `trace.csv` record the noise-free value, and `y_best_so_far` is the `y_true` of the point with the lowest observed `y` so far (what returning the best observed point delivers), so plots and regret work unchanged; `meta.json` gains `task_noisy`. COCO's noise RNG is global in its C library, cannot be seeded, and resets on problem construction, so every campaign sees the same noise stream by call index whatever its seed (a deterministic optimizer gives identical traces across seeds). Nevergrad's own noise draws from numpy's global RNG, so `NevergradNoisyTask` fixes the instance (built from global seed 0) and regenerates nevergrad's noise formula from a task-owned RNG seeded by `reseed`.
 
+Mixed-integer family: `COCOMixintTask(<function_id>, dim=10)` (`src/tasks/coco_mixint.py`, COCO `bbob-mixint`, needs `coco-experiment==2.8.2`). At D=10 the first 8 coordinates are integer (bounds [0, 1], [0, 1], [0, 3], [0, 3], [0, 7], [0, 7], [0, 15], [0, 15]), the last 2 continuous in [-5, 5]. COCO rounds integer coordinates internally, so every optimizer runs unchanged and sees a piecewise-constant objective along them. `f_opt` is the objective at COCO's x* (checked integral).
+
+HPO family: `YAHPOTask("rbv2_svm" | "rbv2_xgboost", instance="40981")` (`src/tasks/yahpo.py`), YAHPO Gym surrogate logloss on an OpenML instance at full fidelity (`trainsize=1.0`, `repl=1`). `yahpo-gym==1.0.2` pins numpy<2, which conflicts with `ioh` (and every result here used numpy 2), so the task evaluates YAHPO's ONNX surrogates directly with `onnxruntime` (install `onnxruntime==1.31.0` into `.venv` by hand, not in `requirements.txt`), using yahpo_gym's input encoding; single-point outputs match yahpo_gym exactly (batched ONNX calls differ by ~1e-6). Model files are git-ignored; download them into `external/yahpo_data/` at the repository root:
+
+```bash
+for s in rbv2_svm rbv2_xgboost; do for f in config_space.json encoding.json model.onnx; do
+  curl -sfL --create-dirs -o external/yahpo_data/$s/$f https://raw.githubusercontent.com/slds-lmu/yahpo_data/v1.0.2/$s/$f
+done; done
+```
+
+The box is [0, 1]^D (D = 6 / 14), one coordinate per searched hyperparameter in `config_space.json` order, decoded inside `_f`: floats interpolate (in log space if log-scaled), ints are the same rounded, a categorical with k choices takes choice floor(u k), and a hyperparameter whose condition fails (e.g. `degree` unless `kernel = polynomial`) is passed as missing, so its coordinate has no effect. No exact optimum is known; `f_opt` is a best-known value (min over 2^20 Sobol points and 20 CMA-ES runs of 1e5 evaluations), so regret can be slightly negative in principle.
+
 A new non-BBOB function subclasses `Task` (`src/tasks/base.py`) in a new `src/tasks/<family>.py`: set `name`, `dim`, `bounds` (`np.ndarray`, shape `(dim, 2)`), `f_opt`, and implement `_f(x)`. `Task.evaluate(x)` adds timing and returns an `Evaluation` with `y`, `g` (constraint values, empty if unconstrained) and `elapsed`. Minimize only (negate a maximization inside `_f`). `f_opt` is for offline regret only; if no exact optimum is known, use a best-known reference value and document it as such.
 
 ## 2. Smoke Test
@@ -69,7 +81,7 @@ Figures (needs `matplotlib`): `../.venv/bin/python scripts/make_comparison_plots
 
    It renders the brief from `agent_briefs/blind_brief_template.md` (dim and bounds from the harness; uniform box, deterministic), copies `requirements.txt`, `src/optimizers/`, and the harness, and creates an empty `results/`. No `src/tasks/`, no other harnesses.
 3. **Leak check:** `make_sandbox.py` searches every sandbox file for registered task names and `f_opt`, and deletes the sandbox on a hit. Also check by hand for anything the template could not know about (e.g. a new function's name not yet in the registry).
-4. **Brief changes:** if the task needs a property the template does not state (noise, non-uniform bounds), edit the rendered brief in the sandbox; describe only properties the agent may know.
+4. **Brief changes:** if the task needs a property the template does not state (noise, non-uniform bounds, integer or categorical coordinates: for `mixint_*` list which coordinates are integer, for `yahpo_*` which coordinates are categorical and which are conditional and inert), edit the rendered brief in the sandbox; describe only properties the agent may know.
 5. **Run:** start a brand-new agent session with the sandbox as its working directory (never one that has seen `main/`). First message only:
 
    > Read `agent_briefs/task_<NNN>.md` and carry out everything it describes.
