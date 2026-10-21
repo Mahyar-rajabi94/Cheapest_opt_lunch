@@ -42,12 +42,18 @@ from src.optimizers.nelder_mead import NelderMead
 from src.optimizers.random_search import RandomSearch
 from src.optimizers.sobol_search import SobolSearch
 from src.optimizers.turbo import TuRBO
+from src.tasks.bent_cigar import BentCigarTask
+from src.tasks.rastrigin import RastriginTask
 from src.tasks.rosenbrock import RosenbrockTask
+from src.tasks.sphere import SphereTask
 
 # Registries: add a new task or optimizer here; nothing else in this file
 # needs to change.
 TASKS = {
     "rosenbrock10": lambda: RosenbrockTask(dim=10, instance=1, rotated=False),
+    "rastrigin10": lambda: RastriginTask(dim=10, instance=1),
+    "bent_cigar10": lambda: BentCigarTask(dim=10, instance=1),
+    "sphere10": lambda: SphereTask(dim=10, instance=1),
 }
 
 OPTIMIZERS = {
