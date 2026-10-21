@@ -9,6 +9,8 @@ from __future__ import annotations
 from src.tasks.bbob import BBOBTask
 from src.tasks.cec2017 import CEC2017Task
 from src.tasks.coco_constrained import COCOConstrainedTask
+from src.tasks.coco_noisy import COCONoisyTask
+from src.tasks.nevergrad_noisy import NevergradNoisyTask
 from src.tasks.pymoo_g import PymooGTask
 
 TASKS = {
@@ -45,4 +47,14 @@ TASKS = {
     "constrained_diffpowers10": lambda: COCOConstrainedTask(38, dim=10),
     # bbob-constrained f44 (C03): Rastrigin, 3 linear constraints; multimodal.
     "constrained_rastrigin10": lambda: COCOConstrainedTask(44, dim=10),
+    # bbob-noisy f110: Rosenbrock, moderate Gaussian noise that vanishes at the optimum.
+    "noisy_rosenbrock_gauss5": lambda: COCONoisyTask(110, dim=5),
+    # bbob-noisy f111: Rosenbrock, severe uniform noise, mostly upward.
+    "noisy_rosenbrock_unif5": lambda: COCONoisyTask(111, dim=5),
+    # bbob-noisy f112: Rosenbrock, Cauchy noise: a constant offset plus rare heavy-tailed outliers.
+    "noisy_rosenbrock_cauchy5": lambda: COCONoisyTask(112, dim=5),
+    # nevergrad noisy Rosenbrock, 20 dims: curved valley under noise that grows with local slope.
+    "ng_noisy_rosenbrock20": lambda: NevergradNoisyTask("rosenbrock", dim=20),
+    # nevergrad noisy cigar, 20 dims: ill-conditioned (one easy, 19 steep directions) under noise.
+    "ng_noisy_cigar20": lambda: NevergradNoisyTask("cigar", dim=20),
 }
