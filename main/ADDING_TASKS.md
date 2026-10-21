@@ -64,6 +64,8 @@ Budget 2000; `gp_bo`, `turbo`, `bobyqa` capped at 100 via `BUDGET_CAPS`. Seeds 0
 
 Outputs land in `results/<task.name>/<optimizer>/seed_<n>/` (`trace.csv`, `meta.json`). Check `eval_seconds` in the smoke run before sweeping an expensive task.
 
+Figures (needs `matplotlib`): `../.venv/bin/python scripts/plot_sweep.py <outdir>` writes `plot1_final_regret_bar.png`, `plot2_regret_vs_eval.png` and, once agent runs exist, `plot3_agent_method_timeline.png` into each task folder. Add the task's sandbox trace to `AGENTS` in that script.
+
 ## 4. Blind Agent Task
 
 1. **Harness:** copy `src/agent_harness/task_001.py` to `task_<NNN>.py`. Change:
