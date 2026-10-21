@@ -71,6 +71,7 @@ def make_optimizer(
     scale=None,
     seed: Optional[int] = None,
     start_index: int = 1,
+    x0=None,
     **overrides,
 ):
     if method not in METHODS:
@@ -81,7 +82,16 @@ def make_optimizer(
     rng = np.random.default_rng(seed)
     cold = start == "center" or len(archive) == 0
 
-    x0 = _start_point(archive, start, rng, start_index)
+    if x0 is not None:
+        # Explicit start point (e.g. the best point of the active method):
+        # scale from the spread of the archive points nearest to it.
+        x0 = np.clip(np.asarray(x0, dtype=float), lo, hi)
+        if scale is None:
+            Xn, _ = archive.nearest(x0, max(2 * len(x0), 10))
+            scale = np.clip(Xn.std(axis=0), 1e-6 * width, 0.3 * width)
+        cold = False
+    else:
+        x0 = _start_point(archive, start, rng, start_index)
     if scale is None:
         scale = archive.local_scale() if not cold and start == "incumbent" else 0.25 * width
     scale = np.broadcast_to(np.asarray(scale, dtype=float), x0.shape)
