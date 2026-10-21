@@ -6,6 +6,9 @@ Writes two files per campaign:
 
 trace.csv has one row per evaluation (eval_idx, batch_idx, optimizer,
 x0..x{dim-1}, y, y_best_so_far, eval_seconds, cumulative_seconds).
+Constrained tasks add merit, violation and feasible after y, and
+y_best_so_far is then the best *feasible* y so far (blank until the first
+feasible point).
 meta.json records the campaign-level configuration and provenance.
 
 No optimizer hyperparameters are exposed here by design: each optimizer
@@ -65,6 +68,14 @@ OPTIMIZERS = {
 warnings.filterwarnings("ignore", message=".*balance properties.*")
 
 
+def _merit(ev) -> float:
+    """Scalar fed to the optimizers: y if feasible, else a large penalty that
+    ranks every infeasible point above every feasible one, by violation first."""
+    if ev.feasible:
+        return ev.y
+    return 1e12 + 1e6 * ev.violation + float(np.tanh(ev.y))
+
+
 def run_campaign(
     task_name: str,
     optimizer_name: str,
@@ -92,6 +103,7 @@ def run_campaign(
     campaign_dir = Path(outdir) / task.name / optimizer_name / f"seed_{seed}"
     campaign_dir.mkdir(parents=True, exist_ok=True)
 
+    constrained = task.n_constraints > 0
     rows = []
     best_so_far = None
     cumulative_seconds = 0.0
@@ -108,17 +120,23 @@ def run_campaign(
             stop_reason = str(e)
             break
         x = X[0]
-        y, elapsed = task.evaluate(x)
-        optimizer.tell(X, [y])
+        ev = task.evaluate(x)
+        y, elapsed = ev.y, ev.elapsed
+        merit = _merit(ev)
+        optimizer.tell(X, [merit])
 
         cumulative_seconds += elapsed
-        if best_so_far is None or y < best_so_far:
+        if ev.feasible and (best_so_far is None or y < best_so_far):
             best_so_far = y
 
         row = {"eval_idx": i + 1, "batch_idx": i, "optimizer": optimizer_name}
         for d in range(task.dim):
             row[f"x{d}"] = x[d]
         row["y"] = y
+        if constrained:
+            row["merit"] = merit
+            row["violation"] = ev.violation
+            row["feasible"] = ev.feasible
         row["y_best_so_far"] = best_so_far
         row["eval_seconds"] = elapsed
         row["cumulative_seconds"] = cumulative_seconds
@@ -141,6 +159,7 @@ def run_campaign(
         "task_dim": task.dim,
         "task_direction": task.direction,
         "task_f_opt": task.f_opt,
+        **({"task_n_constraints": task.n_constraints} if constrained else {}),
         "optimizer_name": optimizer_name,
         "optimizer_class": f"{type(optimizer).__module__}.{type(optimizer).__name__}",
         "seed": seed,
