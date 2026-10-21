@@ -33,9 +33,10 @@ from scripts.run_campaign import OPTIMIZERS, TASKS, run_campaign
 # Optimizers not listed here go after these.
 SLOWEST_FIRST = ["gp_bo", "bobyqa", "turbo"]
 
-# Exact GP-BO refits on all data every step; at 1000 evaluations one seed
-# takes over an hour on CPU, so it is capped at its small-budget regime.
-BUDGET_CAPS = {"gp_bo": 100}
+# Expensive methods run at a small budget: GP-BO refits an exact GP every
+# step (over an hour per seed at 1000 on CPU), TuRBO refits every batch, and
+# the threaded Py-BOBYQA wrapper slows superlinearly with evaluations.
+BUDGET_CAPS = {"gp_bo": 100, "turbo": 100, "bobyqa": 100}
 
 
 def _init_worker():
@@ -127,7 +128,7 @@ def _sweep(task_name, budget, seeds, outdir, workers):
 
 def run_sweep(
     task_name: str,
-    budget: int = 1000,
+    budget: int = 2000,
     seeds: int = 10,
     outdir: str = "results",
     workers: int = 1,
@@ -145,7 +146,7 @@ def run_sweep(
 def _parse_args():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--task", required=True, choices=sorted(TASKS))
-    p.add_argument("--budget", type=int, default=1000)
+    p.add_argument("--budget", type=int, default=2000)
     p.add_argument("--seeds", type=int, default=10)
     p.add_argument("--outdir", default="results")
     p.add_argument("--workers", type=int, default=1)

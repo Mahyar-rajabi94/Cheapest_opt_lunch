@@ -60,7 +60,7 @@ Then run the sweep (every optimizer, resumable):
 ../.venv/bin/python scripts/run_sweep.py --task <key> --workers <n>
 ```
 
-Budget 1000 (`gp_bo` capped at 100 via `BUDGET_CAPS`), seeds 0–9. Deterministic optimizers (`bobyqa`, `nelder_mead`, `lbfgsb`) run seed 0 only. Reruns skip completed campaigns; a budget mismatch with existing results errors (use a new `--outdir`).
+Budget 2000; `gp_bo`, `turbo`, `bobyqa` capped at 100 via `BUDGET_CAPS`. Seeds 0–9. Deterministic optimizers (`bobyqa`, `nelder_mead`, `lbfgsb`) run seed 0 only. Reruns skip completed campaigns; a budget mismatch with existing results errors (use a new `--outdir`).
 
 Outputs land in `results/<task.name>/<optimizer>/seed_<n>/` (`trace.csv`, `meta.json`). Check `eval_seconds` in the smoke run before sweeping an expensive task.
 
@@ -109,7 +109,7 @@ Outputs land in `results/<task.name>/<optimizer>/seed_<n>/` (`trace.csv`, `meta.
 - [ ] `src/tasks/<name>.py` with `name`, `direction`, `dim`, `bounds`, `f_opt`, `evaluate`
 - [ ] `TASKS` entry in `scripts/run_campaign.py`
 - [ ] Smoke run passes
-- [ ] Baselines: `run_sweep.py` (budget 1000, `gp_bo` 100, seeds 0–9)
+- [ ] Baselines: `run_sweep.py` (budget 2000, expensive methods 100, seeds 0–9)
 - [ ] Harness `task_<NNN>.py`, self-contained, no `f_opt`
 - [ ] Brief `task_<NNN>.md`, no identifying details
 - [ ] Sandbox built and leak-checked
