@@ -64,7 +64,7 @@ Budget 2000; `gp_bo`, `turbo`, `bobyqa` capped at 100 via `BUDGET_CAPS`. Seeds 0
 
 Outputs land in `results/<task.name>/<optimizer>/seed_<n>/` (`trace.csv`, `meta.json`). Check `eval_seconds` in the smoke run before sweeping an expensive task.
 
-Figures (needs `matplotlib`): `../.venv/bin/python scripts/plot_sweep.py <outdir>` writes `plot1_final_regret_bar.png`, `plot2_regret_vs_eval.png` and, once agent runs exist, `plot3_agent_method_timeline.png` into each task folder. Add the task's sandbox trace to `AGENTS` in that script.
+Figures (needs `matplotlib`): `../.venv/bin/python scripts/make_comparison_plots.py [--task <task.name>]` writes `plot1_counterfactual_bar.png`, `plot2_regret_vs_eval.png` and, once an agent run exists, `plot3_agent_method_timeline.png` into `results/<task.name>/`. Add the task's sandbox results folder to `AGENT_RUNS` in that script. Commit results and figures.
 
 ## 4. Blind Agent Task
 
@@ -104,7 +104,7 @@ Figures (needs `matplotlib`): `../.venv/bin/python scripts/plot_sweep.py <outdir
 
    > Read `agent_briefs/task_<NNN>.md` and carry out everything it describes.
 
-6. **Score:** from `main/`, compare `results/agent_task_<NNN>/trace.csv` against `f_opt` and the step 3 baselines.
+6. **Score:** from `main/`, rerun `scripts/make_comparison_plots.py --task <task.name>` to compare the agent trace against `f_opt` and the step 3 baselines.
 
 ## Checklist
 
