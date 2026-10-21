@@ -26,7 +26,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from run_campaign import OPTIMIZERS, TASKS, run_campaign
+from scripts.run_campaign import OPTIMIZERS, TASKS, run_campaign
 
 # Slowest first, so a parallel sweep does not end waiting on one long job.
 # Optimizers not listed here go after these.
@@ -148,5 +148,8 @@ def _parse_args():
 
 if __name__ == "__main__":
     args = _parse_args()
-    _, failed = _sweep(args.task, args.budget, args.seeds, args.outdir, args.workers)
+    try:
+        _, failed = _sweep(args.task, args.budget, args.seeds, args.outdir, args.workers)
+    except ValueError as e:
+        sys.exit(f"error: {e}")
     sys.exit(1 if failed else 0)
