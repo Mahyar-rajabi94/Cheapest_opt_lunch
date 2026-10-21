@@ -1,0 +1,19 @@
+{
+  "task_dim": 10,
+  "task_direction": "min",
+  "requested_budget": 2000,
+  "evaluations_used": 2000,
+  "stopped_early": false,
+  "start_time_utc": "2026-10-21T19:58:42.234782+00:00",
+  "end_time_utc": "2026-10-21T19:58:42.321794+00:00",
+  "total_wall_seconds": 0.08702037506736815,
+  "numpy_version": "2.5.4",
+  "policy": "scripted",
+  "seed": 4,
+  "rounds": 8,
+  "round_size": 100,
+  "policy_use_probes": true,
+  "landscape_guess": "smooth_single_basin",
+  "task_name": "dev_f8_d10_i1",
+  "task_f_opt": 149.15
+}

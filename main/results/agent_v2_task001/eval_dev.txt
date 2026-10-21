@@ -1,0 +1,31 @@
+task          policy                  n  med regret med t(1e-2) med t(1e-6) solved
+task001       scripted                5    1.76e-08        1175        1263 5/5
+task001       fixed_cma_es            5        3.63           -           - 0/5
+task001       fixed_cma_es_restarts   5        3.63           -           - 0/5
+task001       fixed_lbfgsb            1    1.29e-08        1189        1277 1/1
+task001       fixed_bobyqa            1    5.68e-14         993        1134 1/1
+              scripted landscape guess: {'smooth_single_basin'}
+dev_f1_d10    scripted                5    2.27e-13         165         176 5/5
+dev_f1_d10    fixed_cma_es            5    3.14e-12         527        1167 5/5
+dev_f1_d10    fixed_cma_es_restarts   5    3.14e-12         527        1167 5/5
+dev_f1_d10    fixed_lbfgsb            1    7.25e-13          23          23 1/1
+dev_f1_d10    fixed_bobyqa            1           0          23          23 1/1
+              scripted landscape guess: {'smooth_single_basin'}
+dev_f10_d10   scripted                5        39.4           -           - 0/5
+dev_f10_d10   fixed_cma_es            5        91.4           -           - 0/5
+dev_f10_d10   fixed_cma_es_restarts   5        91.4           -           - 0/5
+dev_f10_d10   fixed_lbfgsb            1        2.95           -           - 0/1
+dev_f10_d10   fixed_bobyqa            1        51.5           -           - 0/1
+              scripted landscape guess: {'multi_basin', 'smooth_single_basin'}
+dev_f15_d10   scripted                5        16.9           -           - 0/5
+dev_f15_d10   fixed_cma_es            5        9.95           -           - 0/5
+dev_f15_d10   fixed_cma_es_restarts   5        9.95           -           - 0/5
+dev_f15_d10   fixed_lbfgsb            1         120           -           - 0/1
+dev_f15_d10   fixed_bobyqa            1        63.7           -           - 0/1
+              scripted landscape guess: {'multi_basin'}
+dev_f21_d10   scripted                5        3.17           -           - 0/5
+dev_f21_d10   fixed_cma_es            5        3.64           -           - 0/5
+dev_f21_d10   fixed_cma_es_restarts   5        3.64           -           - 0/5
+dev_f21_d10   fixed_lbfgsb            1        15.7           -           - 0/1
+dev_f21_d10   fixed_bobyqa            1        2.26           -           - 0/1
+              scripted landscape guess: {'multi_basin', 'smooth_single_basin'}
