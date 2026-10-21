@@ -62,9 +62,9 @@ Then run the sweep (every optimizer, resumable):
 
 Budget 2000; `gp_bo`, `turbo`, `bobyqa` capped at 100 via `BUDGET_CAPS`. Seeds 0–9. Deterministic optimizers (`bobyqa`, `nelder_mead`, `lbfgsb`) run seed 0 only. Reruns skip completed campaigns; a budget mismatch with existing results errors (use a new `--outdir`).
 
-Outputs land in `results/<task.name>/<optimizer>/seed_<n>/` (`trace.csv`, `meta.json`). Check `eval_seconds` in the smoke run before sweeping an expensive task.
+Outputs land in `results_linux/<task.name>/<optimizer>/seed_<n>/` (`trace.csv`, `meta.json`). Run sweeps on Linux (Trillium: `sbatch -p debug scripts/slurm/sweep_all.sh <key>`): results differ bit-for-bit across platforms, so `results_linux/` holds Linux runs only. `results/` holds upstream's original (macOS) baselines. Check `eval_seconds` in the smoke run before sweeping an expensive task.
 
-Figures (needs `matplotlib`): `../.venv/bin/python scripts/make_comparison_plots.py [--task <task.name>]` writes `plot1_counterfactual_bar.png`, `plot2_regret_vs_eval.png` and, once an agent run exists, `plot3_agent_method_timeline.png` into `results/<task.name>/`. Add the task's sandbox results folder to `AGENT_RUNS` in that script. Commit results and figures.
+Figures (needs `matplotlib`): `../.venv/bin/python scripts/make_comparison_plots.py [--task <task.name>]` writes `plot1_counterfactual_bar.png`, `plot2_regret_vs_eval.png` and, once an agent run exists, `plot3_agent_method_timeline.png` into `results_linux/<task.name>/`. Add the task's sandbox results folder to `AGENT_RUNS` in that script. Commit results and figures.
 
 ## 4. Blind Agent Task
 
@@ -111,7 +111,7 @@ Figures (needs `matplotlib`): `../.venv/bin/python scripts/make_comparison_plots
 - [ ] `src/tasks/<name>.py` with `name`, `direction`, `dim`, `bounds`, `f_opt`, `evaluate`
 - [ ] `TASKS` entry in `scripts/run_campaign.py`
 - [ ] Smoke run passes
-- [ ] Baselines: `run_sweep.py` (budget 2000, expensive methods 100, seeds 0–9)
+- [ ] Baselines: `run_sweep.py` (budget 2000, expensive methods 100, seeds 0–9, on Linux into `results_linux/`)
 - [ ] Harness `task_<NNN>.py`, self-contained, no `f_opt`
 - [ ] Brief `task_<NNN>.md`, no identifying details
 - [ ] Sandbox built and leak-checked

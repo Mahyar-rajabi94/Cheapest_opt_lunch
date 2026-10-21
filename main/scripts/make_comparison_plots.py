@@ -1,6 +1,6 @@
 """Comparison plots: agent runs vs. the classical baselines, per task.
 
-Produces three figures in each results/<task>/:
+Produces three figures in each <results>/<task>/ (default results_linux/):
   plot1_counterfactual_bar.png  -- final regret: the agents vs. each
                                    single method they cascaded through
                                    (every baseline if the task has no
@@ -429,7 +429,7 @@ def make_plots(task_dir: Path):
 
 if __name__ == "__main__":
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("--results", default=str(MAIN_ROOT / "results"))
+    p.add_argument("--results", default=str(MAIN_ROOT / "results_linux"))
     p.add_argument("--task", help="one results/<task> folder name; default: every task")
     args = p.parse_args()
     results = Path(args.results)

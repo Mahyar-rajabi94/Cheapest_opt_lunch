@@ -130,7 +130,7 @@ def run_sweep(
     task_name: str,
     budget: int = 2000,
     seeds: int = 10,
-    outdir: str = "results",
+    outdir: str = "results_linux",
     workers: int = 1,
 ) -> list[Path]:
     """Run the full optimizer x seed sweep; return the campaign directories
@@ -148,7 +148,7 @@ def _parse_args():
     p.add_argument("--task", required=True, choices=sorted(TASKS))
     p.add_argument("--budget", type=int, default=2000)
     p.add_argument("--seeds", type=int, default=10)
-    p.add_argument("--outdir", default="results")
+    p.add_argument("--outdir", default="results_linux")
     p.add_argument("--workers", type=int, default=1)
     return p.parse_args()
 

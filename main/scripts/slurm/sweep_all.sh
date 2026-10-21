@@ -4,7 +4,7 @@
 # Submit from main/ in the $SCRATCH clone (jobs can only write to $SCRATCH):
 #     sbatch -p debug scripts/slurm/sweep_all.sh                  # every task in TASKS
 #     sbatch -p debug scripts/slurm/sweep_all.sh sphere10 rastrigin10
-# Optional env: OUTDIR (default results), BUDGET, SEEDS (run_sweep defaults).
+# Optional env: OUTDIR (default results_linux), BUDGET, SEEDS (run_sweep defaults).
 #
 # The node's cores are split evenly across tasks. Each task logs to
 # sweep_<task>_<jobid>.log; reruns skip completed campaigns.
@@ -33,11 +33,11 @@ extra=()
 [[ -n "${BUDGET:-}" ]] && extra+=(--budget "$BUDGET")
 [[ -n "${SEEDS:-}" ]] && extra+=(--seeds "$SEEDS")
 
-echo "tasks: ${tasks[*]}  workers per task: $workers  outdir: ${OUTDIR:-results}"
+echo "tasks: ${tasks[*]}  workers per task: $workers  outdir: ${OUTDIR:-results_linux}"
 pids=()
 for t in "${tasks[@]}"; do
     "$PY" scripts/run_sweep.py --task "$t" --workers "$workers" \
-        --outdir "${OUTDIR:-results}" "${extra[@]}" > "sweep_${t}_${SLURM_JOB_ID}.log" 2>&1 &
+        --outdir "${OUTDIR:-results_linux}" "${extra[@]}" > "sweep_${t}_${SLURM_JOB_ID}.log" 2>&1 &
     pids+=($!)
 done
 
