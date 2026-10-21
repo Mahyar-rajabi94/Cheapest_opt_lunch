@@ -31,8 +31,9 @@ TASKS = {
     # f16: rugged, highly multimodal, repetitive.
     "weierstrass10": lambda: BBOBTask("weierstrass", 16, dim=10),
     # CEC-2017 F6 (D04/D05): expanded Schaffer F6; multimodal, nonseparable, 30 and 50 dims.
-    "schaffer30": lambda: CEC2017Task(6, dim=30),
-    "schaffer50": lambda: CEC2017Task(6, dim=50),
+    # Box [-5, 5], not CEC's [-100, 100], where no method beats random search.
+    "schaffer30": lambda: CEC2017Task(6, dim=30, half_width=5.0),
+    "schaffer50": lambda: CEC2017Task(6, dim=50, half_width=5.0),
     # CEC-2017 F5 (S04): shifted/rotated Rastrigin on a wide box [-100, 100].
     "cec_rastrigin30": lambda: CEC2017Task(5, dim=30),
     # CEC-2017 F8 (S05): Rastrigin with rounded steps; plateaus on top of multimodality.

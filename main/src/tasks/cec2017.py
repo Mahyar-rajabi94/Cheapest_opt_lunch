@@ -20,23 +20,27 @@ class CEC2017Task(Task):
     8: Non-Continuous Rastrigin) at dimension `dim`.
 
     The named equation takes priority over a conflicting CEC-2017 ID, so the
-    values can differ from opfunu's own evaluators. The box is [-100, 100]
-    per dimension; the optimum is the shift vector, with value 100 * function_id.
+    values can differ from opfunu's own evaluators. The box is
+    [-half_width, half_width] per dimension (CEC's own is 100); the optimum is
+    the shift vector scaled by half_width / 100, with value 100 * function_id.
+    A smaller box shrinks the search space relative to the function's
+    features: on F6 at the CEC box, every method stays at random-search level
+    within a few thousand evaluations.
     """
 
-    def __init__(self, function_id: int, dim: int):
+    def __init__(self, function_id: int, dim: int, half_width: float = 100.0):
         if function_id not in _NAMES:
             raise ValueError(f"Only CEC-2017 F5, F6, F8 are implemented, got F{function_id}.")
         from opfunu.cec_based import cec2017
 
         data = getattr(cec2017, f"F{function_id}2017")(ndim=dim)
         self.function_id = function_id
-        self.shift = np.asarray(data.f_shift, dtype=float).reshape(-1)[:dim]
+        self.shift = np.asarray(data.f_shift, dtype=float).reshape(-1)[:dim] * half_width / 100.0
         self.rotation = np.asarray(data.f_matrix, dtype=float)[:dim, :dim]
 
-        self.name = f"cec2017_{_NAMES[function_id]}_d{dim}"
+        self.name = f"cec2017_{_NAMES[function_id]}_d{dim}" + ("" if half_width == 100.0 else f"_b{half_width:g}")
         self.dim = dim
-        self.bounds = np.tile([-100.0, 100.0], (dim, 1))
+        self.bounds = np.tile([-half_width, half_width], (dim, 1))
         self.f_opt = 100.0 * function_id
 
     def _f(self, x: np.ndarray) -> float:
