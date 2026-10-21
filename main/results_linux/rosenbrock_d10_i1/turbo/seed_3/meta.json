@@ -10,9 +10,9 @@
   "evaluations_used": 100,
   "stopped_early": false,
   "stop_reason": null,
-  "start_time_utc": "2026-10-21T16:11:30.056601+00:00",
-  "end_time_utc": "2026-10-21T16:11:43.039052+00:00",
-  "total_wall_seconds": 12.982485795859247,
+  "start_time_utc": "2026-10-21T17:25:36.272064+00:00",
+  "end_time_utc": "2026-10-21T17:25:51.071649+00:00",
+  "total_wall_seconds": 14.799610693007708,
   "numpy_version": "2.4.6",
   "scipy_version": "1.17.1"
 }
