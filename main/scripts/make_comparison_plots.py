@@ -17,6 +17,10 @@ Produces three figures in each <results>/<task>/ (default results_linux/):
 f_opt, seeds and budgets are read from the baseline meta.json files; agent
 traces come from AGENT_RUNS.
 
+Constrained tasks: regret is undefined until the first feasible point, so
+the seed mean skips seeds without one yet, and plot 1 labels how many seeds
+found a feasible point ("no feasible point" if none did).
+
 Colors are the dataviz skill's documented default categorical palette
 (docs/.../dataviz skill, references/palette.md), used in its published fixed
 order. The validator script (validate_palette.js) could not be run directly
@@ -36,6 +40,7 @@ import argparse
 import csv
 import json
 import re
+import warnings
 from pathlib import Path
 
 import matplotlib
@@ -143,7 +148,8 @@ def load_rows(path: Path):
 
 
 def regret_trajectory(rows, f_opt):
-    y = np.array([float(r["y_best_so_far"]) for r in rows])
+    # Blank until the first feasible point (constrained tasks): regret is undefined there.
+    y = np.array([float(r["y_best_so_far"] or "nan") for r in rows])
     return y - f_opt
 
 
@@ -175,13 +181,18 @@ def load_task(task_dir: Path):
     f_opt = json.loads(next(iter(metas.values()))[0].read_text())["task_f_opt"]
 
     # ---- baseline trajectories (mean across seeds where there are several) ----
-    baselines = {}  # name -> dict(x, regret, budget, n_seeds)
+    baselines = {}  # name -> dict(x, regret, n_feasible, budget, n_seeds)
     for name, paths in metas.items():
         seed_ys = [regret_trajectory(load_rows(p.parent / "trace.csv"), f_opt) for p in paths]
         min_len = min(len(a) for a in seed_ys)
+        stacked = np.stack([a[:min_len] for a in seed_ys])
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)  # all-NaN column: no seed feasible yet
+            mean_regret = np.nanmean(stacked, axis=0)  # seeds without a feasible point yet are skipped
         baselines[name] = dict(
             x=np.arange(1, min_len + 1),
-            regret=np.stack([a[:min_len] for a in seed_ys]).mean(axis=0),
+            regret=mean_regret,
+            n_feasible=int(np.isfinite(stacked[:, -1]).sum()),
             budget=json.loads(paths[0].read_text())["requested_budget"],
             n_seeds=len(paths),
         )
@@ -217,19 +228,21 @@ def capped_note(baselines):
 def plot_counterfactual_bar(task_dir, baselines, agents):
     used = {canonical_method(p[0]) for a in agents.values() for p in a["phases"]}
     names = [n for n in baselines if n in used] if agents else list(baselines)
-    names.sort(key=lambda n: baselines[n]["regret"][-1])
+    names.sort(key=lambda n: (np.isnan(baselines[n]["regret"][-1]), baselines[n]["regret"][-1]))
 
     entries = [(f"{label} (budget {len(a['x'])})", a["regret"][-1], a["color"]) for label, a in agents.items()]
     for n in names:
         b = baselines[n]
         seeds = f", mean of {b['n_seeds']} seeds" if b["n_seeds"] > 1 else ""
+        if b["n_feasible"] < b["n_seeds"]:
+            seeds += f", {b['n_feasible']}/{b['n_seeds']} found a feasible point"
         alone = " alone" if agents else ""
         entries.append(
             (f"{baseline_display_names[n]}{alone} (budget {b['budget']}{seeds})", b["regret"][-1],
              baseline_style[n]["color"])
         )
 
-    values = [max(v, FLOOR) for _, v, _ in entries]  # floor only for the log axis
+    values = [FLOOR if np.isnan(v) else max(v, FLOOR) for _, v, _ in entries]  # floor only for the log axis
     y_pos = np.arange(len(entries))[::-1]
 
     fig, ax = plt.subplots(figsize=(8.5, 0.45 * len(entries) + 1.6), dpi=150)
@@ -244,7 +257,7 @@ def plot_counterfactual_bar(task_dir, baselines, agents):
         ax.spines[spine].set_visible(False)
 
     for yi, (_, v, _) in zip(y_pos, entries):
-        label = f"{v:.2e}" if v < 0.01 else f"{v:.2f}"
+        label = "no feasible point" if np.isnan(v) else f"{v:.2e}" if v < 0.01 else f"{v:.2f}"
         ax.text(max(v, FLOOR) * 1.3, yi, label, va="center", ha="left", fontsize=9.5, color=TEXT_SECONDARY)
 
     title = (
