@@ -23,7 +23,7 @@ This file names task identities. Keep it in `main/`; never copy it into a sandbo
 
 ## Per Task
 
-Folder: `results_linux/<folder>/`. "Random" is the median random-search regret over 500 uniform points; "center" is the regret at the box center, where deterministic optimizers (`lbfgsb`, `nelder_mead`, `bobyqa`) start. Winners are median regret over seeds of the baselines in `results_linux/`, at 100 and 2000 evaluations (GP-BO, TuRBO, BOBYQA capped at 100). "Pending" marks a task whose baseline sweep has not run yet; its numbers are from a scratch check (random search, CMA-ES, DE on 3 seeds; L-BFGS-B, Nelder–Mead on seed 0).
+Folder: `results_linux/<folder>/`. "Random" is the median random-search regret over 500 uniform points; "center" is the regret at the box center, where deterministic optimizers (`lbfgsb`, `nelder_mead`, `bobyqa`) start. Winners are median regret over seeds of the baselines in `results_linux/`, at 100 and 2000 evaluations (GP-BO, TuRBO, BOBYQA capped at 100).
 
 ### Unconstrained, Noiseless
 
@@ -40,8 +40,8 @@ Folder: `results_linux/<folder>/`. "Random" is the median random-search regret o
 | `sharp_ridge10` | `sharp_ridge_d10_i1` | BBOB f13 | 10 | [-5, 5] | Nondifferentiable ridge; in practice finite-difference L-BFGS-B still wins, ranking ≈ `bent_cigar10`. | BOBYQA (23) | L-BFGS-B (0.22) |
 | `cec_rastrigin30` | `cec2017_f5_d30` | CEC-2017 F5 | 30 | [-100, 100] | Rastrigin at D=30 on a wide box. | L-BFGS-B ≈ GP-BO (~365) | CMA-ES (233) |
 | `noncont_rastrigin30` | `cec2017_f8_d30` | CEC-2017 F8 | 30 | [-100, 100] | F5 with rounded steps: plateaus on top of multimodality; stalls L-BFGS-B (518 vs 303 on F5). | GP-BO (361) | CMA-ES (236) |
-| `schaffer30` | `cec2017_f6_d30_b5` | CEC-2017 F6 | 30 | [-5, 5] | Expanded Schaffer F6, nonseparable rippled multimodality; CMA-ES and DE stay at random level. | Pending (L-BFGS-B 7.3, random 10.5) | Pending (L-BFGS-B 0.98, random 8.2) |
-| `schaffer50` | `cec2017_f6_d50_b5` | CEC-2017 F6 | 50 | [-5, 5] | Same at D=50; each finite-difference gradient costs 51 evaluations, so L-BFGS-B is worse than random at 100 and best at 2000. | Pending (random 19.5, L-BFGS-B 27) | Pending (L-BFGS-B 3.1, random 17.5) |
+| `schaffer30` | `cec2017_f6_d30_b5` | CEC-2017 F6 | 30 | [-5, 5] | Expanded Schaffer F6, nonseparable rippled multimodality; CMA-ES and DE stay at random level. | BOBYQA (5.4) | L-BFGS-B (0.98); rest ≈ random (8.3–9.0) |
+| `schaffer50` | `cec2017_f6_d50_b5` | CEC-2017 F6 | 50 | [-5, 5] | Same at D=50; each finite-difference gradient costs 51 evaluations, so L-BFGS-B is worse than random at 100 and best at 2000. | DE = random (18.8); L-BFGS-B 27 | L-BFGS-B (3.2); rest ≈ random (16.8–17.4) |
 
 ### Constrained
 
@@ -64,8 +64,8 @@ Optimizers see the observed `y`; scoring uses the noise-free value of the best o
 | `noisy_rosenbrock_gauss5` | `bbob_noisy_f110_d5_i1` | bbob-noisy f110 | 5 | Gaussian, multiplicative, vanishes at the optimum | 0.72 | Moderate noise. | CMA-ES (467) | CMA-ES (4.7) |
 | `noisy_rosenbrock_unif5` | `bbob_noisy_f111_d5_i1` | bbob-noisy f111 | 5 | Uniform, severe, mostly upward | 0.24 | Severe noise; observed values at the center span 2 to 1e6. | BOBYQA (485) | CMA-ES (603) |
 | `noisy_rosenbrock_cauchy5` | `bbob_noisy_f112_d5_i1` | bbob-noisy f112 | 5 | ~+1000 offset, rare Cauchy outliers | 1.00 | In practice near-noiseless: SD at the center is 1.0 over 200 calls. Behaves like a 5-D noiseless Rosenbrock. | BOBYQA (9.0) | CMA-ES (1.2) |
-| `ng_noisy_rosenbrock20` | `nevergrad_noisy_rosenbrock_d20_n0.1` | nevergrad, noise level 0.1, x* uniform in [-4, 4] | 20 | 0.1·N(0,1)·(f(x+N(0,I)) − f(x)), symmetric, nonzero at x* | 0.99 | Curved valley under noise that breaks finite differences: L-BFGS-B and Nelder–Mead stall at the center. | Pending (CMA-ES 2.5e4, random 2.3e5) | Pending (CMA-ES 1.6e3, random 6.9e4) |
-| `ng_noisy_cigar20` | `nevergrad_noisy_cigar_d20_n0.1` | nevergrad, noise level 0.1, x* uniform in [-4, 4] | 20 | Same formula | 1.00 | Ill-conditioning under the same noise; same stall. | Pending (CMA-ES 3.8e7, random 1.2e8) | Pending (CMA-ES 2.1e6, random 6.4e7) |
+| `ng_noisy_rosenbrock20` | `nevergrad_noisy_rosenbrock_d20_n0.1` | nevergrad, noise level 0.1, x* uniform in [-4, 4] | 20 | 0.1·N(0,1)·(f(x+N(0,I)) − f(x)), symmetric, nonzero at x* | 0.99 | Curved valley under noise that breaks finite differences: L-BFGS-B and Nelder–Mead stall at the center. | TuRBO (2.6e4) | CMA-ES (2.0e3) |
+| `ng_noisy_cigar20` | `nevergrad_noisy_cigar_d20_n0.1` | nevergrad, noise level 0.1, x* uniform in [-4, 4] | 20 | Same formula | 1.00 | Ill-conditioning under the same noise; same stall. GP-BO at 100 nearly matches CMA-ES at 2000. | GP-BO (3.6e6) | CMA-ES (2.7e6) |
 
 COCO's noise stream repeats by call index across seeds, so seed spread on the `noisy_rosenbrock_*` tasks understates the true variance.
 
