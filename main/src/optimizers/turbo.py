@@ -31,7 +31,8 @@ tutorial:
   only the data used to fit the *current* trust region's GP is local.
 
 By convention, this optimizer MINIMIZES the objective (matching the rest
-of this package).
+of this package). Internally the GP is fit on -y, because BoTorch's
+Thompson-sampling selector (MaxPosteriorSampling) maximizes.
 """
 
 from __future__ import annotations
@@ -157,8 +158,13 @@ class TuRBO:
 
         # Fit a GP on this trust region's own local data so far (not the
         # whole run's history -- that's reset on restart).
+        # BoTorch's MaxPosteriorSampling (used below) picks the candidates
+        # with the *highest* sampled values, i.e. it assumes maximization.
+        # This optimizer minimizes, so the GP is fit on -y: the maximum of
+        # -y is the minimum of y. (Fitting on raw y made TuRBO chase the
+        # worst regions of the trust region.)
         X_t = torch.tensor(self._local_X_unit, dtype=torch.double)
-        Y_t = torch.tensor(self._local_y, dtype=torch.double).unsqueeze(-1)
+        Y_t = torch.tensor(-self._local_y, dtype=torch.double).unsqueeze(-1)
 
         model = SingleTaskGP(
             X_t,
