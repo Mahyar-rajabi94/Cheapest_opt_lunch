@@ -309,6 +309,8 @@ class Controller:
         outdir = Path(outdir)
         outdir.mkdir(parents=True, exist_ok=True)
         self.log.save(outdir / "decisions.jsonl")
+        if hasattr(self.policy, "save_transcript"):
+            self.policy.save_transcript(outdir / "llm_transcript.jsonl")
         self.intake.save(outdir / "intake.yaml")
         meta = {"policy": getattr(self.policy, "name", "?"), "seed": self.seed,
                 "rounds": self.round, "round_size": self.k}
