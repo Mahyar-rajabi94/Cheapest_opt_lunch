@@ -256,9 +256,9 @@ def plot_counterfactual_bar(task_dir, baselines, agents):
     for spine in ("top", "right", "left"):
         ax.spines[spine].set_visible(False)
 
-    for yi, (_, v, _) in zip(y_pos, entries):
+    for yi, (_, v, _), plotted in zip(y_pos, entries, values):
         label = "no feasible point" if np.isnan(v) else f"{v:.2e}" if v < 0.01 else f"{v:.2f}"
-        ax.text(max(v, FLOOR) * 1.3, yi, label, va="center", ha="left", fontsize=9.5, color=TEXT_SECONDARY)
+        ax.text(plotted * 1.3, yi, label, va="center", ha="left", fontsize=9.5, color=TEXT_SECONDARY)
 
     title = (
         "The agents vs. the single-method counterfactuals they cascaded through"
