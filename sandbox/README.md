@@ -32,8 +32,22 @@ from src.agent_harness.harness import AgentTaskHarness, BudgetExhausted
 harness = AgentTaskHarness(budget=<N>)
 ```
 
-Everything else (roadmap, changelog, trace/meta output) follows the
-protocol in `Agent.md`.
+The agent follows the iterative protocol in `Agent.md`: choose one method
+and a bounded number of evaluations, execute that step, inspect the
+observations, then decide again. It chooses each step's length based on
+the method, evidence, and remaining budget; there is no fixed review
+interval or advance schedule of future methods. Continuing the same
+method is also an explicit decision at a checkpoint.
+
+The agent also chooses and may revise any relevant optimizer hyperparameters
+for each block. Defaults are optional starting points. It determines which
+settings apply, records its choices, and can keep them unchanged; methods
+without relevant configurable settings need no tuning step.
+
+`roadmap_initial.md` records only the first step. `changelog.md` records
+every subsequent decision before it is executed, plus the final stop
+decision. The harness still writes `trace.csv` and `meta.json`; these four
+files remain the campaign outputs.
 
 ## Example task-specific prompt
 
