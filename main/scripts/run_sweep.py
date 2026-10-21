@@ -4,7 +4,8 @@ Writes the same per-campaign files as run_campaign.py:
     <outdir>/<task_name>/<optimizer_name>/seed_<seed>/{trace.csv,meta.json}
 
 Seeds 0..seeds-1 are run for each optimizer, except deterministic ones
-(class attribute `deterministic = True`), which run seed 0 only.
+(class attribute `deterministic = True`), which run seed 0 only. Optimizers
+in BUDGET_CAPS run at min(budget, cap).
 
 Reruns are safe: a campaign whose meta.json already exists with the same
 requested_budget is skipped. If an existing campaign used a different
@@ -32,6 +33,10 @@ from scripts.run_campaign import OPTIMIZERS, TASKS, run_campaign
 # Optimizers not listed here go after these.
 SLOWEST_FIRST = ["gp_bo", "bobyqa", "turbo"]
 
+# Exact GP-BO refits on all data every step; at 1000 evaluations one seed
+# takes over an hour on CPU, so it is capped at its small-budget regime.
+BUDGET_CAPS = {"gp_bo": 100}
+
 
 def _init_worker():
     import torch
@@ -56,21 +61,22 @@ def _sweep(task_name, budget, seeds, outdir, workers):
     jobs = []
     for name in names:
         n_seeds = 1 if getattr(OPTIMIZERS[name], "deterministic", False) else seeds
-        jobs += [(name, seed) for seed in range(n_seeds)]
+        job_budget = min(budget, BUDGET_CAPS.get(name, budget))
+        jobs += [(name, seed, job_budget) for seed in range(n_seeds)]
 
     todo, done, conflicts = [], [], []
-    for name, seed in jobs:
+    for name, seed, job_budget in jobs:
         meta_path = task_dir / name / f"seed_{seed}" / "meta.json"
         if not meta_path.exists():
-            todo.append((name, seed))
-        elif json.loads(meta_path.read_text())["requested_budget"] == budget:
+            todo.append((name, seed, job_budget))
+        elif json.loads(meta_path.read_text())["requested_budget"] == job_budget:
             done.append((name, seed))
         else:
             conflicts.append(meta_path.parent)
     if conflicts:
         listing = "\n  ".join(str(p) for p in conflicts)
         raise ValueError(
-            f"existing results use a different budget than {budget}:\n  {listing}\n"
+            f"existing results use a different budget than this sweep's:\n  {listing}\n"
             "Pass a different --outdir."
         )
 
@@ -93,9 +99,9 @@ def _sweep(task_name, budget, seeds, outdir, workers):
             print(f"[{count}/{total}] {name} seed={seed} FAILED: {error!r}")
 
     if workers == 1:
-        for name, seed in todo:
+        for name, seed, job_budget in todo:
             try:
-                seconds = _timed_campaign(task_name, name, seed, budget, outdir)
+                seconds = _timed_campaign(task_name, name, seed, job_budget, outdir)
             except Exception as e:
                 finished(name, seed, error=e)
             else:
@@ -103,8 +109,8 @@ def _sweep(task_name, budget, seeds, outdir, workers):
     else:
         with ProcessPoolExecutor(max_workers=workers, initializer=_init_worker) as pool:
             futures = {
-                pool.submit(_timed_campaign, task_name, name, seed, budget, outdir): (name, seed)
-                for name, seed in todo
+                pool.submit(_timed_campaign, task_name, name, seed, job_budget, outdir): (name, seed)
+                for name, seed, job_budget in todo
             }
             for fut in as_completed(futures):
                 name, seed = futures[fut]
