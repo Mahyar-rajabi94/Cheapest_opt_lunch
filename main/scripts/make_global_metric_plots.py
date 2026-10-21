@@ -15,11 +15,8 @@ mean of the per-seed R equals R_a; methods run with one seed get no band.
 Agents ran on only a few tasks, so their R covers just those tasks (counted in
 the printed table) and they are left off the aggregate curve.
 
-Produces in <results>/ (default results_linux/):
-  global_metric_vs_budget.png  -- R_a(B) vs. evaluations, every baseline
-  global_metric_heatmap.png    -- r_{a,i} per task x method at B=100 and B=2000,
-                                  with R_a as the bottom row
-and prints R_a at those budgets.
+Writes <results>/global_metric_vs_budget.png (default results_linux/), R_a(B)
+vs. evaluations for every baseline, and prints R_a at B = 100 and 2000.
 
 Usage (from main/):
     python scripts/make_global_metric_plots.py
@@ -33,7 +30,7 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.colors import LinearSegmentedColormap, TwoSlopeNorm
+from matplotlib.ticker import FormatStrFormatter, LogLocator, NullLocator
 
 from make_comparison_plots import (
     AGENT_RUNS,
@@ -41,10 +38,8 @@ from make_comparison_plots import (
     GRIDLINE,
     MAIN_ROOT,
     SANDBOX_ROOT,
-    SURFACE,
     TEXT_MUTED,
     TEXT_PRIMARY,
-    TEXT_SECONDARY,
     baseline_display_names,
     baseline_style,
     load_rows,
@@ -54,10 +49,6 @@ from make_comparison_plots import (
 EPS = 1e-12
 BASELINE = "random_search"
 CHECKPOINTS = (100, 2000)
-# Diverging pair from the dataviz palette: blue = beats random, red = worse,
-# neutral gray midpoint at r = 1.
-DIVERGING = LinearSegmentedColormap.from_list("blue_gray_red", ["#2a78d6", "#f0efec", "#e34948"])
-MAX_LOG_RATIO = 6  # color scale clipped at 1e-6 .. 1e6
 
 
 def padded(regret, budget):
@@ -145,78 +136,27 @@ def plot_vs_budget(results_root, rel):
                             alpha=0.12, linewidth=0, zorder=1)
 
     ax.set_yscale("log")
-    ax.set_xlabel("Evaluation budget B", fontsize=10)
-    ax.set_ylabel("R(B): mean over tasks of regret / random-search regret (log scale)", fontsize=10)
+    # Plain decimals: R spans well under a decade, so 10^k labels would be mostly empty.
+    ax.yaxis.set_major_locator(LogLocator(subs=(1, 2, 3, 4, 5, 6, 8)))
+    ax.yaxis.set_major_formatter(FormatStrFormatter("%g"))
+    ax.yaxis.set_minor_locator(NullLocator())
+    ax.set_xlim(1, max(r.shape[1] for t in rel.values() for r in t.values()))
+    ax.set_xlabel("Evaluations", fontsize=10)
+    ax.set_ylabel("Relative regret R", fontsize=10)
     ax.grid(True, which="major", axis="both", color=GRIDLINE, linewidth=1.0, zorder=0)
     ax.set_axisbelow(True)
     for spine in ("top", "right"):
         ax.spines[spine].set_visible(False)
     ax.spines["left"].set_color(AXIS)
     ax.spines["bottom"].set_color(AXIS)
-    ax.set_title(f"Regret relative to random search, averaged over {len(rel)} tasks (lower is better)",
+    ax.set_title(f"Regret relative to random search, mean over {len(rel)} tasks",
                  fontsize=12, color=TEXT_PRIMARY, pad=14, loc="left")
     ax.legend(frameon=False, loc="center left", bbox_to_anchor=(1.01, 0.5), fontsize=9.5,
-              labelcolor=TEXT_PRIMARY, title="Paired hue = same family\n(solid vs. dashed)", title_fontsize=8.5)
-    fig.text(0.0, -0.03,
-             "R = 1: matches random search at the same budget; R = 0: optimal. "
-             "Bands: ±1 std over seed indices (single-seed methods have none). "
-             "Capped methods end at their budget. Tasks: " + ", ".join(rel) + ".",
-             fontsize=8, color=TEXT_MUTED, wrap=True)
-    fig.tight_layout()
-    fig.savefig(results_root / "global_metric_vs_budget.png", bbox_inches="tight")
-    plt.close(fig)
-
-
-def plot_heatmap(results_root, rel):
-    baselines, agents = methods_in(rel)
-    methods = baselines + agents
-    tasks = list(rel)
-    norm = TwoSlopeNorm(vmin=-MAX_LOG_RATIO, vcenter=0, vmax=MAX_LOG_RATIO)
-
-    fig, axes = plt.subplots(1, len(CHECKPOINTS), figsize=(7 * len(CHECKPOINTS), 0.5 * len(tasks) + 3.2),
-                             dpi=150, sharey=True)
-    for ax, b in zip(axes, CHECKPOINTS):
-        grid = np.full((len(tasks) + 1, len(methods)), np.nan)
-        for j, m in enumerate(methods):
-            for i, t in enumerate(tasks):
-                r = rel[t].get(m)
-                if r is not None and r.shape[1] >= b:
-                    grid[i, j] = r[:, b - 1].mean()
-            # R_a only over every task, so a method missing a task gets no mean cell.
-            if not np.isnan(grid[: len(tasks), j]).any():
-                grid[-1, j] = grid[: len(tasks), j].mean()
-
-        log_r = np.log10(np.clip(grid, 10.0**-MAX_LOG_RATIO, 10.0**MAX_LOG_RATIO))
-        ax.imshow(np.ma.masked_invalid(log_r), cmap=DIVERGING, norm=norm, aspect="auto")
-        for i in range(grid.shape[0]):
-            for j in range(grid.shape[1]):
-                v = grid[i, j]
-                text = "--" if np.isnan(v) else f"{v:.2g}"
-                ink = "white" if not np.isnan(v) and abs(log_r[i, j]) > 0.6 * MAX_LOG_RATIO else TEXT_PRIMARY
-                ax.text(j, i, text, ha="center", va="center", fontsize=8,
-                        color=TEXT_MUTED if np.isnan(v) else ink,
-                        fontweight="bold" if i == len(tasks) else "normal")
-
-        ax.axhline(len(tasks) - 0.5, color=SURFACE, linewidth=4)
-        ax.set_xticks(range(len(methods)))
-        ax.set_xticklabels([baseline_display_names.get(m, m) for m in methods], rotation=45,
-                           ha="right", fontsize=9, color=TEXT_PRIMARY)
-        ax.set_yticks(range(len(tasks) + 1))
-        ax.set_yticklabels(tasks + ["R (mean over tasks)"], fontsize=9, color=TEXT_PRIMARY)
-        ax.tick_params(length=0)
-        for spine in ax.spines.values():
-            spine.set_visible(False)
-        ax.set_title(f"Budget B = {b}", fontsize=11, color=TEXT_SECONDARY, loc="left")
-
-    fig.suptitle("Regret relative to random search, r = regret / random-search regret (lower is better)",
-                 fontsize=12, color=TEXT_PRIMARY, x=0.01, ha="left")
-    fig.text(0.01, -0.02,
-             "Blue: beats random search; gray: r = 1; red: worse. Color is log-scaled, clipped at "
-             f"1e±{MAX_LOG_RATIO}. Cells: mean over seeds. '--': not run at that budget or on that task "
-             "(capped baselines stop at 100; agents ran on a subset of tasks).",
+              labelcolor=TEXT_PRIMARY)
+    fig.text(0.0, -0.02, "Lower is better: 1 = random search, 0 = optimal. Bands: ±1 std over seeds.",
              fontsize=8, color=TEXT_MUTED)
     fig.tight_layout()
-    fig.savefig(results_root / "global_metric_heatmap.png", bbox_inches="tight")
+    fig.savefig(results_root / "global_metric_vs_budget.png", bbox_inches="tight")
     plt.close(fig)
 
 
@@ -228,7 +168,6 @@ def main():
     rel = relative_regrets(results_root)
     print_table(rel)
     plot_vs_budget(results_root, rel)
-    plot_heatmap(results_root, rel)
 
 
 if __name__ == "__main__":
