@@ -42,28 +42,10 @@ from src.optimizers.nelder_mead import NelderMead
 from src.optimizers.random_search import RandomSearch
 from src.optimizers.sobol_search import SobolSearch
 from src.optimizers.turbo import TuRBO
-from src.tasks.bent_cigar import BentCigarTask
-from src.tasks.rastrigin import RastriginTask
-from src.tasks.rosenbrock import RosenbrockTask
-from src.tasks.sharp_ridge import SharpRidgeTask
-from src.tasks.sphere import SphereTask
-from src.tasks.step_ellipsoid import StepEllipsoidTask
-from src.tasks.weierstrass import WeierstrassTask
+from src.tasks.registry import TASKS
 
-# Registries: add a new task or optimizer here; nothing else in this file
-# needs to change.
-TASKS = {
-    "rosenbrock10": lambda: RosenbrockTask(dim=10, instance=1, rotated=False),
-    "rastrigin10": lambda: RastriginTask(dim=10, instance=1),
-    "bent_cigar10": lambda: BentCigarTask(dim=10, instance=1),
-    "sphere10": lambda: SphereTask(dim=10, instance=1),
-    "rosenbrock20": lambda: RosenbrockTask(dim=20, instance=1, rotated=False),
-    "rosenbrock40": lambda: RosenbrockTask(dim=40, instance=1, rotated=False),
-    "step_ellipsoid10": lambda: StepEllipsoidTask(dim=10, instance=1),
-    "sharp_ridge10": lambda: SharpRidgeTask(dim=10, instance=1),
-    "weierstrass10": lambda: WeierstrassTask(dim=10, instance=1),
-}
-
+# Optimizer registry: add a new optimizer here; nothing else in this file
+# needs to change. Tasks are registered in src/tasks/registry.py.
 OPTIMIZERS = {
     "random_search": RandomSearch,
     "sobol": SobolSearch,
