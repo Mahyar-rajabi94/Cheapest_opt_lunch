@@ -28,6 +28,23 @@ black-box function actually is, which would invalidate the entire blind
 test. The sandbox is a separate copy containing only the optimizer
 library and the task harness — nothing that reveals what it's solving.
 
+## Task code → true identity
+
+The blind-test sandboxes (and everything handed to an agent) refer to
+tasks only by code — `task_001`, `task_002`, etc. This mapping is exactly
+what must never leak into a sandbox or an agent's briefing; it exists only
+here, for the human reading results from `main/`.
+
+| Task code  | Function (BBOB id)     | dim | True optimum (`f_opt`) |
+|------------|-------------------------|-----|-------------------------|
+| `task_001` | Rosenbrock (f8)         | 10  | 149.15                  |
+| `task_002` | Rastrigin (f15)         | 10  | 1000.0                  |
+| `task_003` | Bent Cigar (f12)        | 10  | -621.11                 |
+| `task_004` | Sphere (f1)             | 10  | 79.48                   |
+
+All four use BBOB instance 1. `f_opt` values are specific to that instance
+(a different instance would shift them).
+
 ## Before running an agent on `task_001_sandbox/`, two things matter more than anything else
 
 1. **Start a brand-new conversation, not a continuation of any chat that
