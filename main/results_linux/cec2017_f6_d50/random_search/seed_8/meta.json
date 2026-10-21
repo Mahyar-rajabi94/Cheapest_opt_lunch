@@ -1,0 +1,18 @@
+{
+  "task_name": "cec2017_f6_d50",
+  "task_dim": 50,
+  "task_direction": "min",
+  "task_f_opt": 600.0,
+  "optimizer_name": "random_search",
+  "optimizer_class": "src.optimizers.random_search.RandomSearch",
+  "seed": 8,
+  "requested_budget": 2000,
+  "evaluations_used": 2000,
+  "stopped_early": false,
+  "stop_reason": null,
+  "start_time_utc": "2026-10-21T17:59:30.762547+00:00",
+  "end_time_utc": "2026-10-21T17:59:30.850449+00:00",
+  "total_wall_seconds": 0.08794409199617803,
+  "numpy_version": "2.4.6",
+  "scipy_version": "1.17.1"
+}
