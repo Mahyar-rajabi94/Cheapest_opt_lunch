@@ -83,7 +83,7 @@ Tasks that each add a distinct behavior: `step_ellipsoid10` and `noncont_rastrig
 
 ## Superseded Versions
 
-Their results stay in `results_linux/`; `make_global_metric_plots.py` leaves them out (`SUPERSEDED`).
+Their baseline results were deleted from `results_linux/`; they remain in git history (last present in commit `3b1005a`).
 
 | Folder | Why replaced |
 | --- | --- |

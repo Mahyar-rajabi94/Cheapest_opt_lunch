@@ -19,7 +19,6 @@ search). A task where random search never finds a feasible point has no
 denominator and is left out of R (named in the output). Until every remaining
 task has a feasible random-search point, R(B) is undefined and not drawn.
 Noisy tasks use the observed best (y_best_so_far), as the per-task plots do.
-Results of superseded task versions (SUPERSEDED) stay on disk but are left out.
 
 Agents ran on only a few tasks, so their R covers just those tasks (counted in
 the printed table) and they are left off the aggregate curve.
@@ -59,14 +58,6 @@ from make_comparison_plots import (
 EPS = 1e-12
 BASELINE = "random_search"
 CHECKPOINTS = (100, 2000)
-# Old task versions that separated no methods (see TASKS.md): Schaffer on CEC's
-# [-100, 100] box, nevergrad noise level 10 with x* near the box center.
-SUPERSEDED = {
-    "cec2017_f6_d30",
-    "cec2017_f6_d50",
-    "nevergrad_noisy_rosenbrock_d20",
-    "nevergrad_noisy_cigar_d20",
-}
 
 
 def padded(regret, budget):
@@ -98,7 +89,7 @@ def load_task_regrets(task_dir: Path):
 def relative_regrets(results_root: Path):
     """(task -> method -> (n_seeds, budget) array of r_{a,i,s}(B), tasks left out)."""
     rel, skipped = {}, []
-    for task_dir in sorted(p for p in results_root.iterdir() if (p / BASELINE).is_dir() and p.name not in SUPERSEDED):
+    for task_dir in sorted(p for p in results_root.iterdir() if (p / BASELINE).is_dir()):
         regrets = load_task_regrets(task_dir)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", RuntimeWarning)  # all-NaN column: no feasible seed yet
