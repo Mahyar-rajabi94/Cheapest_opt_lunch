@@ -14,7 +14,7 @@ A task exists in two forms:
 | Used by | `scripts/run_campaign.py` (fixed-optimizer baselines) | LLM agent in a sandbox |
 | Knows `f_opt` | Yes (offline regret only) | No |
 | Budget | Capped by the campaign loop | Enforced in code (`BudgetExhausted`) |
-| `evaluate(x)` returns | `(y, elapsed_seconds)` | `y` |
+| `evaluate(x)` returns | `Evaluation(y, g, elapsed)` | `y` |
 
 The blind harness must not import from `src/tasks/`, so a sandbox can ship without that folder. Shared code lives in `src/tasks/base.py` (`Task`) and `src/agent_harness/harness.py` (`BlackBoxHarness`); a new task adds only its objective.
 
@@ -30,7 +30,9 @@ Add one entry to `TASKS` in `src/tasks/registry.py`. Any noiseless BBOB function
 
 Non-BBOB families exist: `CEC2017Task` (`src/tasks/cec2017.py`, F5/F6/F8) is `CEC2017Task(<function_id>, dim=<n>)`. It needs `opfunu==1.0.1` (official shifts/rotations only) and `setuptools<81` (opfunu imports `pkg_resources`); install both into `.venv` by hand, they are not in `requirements.txt` because sandboxes do not need them.
 
-A new non-BBOB function subclasses `Task` (`src/tasks/base.py`) in a new `src/tasks/<family>.py`: set `name`, `dim`, `bounds` (`np.ndarray`, shape `(dim, 2)`), `f_opt`, and implement `_f(x)`. `Task.evaluate(x)` adds timing and returns `(y, elapsed_seconds)`. Minimize only (negate a maximization inside `_f`). `f_opt` is for offline regret only; if no exact optimum is known, use a best-known reference value and document it as such.
+Constrained families: `PymooGTask("g4" | "g7")` (`src/tasks/pymoo_g.py`, needs `pymoo==0.6.1.6`) and `COCOConstrainedTask(<function_id>, dim=<n>)` (`src/tasks/coco_constrained.py`, COCO `bbob-constrained`, needs `coco-experiment==2.8.2`, import name `cocoex`). Install both into `.venv` by hand; they are not in `requirements.txt`. A constrained task sets `n_constraints` and implements `_g(x)`, the inequality vector, feasible iff all `g <= 0`. `Evaluation.violation` is `sum(max(g, 0))` and `feasible` is `violation <= 1e-10`. `run_campaign.py` gives optimizers the merit `y` if feasible, else `1e12 + 1e6 * violation + tanh(y)`, and adds `merit`, `violation`, `feasible` columns to `trace.csv`; `y_best_so_far` is the best feasible `y` (blank until the first feasible point) and `meta.json` gains `task_n_constraints`. `f_opt` is the constrained optimum. Plots skip seeds with no feasible point yet and label how many found one.
+
+A new non-BBOB function subclasses `Task` (`src/tasks/base.py`) in a new `src/tasks/<family>.py`: set `name`, `dim`, `bounds` (`np.ndarray`, shape `(dim, 2)`), `f_opt`, and implement `_f(x)`. `Task.evaluate(x)` adds timing and returns an `Evaluation` with `y`, `g` (constraint values, empty if unconstrained) and `elapsed`. Minimize only (negate a maximization inside `_f`). `f_opt` is for offline regret only; if no exact optimum is known, use a best-known reference value and document it as such.
 
 ## 2. Smoke Test
 
