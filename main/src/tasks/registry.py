@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from src.tasks.bbob import BBOBTask
 from src.tasks.cec2017 import CEC2017Task
+from src.tasks.coco_constrained import COCOConstrainedTask
+from src.tasks.pymoo_g import PymooGTask
 
 TASKS = {
     # f8: ill-conditioned, axis-aligned curved valley; unimodal.
@@ -33,4 +35,14 @@ TASKS = {
     "cec_rastrigin30": lambda: CEC2017Task(5, dim=30),
     # CEC-2017 F8 (S05): Rastrigin with rounded steps; plateaus on top of multimodality.
     "noncont_rastrigin30": lambda: CEC2017Task(8, dim=30),
+    # G04 (C04): 5 variables, quadratic objective, 6 nonlinear constraints, 2 active at the optimum.
+    "pymoo_g04": lambda: PymooGTask("g4"),
+    # G07 (C05): 10 variables, quadratic objective, 8 constraints, 6 active at the optimum.
+    "pymoo_g07": lambda: PymooGTask("g7"),
+    # bbob-constrained f20 (C01): rotated ellipsoid, 3 linear constraints, ill-conditioned.
+    "constrained_ellipsoid10": lambda: COCOConstrainedTask(20, dim=10),
+    # bbob-constrained f38 (C02): different powers, 3 linear constraints; flat near the optimum.
+    "constrained_diffpowers10": lambda: COCOConstrainedTask(38, dim=10),
+    # bbob-constrained f44 (C03): Rastrigin, 3 linear constraints; multimodal.
+    "constrained_rastrigin10": lambda: COCOConstrainedTask(44, dim=10),
 }
