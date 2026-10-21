@@ -76,7 +76,7 @@ class GPBO:
         x_best, y_best = opt.best()
     """
 
-    def __init__(self, bounds, seed: Optional[int] = None):
+    def __init__(self, bounds, seed: Optional[int] = None, init_X=None, init_y=None):
         self.bounds = np.asarray(bounds, dtype=float)
         if self.bounds.ndim != 2 or self.bounds.shape[1] != 2:
             raise ValueError(
@@ -96,6 +96,17 @@ class GPBO:
         self.X_ = np.empty((0, self.dim))
         self.y_ = np.empty((0,))
 
+        # Warm start: already-evaluated points (e.g. from the agent's
+        # archive) are used as GP training data and count toward the
+        # initial design, so no evaluations are spent re-sampling. They are
+        # kept separate from X_/y_ so best()/history only reflect points this
+        # optimizer proposed itself.
+        self._prior_X = np.empty((0, self.dim))
+        self._prior_y = np.empty((0,))
+        if init_X is not None:
+            self._prior_X = np.atleast_2d(np.asarray(init_X, float))
+            self._prior_y = np.atleast_1d(np.asarray(init_y, float))
+
     def ask(self, n: int = 1) -> np.ndarray:
         """Propose 1 new candidate point, shape (1, dim)."""
         if n != 1:
@@ -104,11 +115,14 @@ class GPBO:
                 "batch BO would need a q>1 acquisition function (e.g. q-LogNEI)."
             )
 
-        if len(self.y_) < self.n_init:
+        X_all = np.vstack([self._prior_X, self.X_])
+        y_all = np.concatenate([self._prior_y, self.y_])
+
+        if len(y_all) < self.n_init:
             return self._sobol.ask(n=1)
 
-        X_t = torch.tensor(self.X_, dtype=torch.double)
-        Y_t = torch.tensor(self.y_, dtype=torch.double).unsqueeze(-1)
+        X_t = torch.tensor(X_all, dtype=torch.double)
+        Y_t = torch.tensor(y_all, dtype=torch.double).unsqueeze(-1)
 
         model = SingleTaskGP(
             X_t,
@@ -119,7 +133,7 @@ class GPBO:
         mll = ExactMarginalLogLikelihood(model.likelihood, model)
         fit_gpytorch_mll(mll)
 
-        best_f = float(self.y_.min())
+        best_f = float(y_all.min())
         acqf = LogExpectedImprovement(model=model, best_f=best_f, maximize=False)
 
         candidate, _ = optimize_acqf(
@@ -144,3 +158,14 @@ class GPBO:
             raise RuntimeError("No evaluations recorded yet; call tell() first.")
         i = np.argmin(self.y_)
         return self.X_[i], self.y_[i]
+
+    def state(self) -> dict:
+        """Internal state for the agent's StateReport."""
+        return {
+            "n_told": int(len(self.y_)),
+            "n_train": int(len(self.y_) + len(self._prior_y)),
+            "exhausted": False,
+        }
+
+    def close(self) -> None:
+        pass

@@ -67,7 +67,7 @@ class DifferentialEvolution:
         x_best, y_best = opt.best()
     """
 
-    def __init__(self, bounds, seed: Optional[int] = None):
+    def __init__(self, bounds, seed: Optional[int] = None, init_population=None):
         self.bounds = np.asarray(bounds, dtype=float)
         if self.bounds.ndim != 2 or self.bounds.shape[1] != 2:
             raise ValueError(
@@ -85,6 +85,15 @@ class DifferentialEvolution:
         self._population = self.rng.uniform(
             lower, upper, size=(self.pop_size, self.dim)
         )
+        # Warm start: the agent can seed the initial population with good
+        # archive points (agent/warmstart.py). Rows beyond pop_size are
+        # ignored; missing rows stay uniform random. These seeded points are
+        # re-evaluated in the first generation (DE needs their fitness in its
+        # own bookkeeping), which costs len(init_population) evaluations.
+        if init_population is not None:
+            P = np.clip(np.atleast_2d(np.asarray(init_population, float)), lower, upper)
+            k = min(len(P), self.pop_size)
+            self._population[:k] = P[:k]
         self._pop_fitness = np.full(self.pop_size, np.nan)
 
         self._phase = "init"  # "init" (first generation) or "evolve"
@@ -159,3 +168,19 @@ class DifferentialEvolution:
             raise RuntimeError("No evaluations recorded yet; call tell() first.")
         i = np.argmin(self.y_)
         return self.X_[i], self.y_[i]
+
+    def state(self) -> dict:
+        """Internal state for the agent's StateReport."""
+        fit = self._pop_fitness[~np.isnan(self._pop_fitness)]
+        spread = float(np.mean(np.std(self._population, axis=0)))
+        return {
+            "n_told": int(len(self.y_)),
+            "phase": self._phase,
+            "pop_size": int(self.pop_size),
+            "pop_fitness_spread": float(fit.max() - fit.min()) if len(fit) else None,
+            "pop_x_spread": spread,
+            "exhausted": False,
+        }
+
+    def close(self) -> None:
+        pass

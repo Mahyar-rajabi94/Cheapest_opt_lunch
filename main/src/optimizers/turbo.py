@@ -84,7 +84,14 @@ class TuRBO:
         x_best, y_best = opt.best()
     """
 
-    def __init__(self, bounds, seed: Optional[int] = None):
+    def __init__(
+        self,
+        bounds,
+        seed: Optional[int] = None,
+        init_X=None,
+        init_y=None,
+        length_init: Optional[float] = None,
+    ):
         self.bounds = np.asarray(bounds, dtype=float)
         if self.bounds.ndim != 2 or self.bounds.shape[1] != 2:
             raise ValueError(
@@ -116,6 +123,22 @@ class TuRBO:
 
         self.X_ = np.empty((0, self.dim))
         self.y_ = np.empty((0,))
+
+        # Warm start (agent/warmstart.py): seed the *first* trust region with
+        # already-evaluated points instead of a fresh random design, so it
+        # starts centered on the incumbent and skips the init phase when
+        # enough points are given. length_init sets that first region's side
+        # length (unit cube); later restarts use the standard 0.8.
+        if length_init is not None:
+            self._length = float(np.clip(length_init, self._length_min, self._length_max))
+        if init_X is not None:
+            X0 = np.atleast_2d(np.asarray(init_X, float))
+            y0 = np.atleast_1d(np.asarray(init_y, float))
+            self._local_X_unit = np.vstack([self._to_unit(x) for x in X0])
+            self._local_y = y0.copy()
+            if len(self._local_y) >= self.n_init:
+                self._local_best_y = float(self._local_y.min())
+                self._phase = "evolve"
 
     def _to_unit(self, x_raw):
         return (x_raw - self._lower) / (self._upper - self._lower)
@@ -263,3 +286,15 @@ class TuRBO:
             raise RuntimeError("No evaluations recorded yet; call tell() first.")
         i = np.argmin(self.y_)
         return self.X_[i], self.y_[i]
+
+    def state(self) -> dict:
+        """Internal state for the agent's StateReport."""
+        return {
+            "n_told": int(len(self.y_)),
+            "tr_length": float(self._length),
+            "phase": self._phase,
+            "exhausted": False,
+        }
+
+    def close(self) -> None:
+        pass

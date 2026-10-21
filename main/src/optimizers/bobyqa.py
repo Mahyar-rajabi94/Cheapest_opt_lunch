@@ -33,28 +33,20 @@ Standard, no-tuning defaults:
   value for that case (0.1) instead of a hand-picked one.
 - Final trust-region radius (`rhoend`) is left at the library's own
   default (1e-8). The maximum number of function evaluations (`maxfun`)
-  is set to an effectively unreachable value (10**9), since its own
-  default (min(100*(dim+1), 1000)) would otherwise cut the search off
-  early -- this project's external budget (how many times `ask`/`tell`
-  are called) is what controls how long the search runs, exactly as for
-  every other optimizer here.
+  defaults to 20,000 (overridable), since the library's own default
+  (min(100*(dim+1), 1000)) would cut the search off early -- this
+  project's external budget (how many times `ask`/`tell` are called) is
+  what controls how long the search runs, exactly as for every other
+  optimizer here.
 
-KNOWN LIMITATION (investigated, not fixed): driven through this
-thread+queue wrapper, BOBYQA reliably works up to a few hundred
-evaluations (tested cleanly to budget=500) but becomes impractically slow
-somewhere in the next few hundred (observed stalling between roughly 400
-and 2000, depending on exact settings). This was tracked down to a
-thread-scheduling interaction specific to this library, not the objective
-function or any of rhoend/scaling_within_bounds/BLAS-thread settings:
-driven synchronously (no thread), the same solver with the same settings
-runs to completion in seconds; the same code through this wrapper shows
-high *system* (not *user*) CPU time and visibly slows down a few dozen
-evaluations in, and this reproduces even with a trivial pure-numpy
-objective with no other part of this project involved. A real fix would
-likely mean running the solver in a separate process instead of a thread
-(no shared GIL/scheduler), which is a larger change than this module
-currently makes. Until then, treat budget=500 as this optimizer's tested
-practical ceiling here, not an arbitrary choice.
+RESOLVED (2026-10-21): this wrapper used to pass maxfun=10**9, and Py-BOBYQA
+allocates Python lists of length maxfun (e.g. `[False]*maxfun` for its
+restart bookkeeping) -- about 8 GB before the first evaluation. That caused
+the previously documented "impractically slow past ~500 evaluations" (high
+*system* CPU time = memory paging), and an out-of-memory kill on smaller
+machines. With maxfun=20,000 the wrapper runs 1,500+ evaluations on 10-D
+Rosenbrock in ~10 s using ~130 MB, so the old 500-evaluation ceiling no
+longer applies.
 
 By convention, this optimizer MINIMIZES the objective (matching the rest
 of this package).
@@ -70,6 +62,13 @@ import numpy as np
 import pybobyqa
 
 from src.optimizers import OptimizerExhausted
+
+
+class _StopSolver(Exception):
+    """Raised inside the solver thread to make it return early (close())."""
+
+
+_STOP = object()
 
 
 class BOBYQA:
@@ -97,7 +96,7 @@ class BOBYQA:
         x_best, y_best = opt.best()
     """
 
-    def __init__(self, bounds, seed: Optional[int] = None):
+    def __init__(self, bounds, seed: Optional[int] = None, x0=None, maxfun: int = 20_000, **solver_kwargs):
         self.bounds = np.asarray(bounds, dtype=float)
         if self.bounds.ndim != 2 or self.bounds.shape[1] != 2:
             raise ValueError(
@@ -106,7 +105,13 @@ class BOBYQA:
         self.dim = self.bounds.shape[0]
 
         lower, upper = self.bounds[:, 0], self.bounds[:, 1]
-        self.x0 = (lower + upper) / 2
+        # Default start: box midpoint (original behavior). The agent passes
+        # x0 = archive incumbent to warm-start instead (agent/warmstart.py).
+        if x0 is None:
+            self.x0 = (lower + upper) / 2
+        else:
+            self.x0 = np.clip(np.asarray(x0, dtype=float), lower, upper)
+        self._exhausted = False
 
         self._ask_q: "queue.Queue" = queue.Queue()
         self._tell_q: "queue.Queue" = queue.Queue()
@@ -114,19 +119,32 @@ class BOBYQA:
 
         def objective(x):
             self._ask_q.put(np.array(x, dtype=float))
-            return self._tell_q.get()
+            v = self._tell_q.get()
+            if v is _STOP:
+                raise _StopSolver()
+            return v
 
         def run_solver():
-            res = pybobyqa.solve(
-                objective,
-                self.x0,
-                bounds=(lower, upper),
-                scaling_within_bounds=True,
-                maxfun=10**9,
-                do_logging=False,
-            )
-            self.result = res
-            self._ask_q.put(None)  # sentinel: the solver thread has returned
+            try:
+                self.result = pybobyqa.solve(
+                    objective,
+                    self.x0,
+                    bounds=(lower, upper),
+                    scaling_within_bounds=True,
+                    # NOT 10**9: Py-BOBYQA allocates per-maxfun Python lists
+                    # (e.g. restarts' [False]*maxfun), so a huge maxfun costs
+                    # ~8 GB of RAM before the first evaluation. The caller
+                    # (campaign runner / agent controller) enforces the real
+                    # budget anyway; this is only an upper bound.
+                    maxfun=maxfun,
+                    do_logging=False,
+                    **solver_kwargs,
+                )
+            except _StopSolver:
+                pass  # close() was called: the agent abandoned this solver
+            finally:
+                self._exhausted = True
+                self._ask_q.put(None)  # sentinel: the solver thread has returned
 
         self._thread = threading.Thread(target=run_solver, daemon=True)
         self._thread.start()
@@ -143,6 +161,7 @@ class BOBYQA:
             )
         x = self._ask_q.get()
         if x is None:
+            self._exhausted = True
             raise OptimizerExhausted(
                 "BOBYQA's solver thread has already returned (converged, or "
                 "hit a numerical stopping condition) and will not propose "
@@ -164,3 +183,18 @@ class BOBYQA:
             raise RuntimeError("No evaluations recorded yet; call tell() first.")
         i = np.argmin(self.y_)
         return self.X_[i], self.y_[i]
+
+    def state(self) -> dict:
+        """Internal state for the agent's StateReport."""
+        return {
+            "n_told": int(len(self.y_)),
+            "exhausted": self._exhausted,
+        }
+
+    def close(self) -> None:
+        """Stop the background solver thread (safe to call more than once).
+        Used when the agent abandons this optimizer mid-run, so idle solver
+        threads don't pile up."""
+        if not self._exhausted and self._thread.is_alive():
+            self._tell_q.put(_STOP)
+        self._exhausted = True

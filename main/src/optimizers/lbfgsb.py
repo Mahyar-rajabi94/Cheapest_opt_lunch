@@ -49,6 +49,13 @@ from scipy.optimize import minimize
 from src.optimizers import OptimizerExhausted
 
 
+class _StopSolver(Exception):
+    """Raised inside the solver thread to make it return early (close())."""
+
+
+_STOP = object()
+
+
 class LBFGSB:
     """L-BFGS-B, driven one point at a time via a background solver thread.
 
@@ -75,7 +82,7 @@ class LBFGSB:
         x_best, y_best = opt.best()
     """
 
-    def __init__(self, bounds, seed: Optional[int] = None):
+    def __init__(self, bounds, seed: Optional[int] = None, x0=None, **solver_kwargs):
         self.bounds = np.asarray(bounds, dtype=float)
         if self.bounds.ndim != 2 or self.bounds.shape[1] != 2:
             raise ValueError(
@@ -84,7 +91,13 @@ class LBFGSB:
         self.dim = self.bounds.shape[0]
 
         lower, upper = self.bounds[:, 0], self.bounds[:, 1]
-        self.x0 = (lower + upper) / 2
+        # Default start: box midpoint (original behavior). The agent passes
+        # x0 = archive incumbent to warm-start instead (agent/warmstart.py).
+        if x0 is None:
+            self.x0 = (lower + upper) / 2
+        else:
+            self.x0 = np.clip(np.asarray(x0, dtype=float), lower, upper)
+        self._exhausted = False
 
         self._ask_q: "queue.Queue" = queue.Queue()
         self._tell_q: "queue.Queue" = queue.Queue()
@@ -92,18 +105,25 @@ class LBFGSB:
 
         def objective(x):
             self._ask_q.put(np.array(x, dtype=float))
-            return self._tell_q.get()
+            v = self._tell_q.get()
+            if v is _STOP:
+                raise _StopSolver()
+            return v
 
         def run_solver():
-            res = minimize(
-                objective,
-                self.x0,
-                method="L-BFGS-B",
-                bounds=[tuple(b) for b in self.bounds],
-                options={"maxfun": 10**9, "maxiter": 10**9},
-            )
-            self.result = res
-            self._ask_q.put(None)  # sentinel: the solver thread has returned
+            try:
+                self.result = minimize(
+                    objective,
+                    self.x0,
+                    method="L-BFGS-B",
+                    bounds=[tuple(b) for b in self.bounds],
+                    options={"maxfun": 10**9, "maxiter": 10**9, **solver_kwargs},
+                )
+            except _StopSolver:
+                pass  # close() was called: the agent abandoned this solver
+            finally:
+                self._exhausted = True
+                self._ask_q.put(None)  # sentinel: the solver thread has returned
 
         self._thread = threading.Thread(target=run_solver, daemon=True)
         self._thread.start()
@@ -120,6 +140,7 @@ class LBFGSB:
             )
         x = self._ask_q.get()
         if x is None:
+            self._exhausted = True
             raise OptimizerExhausted(
                 "L-BFGS-B has already converged (or stopped) and will not "
                 f"propose further points. Final result: {self.result}"
@@ -140,3 +161,18 @@ class LBFGSB:
             raise RuntimeError("No evaluations recorded yet; call tell() first.")
         i = np.argmin(self.y_)
         return self.X_[i], self.y_[i]
+
+    def state(self) -> dict:
+        """Internal state for the agent's StateReport."""
+        return {
+            "n_told": int(len(self.y_)),
+            "exhausted": self._exhausted,
+        }
+
+    def close(self) -> None:
+        """Stop the background solver thread (safe to call more than once).
+        Used when the agent abandons this optimizer mid-run, so idle solver
+        threads don't pile up."""
+        if not self._exhausted and self._thread.is_alive():
+            self._tell_q.put(_STOP)
+        self._exhausted = True

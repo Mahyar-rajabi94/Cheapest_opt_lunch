@@ -83,3 +83,10 @@ class SobolSearch:
             raise RuntimeError("No evaluations recorded yet; call tell() first.")
         i = np.argmin(self.y_)
         return self.X_[i], self.y_[i]
+
+    def state(self) -> dict:
+        """Internal state for the agent's StateReport."""
+        return {"n_told": int(len(self.y_)), "exhausted": False}
+
+    def close(self) -> None:
+        pass

@@ -64,7 +64,14 @@ class CMAES:
         x_best, y_best = opt.best()  # best point found so far
     """
 
-    def __init__(self, bounds, seed: Optional[int] = None):
+    def __init__(
+        self,
+        bounds,
+        seed: Optional[int] = None,
+        x0=None,
+        sigma0: Optional[float] = None,
+        popsize: Optional[int] = None,
+    ):
         self.bounds = np.asarray(bounds, dtype=float)
         if self.bounds.ndim != 2 or self.bounds.shape[1] != 2:
             raise ValueError(
@@ -73,8 +80,14 @@ class CMAES:
         self.dim = self.bounds.shape[0]
 
         lower, upper = self.bounds[:, 0], self.bounds[:, 1]
-        x0 = (lower + upper) / 2
-        sigma0 = float(np.mean(upper - lower)) / 4.0
+        # Defaults (original behavior): box midpoint, quarter box width.
+        # The agent warm-starts with x0 = incumbent and sigma0 from the
+        # archive's local scale (agent/warmstart.py); popsize is raised for
+        # IPOP-style restarts.
+        x0 = (lower + upper) / 2 if x0 is None else np.clip(np.asarray(x0, float), lower, upper)
+        if sigma0 is None:
+            sigma0 = float(np.mean(upper - lower)) / 4.0
+        sigma0 = float(sigma0)
 
         opts = {
             "bounds": [lower.tolist(), upper.tolist()],
@@ -82,6 +95,8 @@ class CMAES:
         }
         if seed is not None:
             opts["seed"] = seed
+        if popsize is not None:
+            opts["popsize"] = int(popsize)
 
         self._es = cma.CMAEvolutionStrategy(x0, sigma0, opts)
 
@@ -128,3 +143,19 @@ class CMAES:
             raise RuntimeError("No evaluations recorded yet; call tell() first.")
         i = np.argmin(self.y_)
         return self.X_[i], self.y_[i]
+
+    def state(self) -> dict:
+        """Internal state for the agent's StateReport."""
+        stop = {k: v for k, v in self._es.stop().items() if k != "callback"}
+        return {
+            "n_told": int(len(self.y_)),
+            "sigma": float(self._es.sigma),
+            "popsize": int(self._es.popsize),
+            "generation": int(self._es.countiter),
+            "converged": bool(stop),
+            "stop_reasons": sorted(stop),
+            "exhausted": False,
+        }
+
+    def close(self) -> None:
+        pass
