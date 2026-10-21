@@ -40,8 +40,9 @@ METHODS = {
     "nelder_mead": ("Nelder-Mead", "#6c55d6", "-"),
     "lbfgsb": ("L-BFGS-B", "#e0504f", "-"),
     "probes": ("Probes", "#9a9a9a", "-"),
+    "race": ("Race", "#7f8fa6", "-"),
 }
-AGENT_COLORS = ["#111111", "#1f6fd6", "#f06a35", "#b8009a"]
+AGENT_COLORS = ["#111111", "#b8009a", "#00a3c4", "#1f6fd6", "#f06a35"]
 REGRET_FLOOR = 1e-12
 
 
@@ -49,6 +50,8 @@ def canon(name: str) -> str:
     """Map optimizer labels from v1/v2 traces to METHODS keys."""
     if name.startswith("probe"):
         return "probes"
+    if name.startswith("race"):  # race candidates interleave; show the race as one block
+        return "race"
     name = name.removesuffix("_local")
     return {"sobol_search": "sobol", "differential_evolution": "de"}.get(name, name)
 

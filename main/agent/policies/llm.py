@@ -11,6 +11,10 @@ Providers (switch with --provider):
     anthropic  ANTHROPIC_API_KEY, model from --model / $AGENT_ANTHROPIC_MODEL
     openai     OPENAI_API_KEY,    model from --model / $AGENT_OPENAI_MODEL
 
+If VP_API_KEY is set, both providers go through the Vector AI Gateway
+(https://proxy.vectorinstitute.ai) with that key instead of the provider keys.
+The gateway reaches every model with either request format.
+
 Every request/response is kept in a transcript (llm_transcript.jsonl in the
 run folder) so runs can be audited and replayed.
 """
@@ -35,6 +39,8 @@ DEFAULT_MODELS = {
     "openai": os.environ.get("AGENT_OPENAI_MODEL", "gpt-5"),
 }
 
+GATEWAY_URL = os.environ.get("VP_BASE_URL", "https://proxy.vectorinstitute.ai")
+
 TOOL_NAME = "take_action"
 TOOL_DESC = ("Submit exactly one Action for the next round of the optimization run. "
              "Fill `rationale` with 1-3 sentences citing numbers from the StateReport.")
@@ -44,7 +50,11 @@ TOOL_DESC = ("Submit exactly one Action for the next round of the optimization r
 class AnthropicProvider:
     def __init__(self, model: str, max_tokens: int = 1024):
         import anthropic
-        self.client = anthropic.Anthropic()
+        key = os.environ.get("VP_API_KEY")
+        # The gateway reads only the Bearer header (auth_token, not api_key),
+        # and the SDK appends /v1 itself.
+        self.client = (anthropic.Anthropic(auth_token=key, base_url=GATEWAY_URL)
+                       if key else anthropic.Anthropic())
         self.model = model
         self.max_tokens = max_tokens
 
@@ -78,9 +88,13 @@ class AnthropicProvider:
 
 
 class OpenAIProvider:
-    def __init__(self, model: str, max_tokens: int = 1024):
+    # Reasoning models (gpt-5) count hidden reasoning tokens against
+    # max_completion_tokens; 1024 ran out before the tool call was emitted.
+    def __init__(self, model: str, max_tokens: int = 16000):
         import openai
-        self.client = openai.OpenAI()
+        key = os.environ.get("VP_API_KEY")
+        self.client = (openai.OpenAI(api_key=key, base_url=f"{GATEWAY_URL}/v1")
+                       if key else openai.OpenAI())
         self.model = model
         self.max_tokens = max_tokens
 
