@@ -1,0 +1,18 @@
+{
+  "task_name": "cec2017_f6_d30_b5",
+  "task_dim": 30,
+  "task_direction": "min",
+  "task_f_opt": 600.0,
+  "optimizer_name": "turbo",
+  "optimizer_class": "src.optimizers.turbo.TuRBO",
+  "seed": 7,
+  "requested_budget": 100,
+  "evaluations_used": 100,
+  "stopped_early": false,
+  "stop_reason": null,
+  "start_time_utc": "2026-10-21T19:27:02.482262+00:00",
+  "end_time_utc": "2026-10-21T19:27:13.750695+00:00",
+  "total_wall_seconds": 11.26846714806743,
+  "numpy_version": "2.4.6",
+  "scipy_version": "1.17.1"
+}
