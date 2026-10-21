@@ -97,6 +97,8 @@ class BOBYQA:
         x_best, y_best = opt.best()
     """
 
+    deterministic = True  # seed is unused; one seed is enough in sweeps
+
     def __init__(self, bounds, seed: Optional[int] = None):
         self.bounds = np.asarray(bounds, dtype=float)
         if self.bounds.ndim != 2 or self.bounds.shape[1] != 2:
