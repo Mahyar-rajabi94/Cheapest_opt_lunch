@@ -15,6 +15,21 @@ import numpy as np
 from src.tasks.base import Task
 
 
+def coco_x_star(problem) -> np.ndarray:
+    """The optimum x* COCO writes out for a problem instance."""
+    # Private API: the only way to get x*. It writes a file into the CWD,
+    # so run it in a temporary directory.
+    cwd = os.getcwd()
+    with tempfile.TemporaryDirectory() as tmp:
+        os.chdir(tmp)
+        try:
+            problem._best_parameter("print")
+            with open("._bbob_problem_best_parameter.txt") as f:
+                return np.array(f.read().split(), dtype=float)
+        finally:
+            os.chdir(cwd)
+
+
 class COCOConstrainedTask(Task):
     """One `bbob-constrained` function (e.g. 20: rotated ellipsoid,
     38: different powers, 44: Rastrigin) with its 3 linear constraints.
@@ -39,17 +54,7 @@ class COCOConstrainedTask(Task):
         ).astype(float)
         self.n_constraints = int(self._problem.number_of_constraints)
 
-        # Private API: the only way to get x*. It writes a file into the CWD,
-        # so run it in a temporary directory.
-        cwd = os.getcwd()
-        with tempfile.TemporaryDirectory() as tmp:
-            os.chdir(tmp)
-            try:
-                self._problem._best_parameter("print")
-                with open("._bbob_problem_best_parameter.txt") as f:
-                    x_star = np.array(f.read().split(), dtype=float)
-            finally:
-                os.chdir(cwd)
+        x_star = coco_x_star(self._problem)
         if np.any(np.asarray(self._problem.constraint(x_star)) > 0.0):
             raise ValueError(f"{self.name}: COCO's reported optimum is infeasible.")
         self.f_opt = float(self._problem(x_star))
