@@ -1,4 +1,4 @@
-# Optimization Task Brief — Task 003
+# Optimization Task Brief — Task ${num}
 
 You are acting as an autonomous optimization agent. Your job is to find the
 lowest possible value of an unknown black-box function, within a strict
@@ -8,11 +8,11 @@ and to document your reasoning as you go.
 ## 1. Problem statement
 
 - You are given a black-box objective function to **minimize**.
-- The input is a real-valued vector `x` of dimension **10**.
-- Each coordinate of `x` must lie in the box **[-5, 5]**.
+- The input is a real-valued vector `x` of dimension **${dim}**.
+- Each coordinate of `x` must lie in the box **${box}**.
 - The function is **deterministic**: the same `x` always returns the same
   value (no observation noise).
-- You may call the evaluation function **at most 2000 times in total**.
+- You may call the evaluation function **at most ${budget} times in total**.
   This is enforced in code, not just a rule: the harness raises an
   exception if you call it again after the budget is used. There is no
   benefit to trying to work around this.
@@ -31,13 +31,13 @@ function.
 ```python
 import sys
 sys.path.insert(0, "<repo root>")  # adjust to this project's absolute path
-from src.agent_harness.task_003 import AgentTaskHarness, BudgetExhausted
+from src.agent_harness.task_${num} import AgentTaskHarness, BudgetExhausted
 
-harness = AgentTaskHarness(budget=2000)
-print(harness.dim, harness.bounds, harness.direction)  # 10  [[-5.0, 5.0], ...]  "min"
+harness = AgentTaskHarness(budget=${budget})
+print(harness.dim, harness.bounds, harness.direction)  # ${dim}  ${bounds_repr}  "min"
 
 harness.set_active_optimizer("cma_es")   # label every evaluate() call with your current method
-y = harness.evaluate(x)                   # x: length-10 list or array; returns a float
+y = harness.evaluate(x)                   # x: length-${dim} list or array; returns a float
 
 harness.set_active_optimizer("lbfgsb")   # call again every time you switch methods
 
@@ -55,7 +55,7 @@ harness.save()                            # writes output early if you stop befo
   names.
 - The harness automatically records every evaluation (point, value,
   running best, timing) and writes `trace.csv` + `meta.json` to
-  `results/agent_task_003/` once the budget is exhausted, or when you call
+  `results/agent_task_${num}/` once the budget is exhausted, or when you call
   `harness.save()`. You do not need to build this yourself, and should not
   hand-edit these files.
 
@@ -104,7 +104,7 @@ Follow these four steps, in order. Steps (a) and (c) produce required
 output files, not optional notes.
 
 **(a) Before your first call to `evaluate()`**, write
-`results/agent_task_003/roadmap_initial.md` describing your planned
+`results/agent_task_${num}/roadmap_initial.md` describing your planned
 approach. It must include:
 
 - Which method(s) you intend to use, in what sequence (if more than
@@ -127,7 +127,7 @@ budget.
 
 **(c) Every time you actually deviate from the roadmap** (switch methods,
 change a committed hyperparameter, hybridize two approaches, restart,
-etc.), append one entry to `results/agent_task_003/changelog.md`:
+etc.), append one entry to `results/agent_task_${num}/changelog.md`:
 
 ```
 ## Evaluation <N>
@@ -140,8 +140,8 @@ This file is append-only: add new entries at the end, never edit or
 remove earlier ones.
 
 **(d) When finished** (budget exhausted, or you call `harness.save()`
-early), confirm that `results/agent_task_003/trace.csv` and
-`results/agent_task_003/meta.json` exist. The harness writes these
+early), confirm that `results/agent_task_${num}/trace.csv` and
+`results/agent_task_${num}/meta.json` exist. The harness writes these
 automatically — do not hand-construct or edit them.
 
 ## 5. Hard constraints
@@ -152,7 +152,7 @@ automatically — do not hand-construct or edit them.
 - Never fabricate, estimate, or hand-edit an evaluation result. Every row
   in the final trace must come from a real `harness.evaluate()` call.
 - Do not attempt to identify, search for, or reverse-engineer the
-  underlying function. Do not inspect `src/agent_harness/task_003.py`'s
+  underlying function. Do not inspect `src/agent_harness/task_${num}.py`'s
   implementation or any file under `src/tasks/`.
 - Hybridizing multiple optimizers, or switching between them, is
   explicitly encouraged — this is a central part of what this exercise is
@@ -162,7 +162,7 @@ automatically — do not hand-construct or edit them.
 
 ## 6. What "done" looks like
 
-At the end of your campaign, `results/agent_task_003/` should contain
+At the end of your campaign, `results/agent_task_${num}/` should contain
 exactly four files: `roadmap_initial.md`, `changelog.md`, `trace.csv`,
 `meta.json`. Nothing else is required, and nothing else should be
 hand-written into that directory.
