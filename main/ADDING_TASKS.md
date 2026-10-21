@@ -1,6 +1,6 @@
 # Adding a New Task
 
-Checklist for adding a benchmark task: baseline campaigns first, then (optionally) a blind agent run.
+Checklist for adding a benchmark task. Every task needs both parts: fixed-optimizer baselines and a blind agent run.
 
 This file names task identities. Keep it in `main/`; never copy it into a sandbox.
 
@@ -64,7 +64,7 @@ Then run every optimizer over seeds 0–4. Task 001 used these budgets (lower fo
 
 Outputs land in `results/<task.name>/<optimizer>/seed_<n>/` (`trace.csv`, `meta.json`). Check `eval_seconds` in the smoke run before choosing budgets for an expensive task.
 
-## 4. Blind Agent Task (Optional)
+## 4. Blind Agent Task
 
 1. **Harness:** copy `src/agent_harness/task_001.py` to `task_<NNN>.py`. Change:
    - the objective construction in `__init__` (inline it; do not import from `src/tasks/`)
@@ -110,7 +110,7 @@ Outputs land in `results/<task.name>/<optimizer>/seed_<n>/` (`trace.csv`, `meta.
 - [ ] `TASKS` entry in `scripts/run_campaign.py`
 - [ ] Smoke run passes
 - [ ] Baselines: all optimizers × seeds 0–4
-- [ ] (Blind) harness `task_<NNN>.py`, self-contained, no `f_opt`
-- [ ] (Blind) brief `task_<NNN>.md`, no identifying details
-- [ ] (Blind) sandbox built and leak-checked
-- [ ] (Blind) agent run in a fresh session; scored from `main/`
+- [ ] Harness `task_<NNN>.py`, self-contained, no `f_opt`
+- [ ] Brief `task_<NNN>.md`, no identifying details
+- [ ] Sandbox built and leak-checked
+- [ ] Agent run in a fresh session; scored from `main/`
