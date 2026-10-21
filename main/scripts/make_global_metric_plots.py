@@ -12,6 +12,14 @@ keeps its final best value up to its requested budget. Seed spread: R is also
 computed per seed index (denominator = the seed-mean random search), so the
 mean of the per-seed R equals R_a; methods run with one seed get no band.
 
+Constrained tasks: f(B) is undefined until a run finds a feasible point. The
+random-search denominator is the mean over its seeds that have one; a seed of
+any method with no feasible point yet scores r = 1 (no better than random
+search). A task where random search never finds a feasible point has no
+denominator and is left out of R (named in the output). Until every remaining
+task has a feasible random-search point, R(B) is undefined and not drawn.
+Noisy tasks use the observed best (y_best_so_far), as the per-task plots do.
+
 Agents ran on only a few tasks, so their R covers just those tasks (counted in
 the printed table) and they are left off the aggregate curve.
 
@@ -26,6 +34,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import warnings
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -78,13 +87,22 @@ def load_task_regrets(task_dir: Path):
 
 
 def relative_regrets(results_root: Path):
-    """task -> method -> (n_seeds, budget) array of r_{a,i,s}(B)."""
-    rel = {}
+    """(task -> method -> (n_seeds, budget) array of r_{a,i,s}(B), tasks left out)."""
+    rel, skipped = {}, []
     for task_dir in sorted(p for p in results_root.iterdir() if (p / BASELINE).is_dir()):
         regrets = load_task_regrets(task_dir)
-        denom = regrets[BASELINE].mean(axis=0) + EPS
-        rel[task_dir.name] = {m: r / denom[: r.shape[1]] for m, r in regrets.items()}
-    return rel
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)  # all-NaN column: no feasible seed yet
+            denom = np.nanmean(regrets[BASELINE], axis=0) + EPS
+        if np.isnan(denom).all():
+            skipped.append(task_dir.name)
+            continue
+        rel[task_dir.name] = {}
+        for m, r in regrets.items():
+            d = denom[: r.shape[1]]
+            # NaN under a defined denominator = this seed has no feasible point yet.
+            rel[task_dir.name][m] = np.where(np.isnan(r) & np.isfinite(d), 1.0, r / d)
+    return rel, skipped
 
 
 def aggregate(rel, method):
@@ -102,7 +120,7 @@ def methods_in(rel):
     return baselines, agents
 
 
-def print_table(rel):
+def print_table(rel, skipped):
     baselines, agents = methods_in(rel)
     header = f"{'method':<24}{'tasks':>6}" + "".join(f"{f'R@{b}':>22}" for b in CHECKPOINTS)
     print(header)
@@ -118,10 +136,11 @@ def print_table(rel):
             spread = f" ± {v.std():.3g}" if len(v) > 1 else ""
             cells.append(f"{f'{v.mean():.3g}{spread}':>22}")
         print(f"{baseline_display_names.get(m, m):<24}{n_tasks:>6}" + "".join(cells))
-    print(f"\nMean ± std over seed indices; random search = 1 by construction. {len(rel)} tasks total.")
+    print(f"\nMean ± std over seed indices. {len(rel)} tasks; left out (random search never feasible): "
+          + (", ".join(skipped) or "none"))
 
 
-def plot_vs_budget(results_root, rel):
+def plot_vs_budget(results_root, rel, skipped):
     baselines, _ = methods_in(rel)
     fig, ax = plt.subplots(figsize=(11, 6.5), dpi=150)
     for m in baselines:
@@ -153,8 +172,10 @@ def plot_vs_budget(results_root, rel):
                  fontsize=12, color=TEXT_PRIMARY, pad=14, loc="left")
     ax.legend(frameon=False, loc="center left", bbox_to_anchor=(1.01, 0.5), fontsize=9.5,
               labelcolor=TEXT_PRIMARY)
-    fig.text(0.0, -0.02, "Lower is better: 1 = random search, 0 = optimal. Bands: ±1 std over seeds.",
-             fontsize=8, color=TEXT_MUTED)
+    note = "Lower is better: 1 = random search, 0 = optimal. Bands: ±1 std over seeds. Infeasible runs count as 1."
+    if skipped:
+        note += " Left out (random search never feasible): " + ", ".join(skipped) + "."
+    fig.text(0.0, -0.02, note, fontsize=8, color=TEXT_MUTED)
     fig.tight_layout()
     fig.savefig(results_root / "global_metric_vs_budget.png", bbox_inches="tight")
     plt.close(fig)
@@ -165,9 +186,9 @@ def main():
     parser.add_argument("--results", default="results_linux", help="results folder under main/")
     args = parser.parse_args()
     results_root = MAIN_ROOT / args.results
-    rel = relative_regrets(results_root)
-    print_table(rel)
-    plot_vs_budget(results_root, rel)
+    rel, skipped = relative_regrets(results_root)
+    print_table(rel, skipped)
+    plot_vs_budget(results_root, rel, skipped)
 
 
 if __name__ == "__main__":
