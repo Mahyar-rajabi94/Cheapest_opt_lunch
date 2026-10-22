@@ -11,6 +11,8 @@ The automated isolated runner below drives either Codex CLI or Claude Code CLI
 
 [Published Astra max results: 30 mathematical tasks, 2,000-evaluation allowance](main/agent_runs/astra_max_2000_20261022/README.md).
 
+[OPV and MOF pool results: three seeds each, 100 evaluations, supplied baseline comparisons](main/agent_runs/materials_astra_max_100_3seeds_20261022/README.md).
+
 ## Install once
 
 Use Python 3.11+ and an installed `codex` CLI, authenticated for `--agent codex`.

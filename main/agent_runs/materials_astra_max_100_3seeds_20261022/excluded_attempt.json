@@ -1,0 +1,9 @@
+{
+  "task": "mof_pool",
+  "seed": 1,
+  "evaluations": 58,
+  "run_id": "run-3e6ed4521957",
+  "reason": "Selected model is at capacity; user requested a completely fresh restart. Original attempt excluded from comparisons.",
+  "included_in_statistics": false,
+  "replacement_run_id": "run-95f22ce8f896"
+}

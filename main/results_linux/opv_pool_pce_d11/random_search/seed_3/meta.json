@@ -1,0 +1,19 @@
+{
+  "task_name": "opv_pool_pce_d11",
+  "task_dim": 11,
+  "task_direction": "min",
+  "task_f_opt": -15.707252,
+  "task_n_candidates": 526,
+  "optimizer_name": "random_search",
+  "optimizer_class": "src.optimizers.random_search.RandomSearch",
+  "seed": 3,
+  "requested_budget": 100,
+  "evaluations_used": 100,
+  "stopped_early": false,
+  "stop_reason": null,
+  "start_time_utc": "2026-10-22T19:56:48.105137+00:00",
+  "end_time_utc": "2026-10-22T19:56:48.110313+00:00",
+  "total_wall_seconds": 0.005187119008041918,
+  "numpy_version": "2.5.4",
+  "scipy_version": "1.18.1"
+}

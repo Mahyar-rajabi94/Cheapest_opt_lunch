@@ -1,0 +1,19 @@
+{
+  "task_name": "opv_pool_pce_d11",
+  "task_dim": 11,
+  "task_direction": "min",
+  "task_f_opt": -15.707252,
+  "task_n_candidates": 526,
+  "optimizer_name": "turbo",
+  "optimizer_class": "src.optimizers.turbo.TuRBO",
+  "seed": 1,
+  "requested_budget": 100,
+  "evaluations_used": 100,
+  "stopped_early": false,
+  "stop_reason": null,
+  "start_time_utc": "2026-10-22T19:56:40.600849+00:00",
+  "end_time_utc": "2026-10-22T19:56:42.648245+00:00",
+  "total_wall_seconds": 2.0474140649894252,
+  "numpy_version": "2.5.4",
+  "scipy_version": "1.18.1"
+}

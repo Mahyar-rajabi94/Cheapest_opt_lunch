@@ -1,0 +1,16 @@
+{
+  "task": "mof_pool",
+  "seed": 2,
+  "status": "complete",
+  "evaluations": 100,
+  "budget": 100,
+  "best_raw_score": 8.8133131168,
+  "pool_maximum": 9.2928301557,
+  "regret": 0.47951703890000097,
+  "best_candidate_id": "AJOTEY",
+  "best_descending_rank": 3,
+  "first_best_evaluation": 24,
+  "decision_blocks": 11,
+  "run_id": "run-dea382553e99",
+  "source_commit": "cbe3886f40e2eeffa002d353188d8ca57a9143cf"
+}

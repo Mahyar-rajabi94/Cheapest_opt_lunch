@@ -1,0 +1,15 @@
+entry = '''
+## Decision after evaluation 26
+**Budget:** 26 used / 100 total; 74 remaining.
+**Evidence:** Ten GP-LogEI purchases produced no new minimum; the incumbent remains row 27 at -6.5720049767. Their minimum was -3.3426317462 and their prospective prediction RMSE was 3.47243. Several early predictions near -6 returned values near -1 to -3. The refitted GP now estimates standardized noise variance 0.5354 and its approximate LOO RMSE (1.6998) barely differs from a constant predictor (1.7007). The nearest purchased neighbor of row 27 is row 830, at range-scaled distance 0.9891, but y=-1.1274; smoothness under this distance is unreliable. A seeded five-fold comparison on all 26 observed labels gave ExtraTrees(min_samples_leaf=2,max_features=0.5) RMSE 1.5780 and rank correlation 0.4373; ridge(alpha=10) RMSE 1.5868, random forest 1.6102, and three-neighbor regression 1.9409. Differences are uncertain and selecting among these small-sample scores is optimistic. Most models independently rank unused row 370 favorably.
+**Decision:** Switch to a regularized ExtraTrees ensemble with a lower-confidence-style score over every unused row: mean minus beta times the standard deviation across trees. Initialize from all 26 observations; preserve the harness, full observation history, and earlier GP state. Refit the ensemble sequentially after each returned label.
+**Hyperparameters:** Campaign-local adapter work/forest_adapter.py using scikit-learn 1.9.1 ExtraTreesRegressor; n_estimators=512 (increased from the 256-tree diagnostic to reduce acquisition Monte Carlo variability), max_features=0.5, min_samples_leaf=2, bootstrap=False, random_state=1, n_jobs=1. Inherit sklearn defaults, notably squared_error splits, max_depth=None, min_samples_split=2, and no pruning. Use the 165 nonconstant public-range-scaled features and raw observed y. Acquisition beta=1.0 and tree SD uses ddof=1; ties select the first available row. Tree variation is an exploration heuristic, not calibrated posterior uncertainty. No target transformation or new dependency is introduced.
+**Reason:** The large prospective GP errors justify changing its smoothness assumptions. Regularized trees have modestly better held-out evidence and allow discontinuities, while beta=1 retains exploration. This is a provisional choice, not proof that the ensemble is superior.
+**Next step limit:** 8 additional objective calls; pause at cumulative evaluation 34.
+**Why this length:** A shorter block tests the new acquisition prospectively before committing much of the remaining 74 calls, especially because cross-validation evidence is weak.
+**Review:** Inspect new minima, the block's objective distribution, prospective errors, and whether selected candidates concentrate in a useful region. Reassess beta, tree regularization, and method choice. Pause on a model failure, nonfinite result, or evaluator error; never retry an unknown evaluation.
+'''
+with Path('results/agent_run/changelog.md').open('a') as f:
+    f.write(entry)
+exec(compile(Path('work/forest_adapter.py').read_text(), 'work/forest_adapter.py', 'exec'), globals())
+forest_block(8, beta=1.0)
