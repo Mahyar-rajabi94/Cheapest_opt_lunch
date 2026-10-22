@@ -67,7 +67,7 @@ SINGLE = ["bobyqa", "nelder_mead", "lbfgsb"]
 BROWN = "#8a5a2e"
 
 # Agent-line colors, in the order agents are given on the command line.
-AGENT_COLORS = [BLUE, ORANGE, VIOLET, "#1a8fa3"]
+AGENT_COLORS = [BLUE, ORANGE, VIOLET, "#1a8fa3", "#c2185b"]
 
 baseline_style = {
     "random_search": dict(color=AQUA, linestyle="-"),
