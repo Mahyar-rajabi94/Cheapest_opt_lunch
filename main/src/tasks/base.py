@@ -6,6 +6,9 @@ times it. Subclasses set the attributes and implement `_f`; scripts only use
 the interface below. A constrained task also sets `n_constraints` and
 implements `_g`. A noisy task sets `noisy = True`, implements `_f_true`
 (the noise-free value, recorded for scoring only) and may override `reseed`.
+A pool task sets `pool = True`, `n_candidates`, `candidates` (one point per
+candidate, which maps to that candidate) and, after each evaluation,
+`last_candidate` (the candidate its point was mapped to).
 
 By convention, every task MINIMIZES (matching this project's optimizers in
 src/optimizers/). A maximization problem negates its value inside `_f`.
@@ -64,6 +67,9 @@ class Task(ABC):
         Number of inequality constraints (default 0, unconstrained).
     noisy : bool
         True if `_f` returns a noisy observation (default False).
+    pool : bool
+        True if each evaluation selects one of `n_candidates` fixed
+        candidates, each at most once per campaign (default False).
 
     Example
     -------
@@ -79,6 +85,7 @@ class Task(ABC):
     f_opt: float
     n_constraints = 0
     noisy = False
+    pool = False
 
     @abstractmethod
     def _f(self, x: np.ndarray) -> float:

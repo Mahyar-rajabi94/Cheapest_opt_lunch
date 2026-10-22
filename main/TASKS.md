@@ -23,6 +23,7 @@ This file names task identities. Keep it in `main/`; never copy it into a sandbo
 | Integer / mixed variables | `mixint_*` |
 | Categorical + conditional (real HPO) | `yahpo_svm`, `yahpo_xgboost` |
 | Emulator of experimental data | `opv_pce` |
+| Fixed pool of measured data (each point used once) | `opv_pool` |
 
 ## Per Task
 
@@ -58,6 +59,14 @@ Feasibility rate is the fraction of 500 uniform points that satisfy every constr
 | `constrained_diffpowers10` | `bbob_constrained_f38_d10_i1` | bbob-constrained f38 | 10 | 3 linear | 8% | Flat objective near the optimum. | CMA-ES (1.2e3) | CMA-ES (0.13) |
 | `constrained_rastrigin10` | `bbob_constrained_f44_d10_i1` | bbob-constrained f44 | 10 | 3 linear | 17% | Multimodal objective with linear constraints. | CMA-ES (1.6e3) | CMA-ES (266) |
 | `opv_pce` | `opv_pce_d11` | Random-forest emulator of 526 OPV devices (Seifrid et al. 2024), −PCE (%) | 11 | 6 linear | 53% | Real-data emulator: piecewise constant along every coordinate, two coordinates snap to observed levels; best-known `f_opt`. L-BFGS-B never leaves the feasible center (12 evaluations, regret 6.1); GP-BO ≈ random at 100. | CMA-ES (2.0) | CMA-ES (0.29); next DE (1.6) |
+
+### Pool
+
+A campaign can test each of the 526 devices at most once, so its budget is at most 526. No baselines are committed; `task_006_baseline/README.md` gives the commands to run them and an agent.
+
+| Key | Folder | Source | D | Box | Tests |
+| --- | --- | --- | --- | --- | --- |
+| `opv_pool` | `opv_pool_pce_d11` | The 526 OPV devices of `opv_pce` (Seifrid et al. 2024) as a fixed pool, measured −PCE (%) | 11 | [0, 1] | Each point maps to the nearest untested device, so a repeated point returns a different device; exact `f_opt` (best device). Pool-only baseline `pool_random` picks devices uniformly without replacement. |
 
 ### Noisy
 

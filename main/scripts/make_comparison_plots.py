@@ -106,6 +106,7 @@ plt.rcParams.update(
 baseline_style = {
     "random_search":   dict(color=AQUA,    linestyle="-"),
     "sobol":           dict(color=AQUA,    linestyle="--"),
+    "pool_random":     dict(color=AQUA,    linestyle=":"),  # pool tasks only
     "cma_es":          dict(color=YELLOW,  linestyle="-"),
     "de":              dict(color=YELLOW,  linestyle="--"),
     "turbo":           dict(color=MAGENTA, linestyle="-"),
@@ -117,6 +118,7 @@ baseline_style = {
 baseline_display_names = {
     "random_search": "Random search",
     "sobol": "Sobol",
+    "pool_random": "Random pick from pool",
     "cma_es": "CMA-ES",
     "de": "Differential evolution",
     "turbo": "TuRBO",
