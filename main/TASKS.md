@@ -62,11 +62,11 @@ Feasibility rate is the fraction of 500 uniform points that satisfy every constr
 
 ### Pool
 
-A campaign can test each of the 526 devices at most once, so its budget is at most 526. No baselines are committed; `task_006_baseline/README.md` gives the commands to run them and an agent.
+A campaign can test each of the 526 devices at most once, so its budget is at most 526. Baselines are at budget 100 only; `task_006_baseline/README.md` gives the commands to rerun them and to run an agent.
 
-| Key | Folder | Source | D | Box | Tests |
-| --- | --- | --- | --- | --- | --- |
-| `opv_pool` | `opv_pool_pce_d11` | The 526 OPV devices of `opv_pce` (Seifrid et al. 2024) as a fixed pool, measured −PCE (%) | 11 | [0, 1] | Each point maps to the nearest untested device, so a repeated point returns a different device; exact `f_opt` (best device). Pool-only baseline `pool_random` picks devices uniformly without replacement. |
+| Key | Folder | Source | D | Box | Tests | Winner @100 |
+| --- | --- | --- | --- | --- | --- | --- |
+| `opv_pool` | `opv_pool_pce_d11` | The 526 OPV devices of `opv_pce` (Seifrid et al. 2024) as a fixed pool, measured −PCE (%) | 11 | [0, 1] | Each point maps to the nearest untested device, so a repeated point returns a different device; exact `f_opt` (best device). Pool-only baseline `pool_random` picks devices uniformly without replacement. | BOBYQA (0, one deterministic run); Sobol (0.28, best device in 8/10 seeds); `pool_random` 1.87 |
 
 ### Noisy
 
