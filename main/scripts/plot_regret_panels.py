@@ -155,7 +155,8 @@ def agent_regret_curve(trace_path: Path, f_opt: float):
 
 
 def plot_task(task: str, out_path: Path, agent_traces_dir: Path | None = None,
-              optimizers: list[str] | None = None, display: dict[str, str] | None = None):
+              optimizers: list[str] | None = None, display: dict[str, str] | None = None,
+              agent_color: str = AGENT_LINE_COLOR, agent_linewidth: float = LINEWIDTH + 0.4):
     optimizers = optimizers or OPTIMIZERS
     display = display or DISPLAY
     task_dir = ROOT / "results" / task
@@ -175,7 +176,7 @@ def plot_task(task: str, out_path: Path, agent_traces_dir: Path | None = None,
         curve = agent_regret_curve(agent_traces_dir / task / "trace.csv", f_opt)
         if curve is not None:
             x, y = curve
-            ax.plot(x, y, color=AGENT_LINE_COLOR, linewidth=LINEWIDTH + 0.4, label="Cheapest lunch")
+            ax.plot(x, y, color=agent_color, linewidth=agent_linewidth, label="Cheapest lunch")
 
     ax.set_yscale("log")
     ax.set_xlabel("Budget", fontsize=13)
@@ -194,12 +195,12 @@ def plot_task(task: str, out_path: Path, agent_traces_dir: Path | None = None,
     print(f"Wrote {out_path}")
 
 
-def write_legend(labels_colors: list[tuple[str, str]], out_path: Path, linewidth: float = LINEWIDTH + 0.4):
+def write_legend(labels_colors_widths: list[tuple[str, str, float]], out_path: Path):
     """A standalone legend image: one entry per row, vertically stacked,
     tightly spaced ('back to back'), no plot axes."""
-    fig = plt.figure(figsize=(3.2, 0.42 * len(labels_colors) + 0.1), facecolor="white")
-    handles = [plt.Line2D([0], [0], color=color, linewidth=linewidth) for _, color in labels_colors]
-    labels = [label for label, _ in labels_colors]
+    fig = plt.figure(figsize=(3.2, 0.42 * len(labels_colors_widths) + 0.1), facecolor="white")
+    handles = [plt.Line2D([0], [0], color=color, linewidth=lw) for _, color, lw in labels_colors_widths]
+    labels = [label for label, _, _ in labels_colors_widths]
     legend = fig.legend(handles, labels, loc="center", frameon=False, fontsize=12,
                          labelspacing=0.3, handlelength=1.8, handletextpad=0.6, borderpad=0, borderaxespad=0)
     fig.savefig(out_path, dpi=200, bbox_inches="tight", facecolor="white")
@@ -216,6 +217,8 @@ def main():
     p.add_argument("--flat", action="store_true", help="Write <outdir>/<task>.png instead of <outdir>/<task>/regret_vs_eval.png")
     p.add_argument("--families", action="store_true",
                     help="Only 4 representative baselines (Bayesian/derivative/evolutionary/random) instead of all 9")
+    p.add_argument("--agent-color", default=AGENT_LINE_COLOR)
+    p.add_argument("--agent-linewidth", type=float, default=LINEWIDTH + 0.4)
     args = p.parse_args()
 
     tasks = list(args.tasks)
@@ -231,14 +234,14 @@ def main():
     display = FAMILY_DISPLAY if args.families else None
     for task in tasks:
         out_path = outdir / f"{task}.png" if args.flat else outdir / task / "regret_vs_eval.png"
-        plot_task(task, out_path, agent_traces_dir, optimizers, display)
+        plot_task(task, out_path, agent_traces_dir, optimizers, display, args.agent_color, args.agent_linewidth)
 
     if tasks:
         opt_keys = optimizers or OPTIMIZERS
         disp = display or DISPLAY
-        labels_colors = [(disp[k], COLORS[k]) for k in opt_keys]
+        labels_colors = [(disp[k], COLORS[k], LINEWIDTH) for k in opt_keys]
         if agent_traces_dir is not None:
-            labels_colors.append(("Cheapest lunch", AGENT_LINE_COLOR))
+            labels_colors.append(("Cheapest lunch", args.agent_color, args.agent_linewidth))
         write_legend(labels_colors, outdir / "legend.png")
 
 

@@ -1,0 +1,6 @@
+agent,best_y,regret,evaluations
+GPT-5 (+playbook),1076.944,990.752,100
+Claude agent (max effort),1208.505,1122.313,100
+Claude agent (plain),1347.431,1261.239,100
+Claude agent (hp-tuning tweak),1718.036,1631.844,100
+GPT-5 (no playbook),1925.524,1839.332,100
