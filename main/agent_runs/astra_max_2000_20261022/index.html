@@ -1,7 +1,7 @@
 <!doctype html><html><head><meta charset="utf-8"><title>Mathematical suite · Astra max · 2000 evaluations</title>
 <style>body{font:16px system-ui;max-width:1250px;margin:40px auto;color:#172334}img{width:100%}section{border-top:1px solid #ccd3dc;margin:35px 0;padding-top:24px}table{border-collapse:collapse}td,th{padding:8px 16px;border-bottom:1px solid #ddd;text-align:left}a{color:#235cad}.muted{color:#657286}</style></head><body>
 <h1>Astra max · mathematical black-box suite</h1>
-<p>29/30 campaigns plotted. Budget: 2,000 evaluations per task. One agent run per task; all nine existing standalone baselines.</p>
+<p>30/30 campaigns plotted. Budget: 2,000 evaluations per task. One agent run per task; all nine existing standalone baselines.</p>
 <p class="muted">Source 591e3de6. Noise-free scores stay private during optimization. Baselines use 10 stochastic seeds or 1 deterministic seed. Constrained agent receives objective and constraint values; baseline wrappers use a fixed penalty. These figures describe individual agent campaigns, not replicate-averaged agent performance.</p>
 <p><a href="summary.csv">Download numerical summary</a> · <a href="cohort.json">Protocol and provenance</a> · <a href="campaign_status.json">Campaign status at export</a></p>
 <table><tr><th>Task</th><th>Status</th><th>Calls</th><th>Agent regret</th><th>Blocks</th></tr>
@@ -34,7 +34,7 @@
 <tr><td><a href='#ng_noisy_rosenbrock20'>ng_noisy_rosenbrock20</a></td><td>complete</td><td>2000</td><td>820.66</td><td>12</td></tr>
 <tr><td><a href='#ng_noisy_cigar20'>ng_noisy_cigar20</a></td><td>complete</td><td>2000</td><td>9993.6</td><td>14</td></tr>
 <tr><td><a href='#mixint_rastrigin10'>mixint_rastrigin10</a></td><td>complete</td><td>2000</td><td>5.0129</td><td>16</td></tr>
-<tr><td><a href='#mixint_schaffer10'>mixint_schaffer10</a></td><td>running</td><td>1901</td><td>—</td><td>—</td></tr>
+<tr><td><a href='#mixint_schaffer10'>mixint_schaffer10</a></td><td>completed_early</td><td>1901</td><td>0</td><td>17</td></tr>
 </table>
 <section id='constrained_ellipsoid10'><h2>constrained_ellipsoid10</h2>
 <p><a href='figures/bbob_constrained_f20_d10_i1/03_decision_timeline.pdf'>PDF</a> · <a href='figures/bbob_constrained_f20_d10_i1/03_decision_timeline.svg'>SVG</a> · <a href='figures/bbob_constrained_f20_d10_i1/03_decision_timeline.png'>PNG</a></p><img loading='lazy' src='figures/bbob_constrained_f20_d10_i1/03_decision_timeline.png' alt='03_decision_timeline'>
@@ -55,6 +55,11 @@
 <p><a href='figures/bbob_mixint_f15_d10_i1/03_decision_timeline.pdf'>PDF</a> · <a href='figures/bbob_mixint_f15_d10_i1/03_decision_timeline.svg'>SVG</a> · <a href='figures/bbob_mixint_f15_d10_i1/03_decision_timeline.png'>PNG</a></p><img loading='lazy' src='figures/bbob_mixint_f15_d10_i1/03_decision_timeline.png' alt='03_decision_timeline'>
 <p><a href='figures/bbob_mixint_f15_d10_i1/02_convergence.pdf'>PDF</a> · <a href='figures/bbob_mixint_f15_d10_i1/02_convergence.svg'>SVG</a> · <a href='figures/bbob_mixint_f15_d10_i1/02_convergence.png'>PNG</a></p><img loading='lazy' src='figures/bbob_mixint_f15_d10_i1/02_convergence.png' alt='02_convergence'>
 <p><a href='figures/bbob_mixint_f15_d10_i1/01_final_regret.pdf'>PDF</a> · <a href='figures/bbob_mixint_f15_d10_i1/01_final_regret.svg'>SVG</a> · <a href='figures/bbob_mixint_f15_d10_i1/01_final_regret.png'>PNG</a></p><img loading='lazy' src='figures/bbob_mixint_f15_d10_i1/01_final_regret.png' alt='01_final_regret'>
+</section>
+<section id='mixint_schaffer10'><h2>mixint_schaffer10</h2>
+<p><a href='figures/bbob_mixint_f17_d10_i1/03_decision_timeline.pdf'>PDF</a> · <a href='figures/bbob_mixint_f17_d10_i1/03_decision_timeline.svg'>SVG</a> · <a href='figures/bbob_mixint_f17_d10_i1/03_decision_timeline.png'>PNG</a></p><img loading='lazy' src='figures/bbob_mixint_f17_d10_i1/03_decision_timeline.png' alt='03_decision_timeline'>
+<p><a href='figures/bbob_mixint_f17_d10_i1/02_convergence.pdf'>PDF</a> · <a href='figures/bbob_mixint_f17_d10_i1/02_convergence.svg'>SVG</a> · <a href='figures/bbob_mixint_f17_d10_i1/02_convergence.png'>PNG</a></p><img loading='lazy' src='figures/bbob_mixint_f17_d10_i1/02_convergence.png' alt='02_convergence'>
+<p><a href='figures/bbob_mixint_f17_d10_i1/01_final_regret.pdf'>PDF</a> · <a href='figures/bbob_mixint_f17_d10_i1/01_final_regret.svg'>SVG</a> · <a href='figures/bbob_mixint_f17_d10_i1/01_final_regret.png'>PNG</a></p><img loading='lazy' src='figures/bbob_mixint_f17_d10_i1/01_final_regret.png' alt='01_final_regret'>
 </section>
 <section id='mixint_rosenbrock10'><h2>mixint_rosenbrock10</h2>
 <p><a href='figures/bbob_mixint_f8_d10_i1/03_decision_timeline.pdf'>PDF</a> · <a href='figures/bbob_mixint_f8_d10_i1/03_decision_timeline.svg'>SVG</a> · <a href='figures/bbob_mixint_f8_d10_i1/03_decision_timeline.png'>PNG</a></p><img loading='lazy' src='figures/bbob_mixint_f8_d10_i1/03_decision_timeline.png' alt='03_decision_timeline'>

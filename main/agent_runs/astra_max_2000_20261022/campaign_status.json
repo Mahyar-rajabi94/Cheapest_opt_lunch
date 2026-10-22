@@ -1,6 +1,6 @@
 {
-  "updated_at": "2026-10-22T19:34:31.880492+00:00",
-  "done": false,
+  "updated_at": "2026-10-22T19:35:31.979672+00:00",
+  "done": true,
   "paused": false,
   "campaigns": [
     {
@@ -237,11 +237,11 @@
     },
     {
       "task": "mixint_schaffer10",
-      "status": "running",
+      "status": "completed_early",
       "evaluations": 1901,
       "budget": 2000,
-      "agent_regret": null,
-      "figures_ready": false
+      "agent_regret": 0.0,
+      "figures_ready": true
     }
   ]
 }

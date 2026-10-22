@@ -1,6 +1,6 @@
 # Astra max mathematical suite — 2,000 evaluations
 
-**Partial release: 29/30 campaigns finished.**
+**Final release: 30/30 campaigns finished.**
 1 campaign has an execution failure, retained and explicitly labeled.
 A normal early stop is permitted by the canonical prompt; the budget is a maximum.
 
@@ -45,7 +45,7 @@ No baselines were rerun. All 1,890 baseline runs come from `main/results_full` a
 | `ng_noisy_rosenbrock20` | complete | 2000 | 820.66346 | [Final](figures/nevergrad_noisy_rosenbrock_d20_n0.1/01_final_regret.png) · [Convergence](figures/nevergrad_noisy_rosenbrock_d20_n0.1/02_convergence.png) · [Timeline](figures/nevergrad_noisy_rosenbrock_d20_n0.1/03_decision_timeline.png) | [Log](analysis/nevergrad_noisy_rosenbrock_d20_n0.1/changelog.md) |
 | `ng_noisy_cigar20` | complete | 2000 | 9993.6474 | [Final](figures/nevergrad_noisy_cigar_d20_n0.1/01_final_regret.png) · [Convergence](figures/nevergrad_noisy_cigar_d20_n0.1/02_convergence.png) · [Timeline](figures/nevergrad_noisy_cigar_d20_n0.1/03_decision_timeline.png) | [Log](analysis/nevergrad_noisy_cigar_d20_n0.1/changelog.md) |
 | `mixint_rastrigin10` | complete | 2000 | 5.0129201 | [Final](figures/bbob_mixint_f15_d10_i1/01_final_regret.png) · [Convergence](figures/bbob_mixint_f15_d10_i1/02_convergence.png) · [Timeline](figures/bbob_mixint_f15_d10_i1/03_decision_timeline.png) | [Log](analysis/bbob_mixint_f15_d10_i1/changelog.md) |
-| `mixint_schaffer10` | pending | — | — | — | — |
+| `mixint_schaffer10` | completed_early | 1901 | 0 | [Final](figures/bbob_mixint_f17_d10_i1/01_final_regret.png) · [Convergence](figures/bbob_mixint_f17_d10_i1/02_convergence.png) · [Timeline](figures/bbob_mixint_f17_d10_i1/03_decision_timeline.png) | [Log](analysis/bbob_mixint_f17_d10_i1/changelog.md) |
 
 ## Files and verification
 
@@ -94,8 +94,8 @@ records these changes. Numerical library threads are limited to one in the launc
 The supervisor also pauses new launches if tracked source code changes.
 
 These are tested native isolation controls; they are not a formal proof against
-operating-system or tool vulnerabilities. `private/isolation_checks.json` and
-`private/integrity_audit.json` preserve the actual checks for each campaign.
+operating-system or tool vulnerabilities. `provenance/<task_key>/isolation_checks.json` and
+`provenance/<task_key>/integrity_audit.json` preserve the actual checks for each campaign.
 
 ## Scoring and comparisons
 

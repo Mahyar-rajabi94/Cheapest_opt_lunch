@@ -1,8 +1,8 @@
 {
   "source_commit": "591e3de6a553c026976e3f785eceb8cac8b6690b",
-  "checked": 29,
+  "checked": 30,
   "expected": 30,
-  "all_finished": false,
+  "all_finished": true,
   "failures": 0,
   "tasks": [
     {
@@ -320,6 +320,17 @@
       "decision_blocks": 16,
       "status": "complete",
       "agent_regret": 5.012920063427401,
+      "isolation_checks": 24,
+      "trailing_unsnapshotted_characters": 0,
+      "checks": "journal / public artifacts / private scoring / exported scores / baseline means / decision coverage / figure files"
+    },
+    {
+      "task": "mixint_schaffer10",
+      "passed": true,
+      "evaluations": 1901,
+      "decision_blocks": 17,
+      "status": "completed_early",
+      "agent_regret": 0.0,
       "isolation_checks": 24,
       "trailing_unsnapshotted_characters": 0,
       "checks": "journal / public artifacts / private scoring / exported scores / baseline means / decision coverage / figure files"
