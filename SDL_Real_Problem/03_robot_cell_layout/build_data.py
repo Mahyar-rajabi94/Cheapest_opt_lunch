@@ -1,7 +1,6 @@
 """Build the data for the robot cell layout problem.
 
     python build_data.py validate    # FK/IK checks against sdl_dt, default layout terms
-    python build_data.py dataset     # data/simulated_layouts.csv (2048 Sobol layouts, every term)
     python build_data.py reference   # data/reference_optimum.json (heavy multi-start search)
 
 `validate` needs a checkout of sdl_dt (path below or --sdl-dt); the others only
@@ -106,22 +105,6 @@ def validate(sdl_dt: str) -> dict:
     return report
 
 
-def dataset(n: int = 2048):
-    from scipy.stats import qmc
-
-    u = qmc.Sobol(15, scramble=True, seed=0).random(n)
-    X = LO + u * (HI - LO)
-    keys = ["objective", "feasible", "cycle_time", "reach_deficit", "footprint_overlap", "min_clearance",
-            "collision", "ik_jumps", "manip_shortfall", "penalty"]
-    with open(HERE / "data" / "simulated_layouts.csv", "w", newline="") as f:
-        w = csv.writer(f)
-        w.writerow(M.NAMES + keys)
-        for x in X:
-            r = M.evaluate(x)
-            w.writerow([f"{v:.6g}" for v in x] + [r[k] for k in keys])
-    print(f"wrote {n} layouts")
-
-
 def _cma_run(args):
     import cma
 
@@ -186,7 +169,7 @@ def reference(restarts: int = 32, budget: int = 20000, workers: int = 8):
 
 if __name__ == "__main__":
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("what", choices=["validate", "dataset", "reference"])
+    p.add_argument("what", choices=["validate", "reference"])
     p.add_argument("--sdl-dt", default="C:/Users/mrast/Github_Mahdi/sdl_dt")
     p.add_argument("--restarts", type=int, default=32)
     p.add_argument("--budget", type=int, default=20000)
@@ -194,7 +177,5 @@ if __name__ == "__main__":
     a = p.parse_args()
     if a.what == "validate":
         validate(a.sdl_dt)
-    elif a.what == "dataset":
-        dataset()
     else:
         reference(a.restarts, a.budget, a.workers)

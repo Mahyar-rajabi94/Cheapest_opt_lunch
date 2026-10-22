@@ -1,6 +1,6 @@
 # Problem 1: Formulating a non-Newtonian blend to hit a target flow curve
 
-**Type:** formulation / rheology · **Dimension:** 7 continuous · **Evaluation:** ~0.1 ms (simulated) · **Data:** real calibration measurements + simulated recipes
+**Type:** formulation / rheology · **Dimension:** 7 continuous · **Evaluation:** ~0.1 ms · **Data:** SDL5 AutoVisco and PEPV measurements; the objective is a physics model calibrated on them
 
 ## 1. The scientific problem
 
@@ -84,14 +84,13 @@ A fit term of 0.045 means the blend misses the target by about 11% on average ac
 
 ## 4. Data provenance
 
-| File | Real or simulated | What it is |
+| File | Source | What it is |
 |---|---|---|
 | `data/autovisco_rheology_summary.csv` | **real** | AutoVisco (SDL5) per-sample summary: reference viscosities by concentration and power-law flow indices for Carbopol, Sepineo, Solagum, PEG and silicones |
 | `data/ingredient_calibration.json` | fitted from real | E1/E2 constants per thickener, with the points each was fitted to |
 | `data/pepv_silicone_blends.csv` | **real** | PEPV pump-viscometer measurements of 1 kcP/10 kcP silicone-oil blends at 8 ratios |
 | `data/mixing_rule_validation.json` | fitted from real | Grunberg–Nissan fit to those blends: ideal log mixing misses by 9.8% on average; with the fitted interaction G = 0.66 it misses by 2.2%. This is the evidence that blends are non-ideal and need an interaction term |
 | `data/target_flow_curve.csv` | spec | E0 on the shear grid |
-| `data/simulated_recipes.csv` | **simulated** | 2048 Sobol-sampled recipes run through the model: variables, every objective term, viscosity at all 16 shear rates. A ready-made "virtual experiment" dataset for surrogates or warm starts |
 | `data/reference_optimum.json` | computed | best-known optimum and how it was found |
 
 Fitted constants (E1/E2):
@@ -103,7 +102,7 @@ Fitted constants (E1/E2):
 | Solagum | 1.0 | 522 | 2.18 | 0.464 | −0.160 | 1 reference viscosity plus apparent-viscosity ratios, 3 n fits |
 | PEG 600K | 5.0 | 2,261 | 4.51 | 0.450 | +0.211 | 3 reference viscosities, 2 valid n fits |
 
-The exponents a ≈ 4–4.6 for the synthetic polymers match the entangled semi-dilute scaling (η ∝ c^~4) expected from polymer physics. That is an independent sanity check on the real data.
+The exponents a ≈ 4–4.6 for Carbopol, Sepineo and PEG match the entangled semi-dilute scaling (η ∝ c^~4) expected from polymer physics. That is an independent sanity check on the real data.
 
 **Assumptions (not from SDL5 data)** are all listed in `model.ASSUMED`: γ̇_ref = 10 s⁻¹ for the reference viscosities, Carbopol's yield fraction and n, the pH-activation curve, the PEG–Carbopol complexation strength, hydration times, and prices. These are literature-shaped and should be replaced by measurements as they become available.
 

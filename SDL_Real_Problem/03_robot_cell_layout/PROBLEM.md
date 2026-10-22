@@ -8,7 +8,7 @@ The sdl_dt digital twin (`C:/Users/mrast/Github_Mahdi/sdl_dt`) plans the cycle e
 
 It's hard in a different way from the other two problems:
 - It's mixed-integer: two IK branches out of 8 each, so 64 combinations.
-- The reachable set is a thin sliver. None of 2048 Sobol layouts in [data/simulated_layouts.csv](data/simulated_layouts.csv) reaches every target.
+- The reachable set is a thin sliver. In a 2048-point Sobol scan of the box, no layout reaches every target.
 - Inside the reachable set, the objective is non-smooth: collision depths come from many min/max operations, and the ready pose switches between discrete fallbacks.
 - Cycle time competes with clearance.
 
@@ -112,8 +112,7 @@ The tiers guarantee that every reachable layout beats every unreachable one, and
 |---|---|---|
 | [data/cell_geometry.json](data/cell_geometry.json) | real (CAD/URDF) | all geometry above, exported from sdl_dt with source tags |
 | [data/validation.json](data/validation.json) | check | FK vs sdl_dt (3e-16 m); IK round trip (6e-10); handle/cup/balance targets vs sdl_dt (≤ 1e-16); default-layout terms; timing |
-| [data/simulated_layouts.csv](data/simulated_layouts.csv) | simulated | 2048 scrambled-Sobol layouts with all 15 variables and every objective term |
-| [data/reference_optimum.json](data/reference_optimum.json) | simulated | best-known x*, f_opt, its terms, how it was found |
+| [data/reference_optimum.json](data/reference_optimum.json) | computed | best-known x*, f_opt, its terms, how it was found |
 
 **sdl_dt's default layout.** The best of its 64 branch pairs × 24 pick azimuths has cycle time **36.27 s**, against sdl_dt's own planner at 36.3 s. It is infeasible: min clearance −91 mm, upper arm over the mixer body near the holder. sdl_dt's best-effort plan is infeasible too, at −35.5 mm. The deeper collision here comes from the fixed planner choices listed under simplifications.
 
@@ -138,7 +137,6 @@ It is a best-known value, not a proven optimum, so regret can in principle go ne
 ```bash
 python SDL_Real_Problem/03_robot_cell_layout/extract_geometry.py        # needs sdl_dt; already done
 python SDL_Real_Problem/03_robot_cell_layout/build_data.py validate     # needs sdl_dt
-python SDL_Real_Problem/03_robot_cell_layout/build_data.py dataset
 python SDL_Real_Problem/03_robot_cell_layout/build_data.py reference --workers 1
 python SDL_Real_Problem/run_baselines.py 03_robot_cell_layout --seeds 10 --workers 4
 ```

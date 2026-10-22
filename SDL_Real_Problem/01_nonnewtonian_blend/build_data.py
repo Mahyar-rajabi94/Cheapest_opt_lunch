@@ -7,11 +7,9 @@
    real PEPV silicone blends (data/pepv_silicone_blends.csv), the evidence
    that ideal log mixing under-predicts blend viscosity.
 3. data/target_flow_curve.csv: the Herschel-Bulkley target on the shear grid.
-4. data/simulated_recipes.csv: 2048 Sobol recipes run through the model
-   (variables, objective terms, viscosity at every shear rate).
-5. data/reference_optimum.json: best-known optimum (f_opt) from 40 CMA-ES
+4. data/reference_optimum.json: best-known optimum (f_opt) from 40 CMA-ES
    runs with restarts, each polished by L-BFGS-B.
-6. figures/: calibration fits and the target vs. the best recipe.
+5. figures/: calibration fits and the target vs. the best recipe.
 
 Usage (from this folder): python build_data.py
 """
@@ -125,23 +123,6 @@ def write_target(model_mod):
             w.writerow([g, e, e * g])
 
 
-def simulate_recipes(model_mod, model, n=2048):
-    from scipy.stats import qmc
-
-    lo = np.array([v[2] for v in model_mod.VARIABLES])
-    hi = np.array([v[3] for v in model_mod.VARIABLES])
-    X = qmc.scale(qmc.Sobol(len(lo), scramble=True, seed=0).random(n), lo, hi)
-    names = [v[0] for v in model_mod.VARIABLES]
-    shear_cols = [f"eta_Pa_s@{g:.3g}" for g in model_mod.SHEAR_RATES]
-    with open(DATA / "simulated_recipes.csv", "w", newline="") as f:
-        w = csv.writer(f)
-        w.writerow(names + ["objective", "fit_log_rmse", "cost_usd_per_kg", "cost_term", "time_term", "pH_term"] + shear_cols)
-        for x in X:
-            t = model.objective_terms(x)
-            eta, _ = model.flow_curve(x)
-            w.writerow(list(x) + [t["objective"], t["fit_log_rmse"], t["cost_usd_per_kg"], t["cost_term"], t["time_term"], t["pH_term"]] + list(eta))
-
-
 def reference_optimum(model_mod, model, runs=40):
     import cma
     from scipy.optimize import minimize
@@ -233,7 +214,6 @@ def main():
 
     model = model_mod.BlendModel()
     write_target(model_mod)
-    simulate_recipes(model_mod, model)
     ref, x_opt = reference_optimum(model_mod, model)
     print(json.dumps({k: ref[k] for k in ("f_opt", "x_opt", "terms_at_opt")}, indent=1))
     print("run finals:", np.round(ref["run_finals_sorted"], 4))
