@@ -70,6 +70,16 @@ OPTIMIZERS = {
     "pool_random": PoolRandomSearch,  # pool tasks only (pool_only)
 }
 
+
+def optimizers_for_task(task):
+    """Use exact-row acquisition for indexed pools; preserve existing box methods."""
+    if getattr(task, 'indexed_pool', False):
+        from src.optimizers.pool_gp_bo import GPBO as PoolGPBO
+        from src.optimizers.pool_turbo import TuRBO as PoolTuRBO
+        return {'gp_bo': PoolGPBO, 'turbo': PoolTuRBO, 'pool_random': PoolRandomSearch}
+    return {name: cls for name, cls in OPTIMIZERS.items()
+            if task.pool or not getattr(cls, 'pool_only', False)}
+
 # scipy's Sobol sampler warns whenever the *cumulative* number of points
 # drawn so far is not a power of 2. Asking one point at a time (below)
 # triggers this on most calls; it is harmless, just noisy, so it is
@@ -110,8 +120,12 @@ def run_campaign(
     if task.pool and budget > task.n_candidates:
         raise ValueError(f"{task.name} has {task.n_candidates} candidates; budget {budget} exceeds that.")
     task.reseed(seed)
-    optimizer_cls = OPTIMIZERS[optimizer_name]
-    if getattr(optimizer_cls, "pool_only", False):
+    available_optimizers = optimizers_for_task(task)
+    if optimizer_name not in available_optimizers:
+        raise ValueError(f'{optimizer_name} does not support this task; choose from {sorted(available_optimizers)}.')
+    optimizer_cls = available_optimizers[optimizer_name]
+    indexed = getattr(task, 'indexed_pool', False)
+    if indexed or getattr(optimizer_cls, "pool_only", False):
         if not task.pool:
             raise ValueError(f"{optimizer_name} runs only on pool tasks.")
         optimizer = optimizer_cls(bounds=task.bounds, seed=seed, candidates=task.candidates)
@@ -130,16 +144,26 @@ def run_campaign(
     start_time_utc = datetime.now(timezone.utc).isoformat()
     stopped_early = False
     stop_reason = None
+    # Standalone pool GP baselines retain the colleague's ten seeded uniform
+    # observations. This is a baseline setting, never an agent requirement.
+    initial_indices = []
+    if indexed and optimizer_name in ('gp_bo', 'turbo'):
+        initial_indices = np.random.default_rng(seed).choice(
+            task.n_candidates, size=min(budget, optimizer.n_init), replace=False).tolist()
 
     for i in range(budget):
         try:
-            X = optimizer.ask(n=1)
+            if indexed:
+                index = initial_indices[i] if i < len(initial_indices) else optimizer.ask_pool(task.available_indices)
+                X = task.candidates[[index]]
+            else:
+                X = optimizer.ask(n=1)
         except OptimizerExhausted as e:
             stopped_early = True
             stop_reason = str(e)
             break
         x = X[0]
-        ev = task.evaluate(x)
+        ev = task.evaluate_index(index) if indexed else task.evaluate(x)
         y, elapsed = ev.y, ev.elapsed
         merit = _merit(ev)
         optimizer.tell(X, [merit])
@@ -155,6 +179,9 @@ def run_campaign(
         row["y"] = y
         if task.pool:
             row["candidate_id"] = task.last_candidate
+        if indexed:
+            row['candidate_index'] = int(index)
+            row['optimizer'] = 'initial_random' if i < len(initial_indices) else optimizer_name
         if task.noisy:
             row["y_true"] = ev.y_true
         if constrained:
@@ -186,6 +213,7 @@ def run_campaign(
         **({"task_n_constraints": task.n_constraints} if constrained else {}),
         **({"task_noisy": True} if task.noisy else {}),
         **({"task_n_candidates": task.n_candidates} if task.pool else {}),
+        **({'indexed_pool': True, 'initial_design_size': len(initial_indices)} if indexed else {}),
         "optimizer_name": optimizer_name,
         "optimizer_class": f"{type(optimizer).__module__}.{type(optimizer).__name__}",
         "seed": seed,

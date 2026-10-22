@@ -53,6 +53,10 @@ Then start a fresh campaign:
 The defaults are `gpt-6-astra` and `max`, so both flags can be omitted.
 Use `--effort xhigh` to retain the reasoning setting used in earlier experiments.
 
+`--seed` is supplied to the agent for its stochastic designs and optimizers and
+also seeds private observation noise where supported. Separate invocations with
+`--seed 0`, `--seed 1`, and `--seed 2` create three independent campaigns.
+
 `--budget` is the number of **objective evaluations**, not model tokens or optimizer
 iterations. It is supplied in the public task input and enforced privately.
 Initialization, repeated points, finite differences and line searches all count.
@@ -105,6 +109,12 @@ The CLI retains the credentials needed for model inference; those credentials
 are not exposed to agent commands. The agent sees bounds, dimension, direction,
 noise status, budget, and its own observations. It does not receive task identity,
 optimum, baseline results or this README.
+
+For an explicitly public candidate pool such as `--task mof_pool`, the agent also
+gets an anonymous, feature-only `candidates.npy`. It selects exact unused rows
+through `h.evaluate_index(index)`. Labels, material IDs, and global ranks remain
+private. This differs from `opv_pool`, whose hidden nearest-untested mapping is
+preserved. See [MOF task details](main/data/mof_pool/README.md).
 
 Preflight attempts forbidden reads/writes, a symlink escape, network access and
 process inspection on macOS. Checks are recorded before the first evaluation.

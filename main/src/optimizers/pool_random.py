@@ -81,6 +81,16 @@ class PoolRandomSearch:
         self.X_ = np.vstack([self.X_, X])
         self.y_ = np.concatenate([self.y_, y])
 
+    def ask_pool(self, available_indices) -> int:
+        """Choose the next available row in the seeded random permutation."""
+        available = np.asarray(available_indices)
+        if not len(available):
+            raise OptimizerExhausted("No unevaluated candidate rows remain")
+        if (available.ndim != 1 or not np.issubdtype(available.dtype, np.integer)
+                or np.any(available < 0) or np.any(available >= len(self.candidates))):
+            raise ValueError("Expected valid available candidate indices")
+        return int(self._order[np.isin(self._order, available)][0])
+
     def best(self):
         """Return (x_best, y_best) among all points told so far (minimum y)."""
         if len(self.y_) == 0:

@@ -67,6 +67,12 @@ A campaign can test each of the 526 devices at most once, so its budget is at mo
 | Key | Folder | Source | D | Box | Tests |
 | --- | --- | --- | --- | --- | --- |
 | `opv_pool` | `opv_pool_pce_d11` | The 526 OPV devices of `opv_pce` (Seifrid et al. 2024) as a fixed pool, measured −PCE (%) | 11 | [0, 1] | Each point maps to the nearest untested device, so a repeated point returns a different device; exact `f_opt` (best device). Pool-only baseline `pool_random` picks devices uniformly without replacement. |
+| `mof_pool` | `mof_pool_d193_n1000` | User-supplied task_061 CSV; minimize −raw y | 193 | Exact rows only | 1,000 public feature rows, 28 constant features; each row purchased once by anonymous index. Labels, material IDs and ranks private. Baselines pending. |
+
+MOF uses the exact supplied 1,000-row table; the archive's reference to 5,882
+rows is stale. Its confirmed agent budget is 100 including initialization,
+with the current canonical agent deciding methods and block lengths. See
+[`data/mof_pool/README.md`](data/mof_pool/README.md) for provenance and scoring.
 
 ### Noisy
 

@@ -2,6 +2,7 @@
 import json
 import math
 import os
+import operator
 from pathlib import Path
 import time
 import uuid
@@ -19,8 +20,13 @@ class AgentTaskHarness:
         state = self._request('status')
         if budget is not None and (type(budget) is not int or budget != state['budget']):
             raise ValueError('Budget must match the public campaign budget.')
-        for k in ['dim', 'bounds', 'direction', 'noisy', 'n_constraints', 'budget']:
+        for k in ['dim', 'bounds', 'direction', 'noisy', 'n_constraints', 'budget', 'seed']:
             setattr(self, k, state[k])
+        self.indexed_pool = state.get('indexed_pool', False)
+        if self.indexed_pool:
+            import numpy as np
+            self.n_candidates = state['n_candidates']
+            self.candidates = np.load(ROOT / 'candidates.npy', mmap_mode='r', allow_pickle=False)
 
     def _request(self, op, **kwargs):
         request_id = uuid.uuid4().hex
@@ -52,12 +58,28 @@ class AgentTaskHarness:
         return self._request('label', name=str(name))
 
     def evaluate(self, x):
+        if self.indexed_pool:
+            raise ValueError('Use evaluate_index(index) to select an exact unused candidate row.')
         x = [float(v) for v in x]
         if len(x) != self.dim or any(not math.isfinite(v) or not lo <= v <= hi for v, (lo, hi) in zip(x, self.bounds)):
             raise ValueError('Expected finite coordinates within the public bounds.')
         result = self._request('evaluate', x=x)
         # Constrained campaigns also return the constraint values; feasible iff all g <= 0.
         return (result['y'], result['g']) if self.n_constraints else result
+
+    def evaluate_index(self, index):
+        if not self.indexed_pool or isinstance(index, bool):
+            raise ValueError('Expected an integer index for an indexed candidate pool.')
+        index = operator.index(index)
+        if not 0 <= index < self.n_candidates:
+            raise ValueError('Candidate index is outside the pool.')
+        return self._request('evaluate', candidate_index=index)
+
+    @property
+    def available_indices(self):
+        if not self.indexed_pool:
+            raise ValueError('This task does not expose a candidate pool.')
+        return self._request('status')['available_indices']
 
     @property
     def evaluations_used(self):

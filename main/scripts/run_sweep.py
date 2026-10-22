@@ -28,7 +28,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from scripts.run_campaign import OPTIMIZERS, TASKS, run_campaign
+from scripts.run_campaign import TASKS, run_campaign, optimizers_for_task
 
 # Slowest first, so a parallel sweep does not end waiting on one long job.
 # Optimizers not listed here go after these.
@@ -57,14 +57,15 @@ def _sweep(task_name, budget, seeds, outdir, workers):
     if task.pool and budget > task.n_candidates:
         raise ValueError(f"{task.name} has {task.n_candidates} candidates; budget {budget} exceeds that.")
     task_dir = Path(outdir) / task.name
+    optimizers = optimizers_for_task(task)
 
     names = sorted(
-        (n for n in OPTIMIZERS if task.pool or not getattr(OPTIMIZERS[n], "pool_only", False)),
+        optimizers,
         key=lambda n: SLOWEST_FIRST.index(n) if n in SLOWEST_FIRST else len(SLOWEST_FIRST),
     )
     jobs = []
     for name in names:
-        n_seeds = 1 if getattr(OPTIMIZERS[name], "deterministic", False) else seeds
+        n_seeds = 1 if getattr(optimizers[name], "deterministic", False) else seeds
         job_budget = min(budget, BUDGET_CAPS.get(name, budget))
         jobs += [(name, seed, job_budget) for seed in range(n_seeds)]
 

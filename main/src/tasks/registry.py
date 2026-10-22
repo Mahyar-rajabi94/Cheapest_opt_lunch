@@ -14,6 +14,7 @@ from src.tasks.coco_noisy import COCONoisyTask
 from src.tasks.nevergrad_noisy import NevergradNoisyTask
 from src.tasks.opv import OPVTask
 from src.tasks.opv_pool import OPVPoolTask
+from src.tasks.mof_pool import MOFPoolTask
 from src.tasks.pymoo_g import PymooGTask
 from src.tasks.psa_v10 import PSAv10Task
 from src.tasks.yahpo import YAHPOTask
@@ -88,4 +89,6 @@ TASKS = {
     # The same 526 OPV devices as a fixed pool: each point maps to the nearest untested device, whose measured PCE
     # is looked up; at most 526 evaluations.
     "opv_pool": lambda: OPVPoolTask(),
+    # Exact rows from the supplied 1,000-material, 193-feature table; labels stay private.
+    "mof_pool": lambda: MOFPoolTask(),
 }

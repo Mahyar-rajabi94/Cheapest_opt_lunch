@@ -86,6 +86,8 @@ class Task(ABC):
     n_constraints = 0
     noisy = False
     pool = False
+    indexed_pool = False  # Public feature rows selected by anonymous index, never by nearest mapping.
+    private_data_paths = ()  # Private data hashed for provenance and probed by isolation preflight.
 
     @abstractmethod
     def _f(self, x: np.ndarray) -> float:
