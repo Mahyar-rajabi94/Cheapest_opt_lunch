@@ -143,7 +143,15 @@ def agent_regret_curve(trace_path: Path, f_opt: float):
             return None
     eval_idx = np.array([int(r["eval_idx"]) for r in rows])
     y = np.minimum.accumulate(np.array([float(r["y"]) for r in rows])) - f_opt
-    return eval_idx, np.maximum(y, 1e-12)
+    y = np.maximum(y, 1e-12)
+    # The agent itself can stop early too (a deliberate early stop, or a
+    # budget-eligible "completed_early" status in the astra_max report);
+    # carry its last incumbent forward to the shared 2000-eval x-axis.
+    last_idx = int(eval_idx[-1])
+    if last_idx < BUDGET:
+        eval_idx = np.concatenate([eval_idx, np.arange(last_idx + 1, BUDGET + 1)])
+        y = np.concatenate([y, np.full(BUDGET - last_idx, y[-1])])
+    return eval_idx, y
 
 
 def plot_task(task: str, out_path: Path, agent_traces_dir: Path | None = None,
