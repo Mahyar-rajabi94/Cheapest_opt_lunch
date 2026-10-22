@@ -63,6 +63,7 @@ AGENT_RUNS = {
     "rastrigin_d10_i1": {"Agent": "task_002_sandbox/results/agent_task_002"},
     "bent_cigar_d10_i1": {"Agent": "task_003_sandbox/results/agent_task_003"},
     "sphere_d10_i1": {"Agent": "task_004_sandbox/results/agent_task_004"},
+    "opv_pce_d11": {"Claude agent": "task_005_sandbox/results/agent_task_005"},
 }
 
 # Validated default categorical palette, fixed order (see module docstring).
