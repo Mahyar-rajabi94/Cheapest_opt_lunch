@@ -1,0 +1,18 @@
+{
+  "task_name": "rastrigin_d10_i1",
+  "task_dim": 10,
+  "task_direction": "min",
+  "task_f_opt": 1000.0,
+  "optimizer_name": "rule_based",
+  "optimizer_class": "src.optimizers.rule_based.RuleBased",
+  "seed": 0,
+  "requested_budget": 2000,
+  "evaluations_used": 1754,
+  "stopped_early": true,
+  "stop_reason": "RuleBased's controller thread has already returned (budget exhausted, or it chose to stop early) and will not propose further points. Final result: {'best_y': 1008.954621449931, 'best_x': [-4.22667171610051, 3.333074623093483, 3.5830698885402614, 3.972814251910333, 2.5730204856553, -3.5195059140808516, -3.278129584578111, -1.158212985804808, -2.813354352595962, -1.7305861500672366], 'evals_used': 1754, 'rounds': 12}",
+  "start_time_utc": "2026-10-22T00:15:47.640337+00:00",
+  "end_time_utc": "2026-10-22T00:15:47.757025+00:00",
+  "total_wall_seconds": 0.11669591598911211,
+  "numpy_version": "2.4.6",
+  "scipy_version": "1.17.1"
+}

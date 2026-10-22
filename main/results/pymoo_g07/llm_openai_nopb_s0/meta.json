@@ -1,0 +1,30 @@
+{
+  "task_dim": 10,
+  "task_direction": "min",
+  "requested_budget": 100,
+  "evaluations_used": 100,
+  "stopped_early": false,
+  "start_time_utc": "2026-10-22T04:33:39.783964+00:00",
+  "end_time_utc": "2026-10-22T04:35:11.005349+00:00",
+  "total_wall_seconds": 91.22178491699742,
+  "numpy_version": "2.4.6",
+  "policy": "llm_openai",
+  "seed": 0,
+  "rounds": 4,
+  "round_size": 50,
+  "llm_provider": "openai",
+  "llm_model": "gpt-5",
+  "playbook": false,
+  "playbook_version": null,
+  "llm_usage": {
+    "calls": 4,
+    "input": 7489,
+    "output": 6403,
+    "cache_read": 3072,
+    "cache_write": 0,
+    "retries": 0,
+    "seconds": 91.15958158500143
+  },
+  "task_name": "pymoo_g07",
+  "task_f_opt": 24.306209068925877
+}

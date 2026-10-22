@@ -8,9 +8,11 @@
   "seed": 1,
   "requested_budget": 2000,
   "evaluations_used": 2000,
-  "start_time_utc": "2026-10-21T00:48:14.084887+00:00",
-  "end_time_utc": "2026-10-21T00:50:52.416191+00:00",
-  "total_wall_seconds": 158.33115283299412,
+  "stopped_early": false,
+  "stop_reason": null,
+  "start_time_utc": "2026-10-21T22:36:26.716951+00:00",
+  "end_time_utc": "2026-10-21T22:40:34.512431+00:00",
+  "total_wall_seconds": 247.79565604199888,
   "numpy_version": "2.4.6",
   "scipy_version": "1.17.1"
 }

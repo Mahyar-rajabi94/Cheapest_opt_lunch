@@ -40,12 +40,91 @@ from src.optimizers.gp_bo import GPBO
 from src.optimizers.lbfgsb import LBFGSB
 from src.optimizers.nelder_mead import NelderMead
 from src.optimizers.random_search import RandomSearch
+from src.optimizers.rule_based import RuleBased
 from src.optimizers.sobol_search import SobolSearch
 from src.optimizers.turbo import TuRBO
+from src.tasks.bbob import BBOBTask
 from src.tasks.bent_cigar import BentCigarTask
+from src.tasks.cec2017 import CEC2017Task
+from src.tasks.coco_constrained import COCOConstrainedTask
+from src.tasks.coco_noisy import COCONoisyTask
+from src.tasks.nevergrad_noisy import NevergradNoisyTask
+from src.tasks.pymoo_g import PymooGTask
 from src.tasks.rastrigin import RastriginTask
 from src.tasks.rosenbrock import RosenbrockTask
 from src.tasks.sphere import SphereTask
+from src.tasks.yahpo import YAHPOTask
+
+
+class _TaskCompat:
+    """Adapts the newer Task interface (evaluate(x) -> Evaluation) to this
+    script's older convention (evaluate(x) -> (y, elapsed))."""
+
+    def __init__(self, t):
+        self.name = t.name
+        self.dim = t.dim
+        self.bounds = t.bounds
+        self.direction = t.direction
+        self.f_opt = t.f_opt
+        self._t = t
+
+    def evaluate(self, x):
+        ev = self._t.evaluate(x)
+        return ev.y, ev.elapsed
+
+
+class _BBOBCompat(_TaskCompat):
+    def __init__(self, name: str, function_id: int, dim: int):
+        super().__init__(BBOBTask(name, function_id, dim=dim, instance=1))
+
+
+class _CEC2017Compat(_TaskCompat):
+    def __init__(self, function_id: int, dim: int, half_width: float = 100.0):
+        super().__init__(CEC2017Task(function_id, dim=dim, half_width=half_width))
+
+
+class _CocoNoisyCompat(_TaskCompat):
+    def __init__(self, function_id: int, dim: int, instance: int = 1):
+        super().__init__(COCONoisyTask(function_id, dim=dim, instance=instance))
+
+
+class _NevergradNoisyCompat(_TaskCompat):
+    def __init__(self, function_name: str, dim: int):
+        super().__init__(NevergradNoisyTask(function_name, dim=dim))
+
+
+class _ConstrainedCompat(_TaskCompat):
+    """Exposes a constrained task as a single scalar: a penalized merit
+    (y + penalty_lambda * total constraint violation), since this project's
+    optimizers and harness only understand one float per point. The merit's
+    minimum coincides with f_opt because the true constrained optimum has
+    zero violation. penalty_lambda is tuned per task so violation dominates
+    the objective's own scale, to push search toward feasibility."""
+
+    def __init__(self, t, penalty_lambda: float):
+        super().__init__(t)
+        self._lambda = penalty_lambda
+
+    def evaluate(self, x):
+        ev = self._t.evaluate(x)
+        merit = ev.y + self._lambda * ev.violation
+        return merit, ev.elapsed
+
+
+class _PymooCompat(_ConstrainedCompat):
+    def __init__(self, problem_name: str, penalty_lambda: float):
+        super().__init__(PymooGTask(problem_name), penalty_lambda)
+
+
+class _CocoConstrainedCompat(_ConstrainedCompat):
+    def __init__(self, function_id: int, dim: int = 10, instance: int = 1, penalty_lambda: float = 1.0):
+        super().__init__(COCOConstrainedTask(function_id, dim=dim, instance=instance), penalty_lambda)
+
+
+class _YAHPOCompat(_TaskCompat):
+    def __init__(self, scenario: str, instance: str = "40981"):
+        super().__init__(YAHPOTask(scenario, instance=instance))
+
 
 # Registries: add a new task or optimizer here; nothing else in this file
 # needs to change.
@@ -54,6 +133,27 @@ TASKS = {
     "rastrigin10": lambda: RastriginTask(dim=10, instance=1),
     "bent_cigar10": lambda: BentCigarTask(dim=10, instance=1),
     "sphere10": lambda: SphereTask(dim=10, instance=1),
+    "rosenbrock20": lambda: _BBOBCompat("rosenbrock", 8, 20),
+    "rosenbrock40": lambda: _BBOBCompat("rosenbrock", 8, 40),
+    "step_ellipsoid10": lambda: _BBOBCompat("step_ellipsoid", 7, 10),
+    "sharp_ridge10": lambda: _BBOBCompat("sharp_ridge", 13, 10),
+    "weierstrass10": lambda: _BBOBCompat("weierstrass", 16, 10),
+    "cec_f5_d30": lambda: _CEC2017Compat(5, 30),
+    "cec_f6_d30_b5": lambda: _CEC2017Compat(6, 30, half_width=5.0),
+    "cec_f6_d50_b5": lambda: _CEC2017Compat(6, 50, half_width=5.0),
+    "cec_f8_d30": lambda: _CEC2017Compat(8, 30),
+    "noisy_f110_d5": lambda: _CocoNoisyCompat(110, 5),
+    "noisy_f111_d5": lambda: _CocoNoisyCompat(111, 5),
+    "noisy_f112_d5": lambda: _CocoNoisyCompat(112, 5),
+    "ng_noisy_rosenbrock20": lambda: _NevergradNoisyCompat("rosenbrock", 20),
+    "ng_noisy_cigar20": lambda: _NevergradNoisyCompat("cigar", 20),
+    "pymoo_g04": lambda: _PymooCompat("g4", penalty_lambda=5000.0),
+    "pymoo_g07": lambda: _PymooCompat("g7", penalty_lambda=10.0),
+    "constrained_f20": lambda: _CocoConstrainedCompat(20, dim=10, penalty_lambda=1.0),
+    "constrained_f38": lambda: _CocoConstrainedCompat(38, dim=10, penalty_lambda=1.0),
+    "constrained_f44": lambda: _CocoConstrainedCompat(44, dim=10, penalty_lambda=1.0),
+    "yahpo_svm": lambda: _YAHPOCompat("rbv2_svm"),
+    "yahpo_xgboost": lambda: _YAHPOCompat("rbv2_xgboost"),
 }
 
 OPTIMIZERS = {
@@ -66,6 +166,7 @@ OPTIMIZERS = {
     "bobyqa": BOBYQA,
     "nelder_mead": NelderMead,
     "lbfgsb": LBFGSB,
+    "rule_based": RuleBased,
 }
 
 # scipy's Sobol sampler warns whenever the *cumulative* number of points
@@ -125,7 +226,13 @@ def run_campaign(
         if best_so_far is None or y < best_so_far:
             best_so_far = y
 
-        row = {"eval_idx": i + 1, "batch_idx": i, "optimizer": optimizer_name}
+        # Some optimizers (e.g. rule_based) internally route between several
+        # sub-methods; such an optimizer exposes a `tags_` list (one entry
+        # per ask() call, same order) so the trace can record which
+        # sub-method actually produced each point, instead of one flat label.
+        tags = getattr(optimizer, "tags_", None)
+        tag = tags[i] if tags is not None and i < len(tags) else optimizer_name
+        row = {"eval_idx": i + 1, "batch_idx": i, "optimizer": tag}
         for d in range(task.dim):
             row[f"x{d}"] = x[d]
         row["y"] = y

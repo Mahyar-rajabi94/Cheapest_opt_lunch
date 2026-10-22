@@ -1,0 +1,12 @@
+{
+  "task_num_candidates": 892,
+  "task_direction": "min",
+  "noisy": false,
+  "requested_budget": 294,
+  "evaluations_used": 294,
+  "stopped_early": false,
+  "start_time_utc": "2026-10-22T05:24:33.940656+00:00",
+  "end_time_utc": "2026-10-22T05:30:22.231903+00:00",
+  "total_wall_seconds": 348.23196820900193,
+  "numpy_version": "2.4.6"
+}

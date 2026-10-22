@@ -1,0 +1,7 @@
+## Evaluation 1533
+**Change:** Spending leftover budget after Phase 3 on additional CMA-ES restarts rather than leaving it unused.
+**Reason:** 467 evaluations remained after Phase 3 converged on its own (not via budget exhaustion); roadmap criterion 4 says leftover budget should be reinvested rather than wasted.
+
+## Evaluation 2000
+**Change:** No further deviation from the plan in criterion 3's "leftover budget" reinvestment (logged at evaluation 1533): after `cma_es_run2` itself hit the 200-evaluation global stagnation safety net at evaluation ~1723, every subsequent restart (`cma_es_run3` through `cma_es_run30`) also triggered that same safety net after just one generation (10 evaluations) each, because the "evaluations since the overall best improved" counter is cumulative across restarts rather than reset per restart. Noting this here for the record rather than as 28 separate changelog entries, since it is the same pre-registered criterion 3 firing repeatedly, not a new decision each time.
+**Reason:** By evaluation ~1533 the incumbent best (y=79.48) had already been found by `cma_es_run1`/the L-BFGS-B polish and did not improve further despite ~470 additional evaluations across many restarts; this is consistent with having located (or converged very near) a basin that further restarts of the same unmodified global method cannot escape with the budget remaining. No further evaluations were available to try a qualitatively different approach once this became clear.

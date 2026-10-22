@@ -1,0 +1,8 @@
+{
+  "name": "delaney",
+  "n_candidates": 892,
+  "goal": "minimize",
+  "f_opt": -11.6,
+  "y_column": "measured log(solubility:mol/L)",
+  "source": "the-matter-lab/dionysus"
+}

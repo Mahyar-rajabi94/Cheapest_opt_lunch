@@ -1,0 +1,13 @@
+{
+  "excluded_tasks": [
+    "dionysus_delaney",
+    "dionysus_freesolv"
+  ],
+  "n_tasks": 28,
+  "budget": 100,
+  "normalization": "max(abs(f_opt), 95th percentile(abs(y - f_opt)), 1e-12)",
+  "global_sbs": "gp_bo",
+  "global_sbs_label": "GP-BO",
+  "global_sbs_tasks_with_results": 28,
+  "vbs_tasks": 28
+}

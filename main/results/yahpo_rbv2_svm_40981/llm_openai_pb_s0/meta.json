@@ -1,0 +1,30 @@
+{
+  "task_dim": 6,
+  "task_direction": "min",
+  "requested_budget": 100,
+  "evaluations_used": 93,
+  "stopped_early": true,
+  "start_time_utc": "2026-10-22T04:34:55.592495+00:00",
+  "end_time_utc": "2026-10-22T04:37:14.350199+00:00",
+  "total_wall_seconds": 138.87998304099892,
+  "numpy_version": "2.4.6",
+  "policy": "llm_openai",
+  "seed": 0,
+  "rounds": 6,
+  "round_size": 30,
+  "llm_provider": "openai",
+  "llm_model": "gpt-5",
+  "playbook": true,
+  "playbook_version": "d16bc3c09f",
+  "llm_usage": {
+    "calls": 6,
+    "input": 32564,
+    "output": 8849,
+    "cache_read": 26880,
+    "cache_write": 0,
+    "retries": 0,
+    "seconds": 138.77851403996465
+  },
+  "task_name": "yahpo_rbv2_svm_40981",
+  "task_f_opt": 0.25901198387145996
+}

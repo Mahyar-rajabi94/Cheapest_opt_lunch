@@ -1,0 +1,18 @@
+{
+  "task_name": "rosenbrock_d10_i1",
+  "task_dim": 10,
+  "task_direction": "min",
+  "task_f_opt": 149.15,
+  "optimizer_name": "rule_based",
+  "optimizer_class": "src.optimizers.rule_based.RuleBased",
+  "seed": 0,
+  "requested_budget": 2000,
+  "evaluations_used": 1803,
+  "stopped_early": true,
+  "stop_reason": "RuleBased's controller thread has already returned (budget exhausted, or it chose to stop early) and will not propose further points. Final result: {'best_y': 149.1500000253716, 'best_x': [-0.05519769656672376, -0.37080178107559486, 0.01919991677171808, 1.8504037285576747, -2.735993968536396, -1.187393104772512, -0.8093844310342495, -1.0709615405300297, 0.09247686608843243, 0.5107489664539442], 'evals_used': 1803, 'rounds': 6}",
+  "start_time_utc": "2026-10-22T00:15:40.367529+00:00",
+  "end_time_utc": "2026-10-22T00:15:40.473970+00:00",
+  "total_wall_seconds": 0.10644729199702851,
+  "numpy_version": "2.4.6",
+  "scipy_version": "1.17.1"
+}

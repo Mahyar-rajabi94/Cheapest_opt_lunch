@@ -1,0 +1,8 @@
+{
+  "name": "freesolv",
+  "n_candidates": 509,
+  "goal": "minimize",
+  "f_opt": -23.62,
+  "y_column": "experimental value (kcalmol)",
+  "source": "the-matter-lab/dionysus"
+}

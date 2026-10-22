@@ -1,0 +1,18 @@
+{
+  "task_name": "yahpo_rbv2_svm_40981",
+  "task_dim": 6,
+  "task_direction": "min",
+  "task_f_opt": 0.25901198387145996,
+  "optimizer_name": "rule_based",
+  "optimizer_class": "src.optimizers.rule_based.RuleBased",
+  "seed": 0,
+  "requested_budget": 100,
+  "evaluations_used": 100,
+  "stopped_early": false,
+  "stop_reason": null,
+  "start_time_utc": "2026-10-22T04:33:44.958688+00:00",
+  "end_time_utc": "2026-10-22T04:33:45.000475+00:00",
+  "total_wall_seconds": 0.041795583005296066,
+  "numpy_version": "2.4.6",
+  "scipy_version": "1.17.1"
+}

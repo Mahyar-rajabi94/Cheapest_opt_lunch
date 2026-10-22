@@ -1,0 +1,18 @@
+{
+  "task_name": "nevergrad_noisy_rosenbrock_d20_n0.1",
+  "task_dim": 20,
+  "task_direction": "min",
+  "task_f_opt": 0.0,
+  "optimizer_name": "rule_based",
+  "optimizer_class": "src.optimizers.rule_based.RuleBased",
+  "seed": 1,
+  "requested_budget": 100,
+  "evaluations_used": 100,
+  "stopped_early": false,
+  "stop_reason": null,
+  "start_time_utc": "2026-10-22T03:57:08.135633+00:00",
+  "end_time_utc": "2026-10-22T03:57:08.151003+00:00",
+  "total_wall_seconds": 0.015375833987491205,
+  "numpy_version": "2.4.6",
+  "scipy_version": "1.17.1"
+}

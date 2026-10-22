@@ -1,0 +1,30 @@
+{
+  "task_dim": 10,
+  "task_direction": "min",
+  "requested_budget": 100,
+  "evaluations_used": 100,
+  "stopped_early": false,
+  "start_time_utc": "2026-10-22T05:43:55.493574+00:00",
+  "end_time_utc": "2026-10-22T05:44:48.547812+00:00",
+  "total_wall_seconds": 53.05391741701169,
+  "numpy_version": "2.4.6",
+  "policy": "llm_openai",
+  "seed": 0,
+  "rounds": 3,
+  "round_size": 50,
+  "llm_provider": "openai",
+  "llm_model": "gpt-5",
+  "playbook": true,
+  "playbook_version": "d16bc3c09f",
+  "llm_usage": {
+    "calls": 3,
+    "input": 15654,
+    "output": 4946,
+    "cache_read": 8960,
+    "cache_write": 0,
+    "retries": 0,
+    "seconds": 47.71781187495799
+  },
+  "task_name": "dev_f8_d10_i1",
+  "task_f_opt": 149.15
+}

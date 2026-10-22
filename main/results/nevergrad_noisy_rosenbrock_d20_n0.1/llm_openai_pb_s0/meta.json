@@ -1,0 +1,30 @@
+{
+  "task_dim": 20,
+  "task_direction": "min",
+  "requested_budget": 100,
+  "evaluations_used": 100,
+  "stopped_early": false,
+  "start_time_utc": "2026-10-22T04:11:13.443583+00:00",
+  "end_time_utc": "2026-10-22T04:13:33.632723+00:00",
+  "total_wall_seconds": 140.19001691698213,
+  "numpy_version": "2.4.6",
+  "policy": "llm_openai",
+  "seed": 0,
+  "rounds": 2,
+  "round_size": 100,
+  "llm_provider": "openai",
+  "llm_model": "gpt-5",
+  "playbook": true,
+  "playbook_version": "d16bc3c09f",
+  "llm_usage": {
+    "calls": 2,
+    "input": 10180,
+    "output": 6115,
+    "cache_read": 4480,
+    "cache_write": 0,
+    "retries": 0,
+    "seconds": 76.06020649900893
+  },
+  "task_name": "nevergrad_noisy_rosenbrock_d20_n0.1",
+  "task_f_opt": 0.0
+}

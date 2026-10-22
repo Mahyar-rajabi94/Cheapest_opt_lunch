@@ -1,0 +1,30 @@
+{
+  "task_dim": 5,
+  "task_direction": "min",
+  "requested_budget": 100,
+  "evaluations_used": 100,
+  "stopped_early": false,
+  "start_time_utc": "2026-10-22T04:09:12.976074+00:00",
+  "end_time_utc": "2026-10-22T04:11:09.968452+00:00",
+  "total_wall_seconds": 117.01689758399152,
+  "numpy_version": "2.4.6",
+  "policy": "llm_openai",
+  "seed": 0,
+  "rounds": 5,
+  "round_size": 25,
+  "llm_provider": "openai",
+  "llm_model": "gpt-5",
+  "playbook": false,
+  "playbook_version": null,
+  "llm_usage": {
+    "calls": 5,
+    "input": 9750,
+    "output": 6661,
+    "cache_read": 4736,
+    "cache_write": 0,
+    "retries": 0,
+    "seconds": 116.40423000202281
+  },
+  "task_name": "bbob_noisy_f112_d5_i1",
+  "task_f_opt": 149.1500000101
+}

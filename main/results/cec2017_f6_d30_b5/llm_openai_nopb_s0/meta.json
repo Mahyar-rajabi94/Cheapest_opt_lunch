@@ -1,0 +1,30 @@
+{
+  "task_dim": 30,
+  "task_direction": "min",
+  "requested_budget": 100,
+  "evaluations_used": 100,
+  "stopped_early": false,
+  "start_time_utc": "2026-10-22T02:51:31.428729+00:00",
+  "end_time_utc": "2026-10-22T02:52:25.758711+00:00",
+  "total_wall_seconds": 54.32982091701706,
+  "numpy_version": "2.4.6",
+  "policy": "llm_openai",
+  "seed": 0,
+  "rounds": 3,
+  "round_size": 100,
+  "llm_provider": "openai",
+  "llm_model": "gpt-5",
+  "playbook": false,
+  "playbook_version": null,
+  "llm_usage": {
+    "calls": 3,
+    "input": 5324,
+    "output": 4093,
+    "cache_read": 3072,
+    "cache_write": 0,
+    "retries": 0,
+    "seconds": 51.150994166964665
+  },
+  "task_name": "cec2017_f6_d30_b5",
+  "task_f_opt": 600.0
+}

@@ -1,0 +1,12 @@
+{
+  "task_dim": 10,
+  "task_direction": "min",
+  "noisy": false,
+  "requested_budget": 100,
+  "evaluations_used": 100,
+  "stopped_early": false,
+  "start_time_utc": "2026-10-22T04:49:43.871267+00:00",
+  "end_time_utc": "2026-10-22T04:53:40.484149+00:00",
+  "total_wall_seconds": 236.62121683300938,
+  "numpy_version": "2.4.6"
+}

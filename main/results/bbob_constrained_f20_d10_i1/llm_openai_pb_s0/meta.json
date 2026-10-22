@@ -1,0 +1,30 @@
+{
+  "task_dim": 10,
+  "task_direction": "min",
+  "requested_budget": 100,
+  "evaluations_used": 100,
+  "stopped_early": false,
+  "start_time_utc": "2026-10-22T04:35:14.986501+00:00",
+  "end_time_utc": "2026-10-22T04:36:39.962514+00:00",
+  "total_wall_seconds": 85.09697195800254,
+  "numpy_version": "2.4.6",
+  "policy": "llm_openai",
+  "seed": 0,
+  "rounds": 3,
+  "round_size": 50,
+  "llm_provider": "openai",
+  "llm_model": "gpt-5",
+  "playbook": true,
+  "playbook_version": "d16bc3c09f",
+  "llm_usage": {
+    "calls": 3,
+    "input": 15658,
+    "output": 4509,
+    "cache_read": 13440,
+    "cache_write": 0,
+    "retries": 0,
+    "seconds": 79.24888358300086
+  },
+  "task_name": "bbob_constrained_f20_d10_i1",
+  "task_f_opt": 1072.3569958546302
+}

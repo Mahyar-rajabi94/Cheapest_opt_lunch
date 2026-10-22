@@ -1,7 +1,13 @@
-.venv/
+.venv
 __pycache__/
 *.pyc
 .DS_Store
 *.egg-info/
 main/docs/
 main/tasks/MOF/
+external/
+main_agent_v2/
+# Sandboxes are reusable scratch space; each run's real output is archived
+# under main/results/<task>/, not here.
+sandbox/results/agent_run/
+sandbox_task*/results/agent_run/

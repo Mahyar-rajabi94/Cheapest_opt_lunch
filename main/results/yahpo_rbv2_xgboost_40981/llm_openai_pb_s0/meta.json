@@ -1,0 +1,30 @@
+{
+  "task_dim": 14,
+  "task_direction": "min",
+  "requested_budget": 100,
+  "evaluations_used": 100,
+  "stopped_early": false,
+  "start_time_utc": "2026-10-22T05:01:47.532855+00:00",
+  "end_time_utc": "2026-10-22T05:02:58.486448+00:00",
+  "total_wall_seconds": 70.95425783301471,
+  "numpy_version": "2.4.6",
+  "policy": "llm_openai",
+  "seed": 0,
+  "rounds": 3,
+  "round_size": 70,
+  "llm_provider": "openai",
+  "llm_model": "gpt-5",
+  "playbook": true,
+  "playbook_version": "d16bc3c09f",
+  "llm_usage": {
+    "calls": 3,
+    "input": 15783,
+    "output": 5860,
+    "cache_read": 8960,
+    "cache_write": 0,
+    "retries": 0,
+    "seconds": 70.84590775097604
+  },
+  "task_name": "yahpo_rbv2_xgboost_40981",
+  "task_f_opt": 0.08344290405511856
+}

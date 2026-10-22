@@ -1,0 +1,18 @@
+{
+  "task_name": "weierstrass_d10_i1",
+  "task_dim": 10,
+  "task_direction": "min",
+  "task_f_opt": 71.35,
+  "optimizer_name": "lbfgsb",
+  "optimizer_class": "src.optimizers.lbfgsb.LBFGSB",
+  "seed": 0,
+  "requested_budget": 2000,
+  "evaluations_used": 1045,
+  "stopped_early": true,
+  "stop_reason": "L-BFGS-B has already converged (or stopped) and will not propose further points. Final result:   message: CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH\n  success: True\n   status: 0\n      fun: 133.34362807342598\n        x: [ 5.834e-01  5.972e-01 -5.715e-01 -5.731e-01  5.425e-01\n            -6.044e-01  5.861e-01 -6.215e-01 -5.422e-01  5.419e-01]\n      nit: 37\n      jac: [ 1.482e+01  2.398e+01  1.703e+01 -2.998e+01  4.404e+00\n            -1.026e+00  5.850e+00  1.712e+01  2.327e+01 -1.161e+01]\n     nfev: 1045\n     njev: 95\n hess_inv: <10x10 LbfgsInvHessProduct with dtype=float64>",
+  "start_time_utc": "2026-10-21T18:54:49.837506+00:00",
+  "end_time_utc": "2026-10-21T18:54:49.879950+00:00",
+  "total_wall_seconds": 0.042459331918507814,
+  "numpy_version": "2.4.6",
+  "scipy_version": "1.17.1"
+}

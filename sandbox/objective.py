@@ -8,7 +8,7 @@ prompt for the rules of this exercise.
 import ioh
 import numpy as np
 
-_problem = ioh.get_problem(8, instance=1, dimension=10, problem_class=ioh.ProblemClass.BBOB)
+_problem = ioh.get_problem(15, instance=1, dimension=10, problem_class=ioh.ProblemClass.BBOB)
 
 # Number of real-valued input dimensions.
 DIM = _problem.meta_data.n_variables

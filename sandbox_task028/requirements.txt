@@ -1,0 +1,6 @@
+numpy
+scipy
+ioh
+cma
+botorch
+Py-BOBYQA

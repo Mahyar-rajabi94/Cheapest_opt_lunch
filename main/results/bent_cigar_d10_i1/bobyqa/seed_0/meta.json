@@ -6,13 +6,13 @@
   "optimizer_name": "bobyqa",
   "optimizer_class": "src.optimizers.bobyqa.BOBYQA",
   "seed": 0,
-  "requested_budget": 500,
-  "evaluations_used": 500,
+  "requested_budget": 2000,
+  "evaluations_used": 2000,
   "stopped_early": false,
   "stop_reason": null,
-  "start_time_utc": "2026-10-21T06:43:44.487969+00:00",
-  "end_time_utc": "2026-10-21T06:45:09.812788+00:00",
-  "total_wall_seconds": 85.32508979200793,
+  "start_time_utc": "2026-10-21T23:30:20.997161+00:00",
+  "end_time_utc": "2026-10-21T23:30:26.664766+00:00",
+  "total_wall_seconds": 5.667577457992593,
   "numpy_version": "2.4.6",
   "scipy_version": "1.17.1"
 }

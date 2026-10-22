@@ -1,0 +1,18 @@
+{
+  "task_name": "sphere_d10_i1",
+  "task_dim": 10,
+  "task_direction": "min",
+  "task_f_opt": 79.48,
+  "optimizer_name": "rule_based",
+  "optimizer_class": "src.optimizers.rule_based.RuleBased",
+  "seed": 0,
+  "requested_budget": 2000,
+  "evaluations_used": 1715,
+  "stopped_early": true,
+  "stop_reason": "RuleBased's controller thread has already returned (budget exhausted, or it chose to stop early) and will not propose further points. Final result: {'best_y': 79.48000000000033, 'best_x': [0.25280012691270143, -1.1568000049746694, -0.724000012027119, 1.9263997148401169, -2.680799695206455, 0.43919996654646914, -0.11679995809139705, 0.11999972723883615, -1.637599889808692, -3.0512002287131295], 'evals_used': 1715, 'rounds': 24}",
+  "start_time_utc": "2026-10-22T00:16:02.076415+00:00",
+  "end_time_utc": "2026-10-22T00:16:02.199735+00:00",
+  "total_wall_seconds": 0.123326166998595,
+  "numpy_version": "2.4.6",
+  "scipy_version": "1.17.1"
+}

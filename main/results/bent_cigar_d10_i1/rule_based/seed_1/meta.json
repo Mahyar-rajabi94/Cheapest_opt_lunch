@@ -1,0 +1,18 @@
+{
+  "task_name": "bent_cigar_d10_i1",
+  "task_dim": 10,
+  "task_direction": "min",
+  "task_f_opt": -621.11,
+  "optimizer_name": "rule_based",
+  "optimizer_class": "src.optimizers.rule_based.RuleBased",
+  "seed": 1,
+  "requested_budget": 2000,
+  "evaluations_used": 1735,
+  "stopped_early": true,
+  "stop_reason": "RuleBased's controller thread has already returned (budget exhausted, or it chose to stop early) and will not propose further points. Final result: {'best_y': -621.109991790274, 'best_x': [-0.8925374159502782, 3.9912435625781244, 0.16991723483143462, -3.8000991060426443, -0.46680889512598994, -2.088118909627251, 1.3835387173707998, -0.7345159236636163, 1.1464578526106897, -0.3042704123201388], 'evals_used': 1735, 'rounds': 3}",
+  "start_time_utc": "2026-10-22T00:15:56.380843+00:00",
+  "end_time_utc": "2026-10-22T00:15:56.478105+00:00",
+  "total_wall_seconds": 0.09726945799775422,
+  "numpy_version": "2.4.6",
+  "scipy_version": "1.17.1"
+}
