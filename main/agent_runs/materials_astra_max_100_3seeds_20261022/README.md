@@ -36,6 +36,13 @@ Reported regret is `full_pool_maximum − best_observed_raw_score`. The full-poo
 
 Three seeds describe run-to-run variation; these results alone do not establish statistical superiority over standalone methods.
 
+## Downloadable exports
+
+- [OPV results ZIP](exports/opv_astra_max_100_3seeds_20261022.zip): all three 100-call runs, supplied baselines, mean/SD comparison figures, decision logs and audit records.
+- [MOF data and visualization ZIP](exports/mof_astra_max_100_3seeds_for_visualization_20261022.zip): all 300 evaluations, source material IDs and 193 descriptors, best candidates per seed, run evidence and figures. `structure_lookup.csv` identifies SEHTEF and AJOTEY for matching to original crystal structures; CIF files and atomic coordinates were not supplied.
+
+Both archives include their own checksums and README. Their ZIP hashes are also recorded in this report's `sha256.json`.
+
 ## Figures
 
 ### OPV device pool
