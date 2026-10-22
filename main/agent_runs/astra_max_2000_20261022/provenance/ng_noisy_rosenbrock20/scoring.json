@@ -1,0 +1,8 @@
+{
+  "task": "ng_noisy_rosenbrock20",
+  "task_name": "nevergrad_noisy_rosenbrock_d20_n0.1",
+  "f_opt": 0.0,
+  "noisy": true,
+  "n_constraints": 0,
+  "seed": 0
+}

@@ -1,0 +1,23 @@
+{
+  "exported_at": "2026-10-22T19:34:55.435081+00:00",
+  "campaigns_finished": 29,
+  "campaigns_expected": 30,
+  "cohort_finished": false,
+  "allowance_per_task": 2000,
+  "actual_evaluations": 51860,
+  "outcomes": {
+    "execution_failure": 1,
+    "complete": 22,
+    "completed_early": 6
+  },
+  "peak_simultaneous_campaigns": 16,
+  "started_at": "2026-10-22T18:20:51.698862+00:00",
+  "finished_at": null,
+  "llm_usage_totals_as_reported_by_cli": {
+    "input_tokens": 67508327,
+    "cached_input_tokens": 64966656,
+    "cache_write_input_tokens": 0,
+    "output_tokens": 918499,
+    "reasoning_output_tokens": 403646
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "task": "schaffer50",
+  "task_name": "cec2017_f6_d50_b5",
+  "evaluations": 2000,
+  "status": "complete",
+  "run_note": "",
+  "agent_regret": 2.0831809022872676,
+  "baseline_mean_regrets": {
+    "random_search": 17.071174723572064,
+    "sobol": 16.889214867217937,
+    "cma_es": 17.140708713875778,
+    "de": 16.74787726678061,
+    "turbo": 7.138861293993182,
+    "gp_bo": 12.432172231215327,
+    "bobyqa": 2.0818731017999426,
+    "nelder_mead": 30.98980306076271,
+    "lbfgsb": 3.1601718970423462
+  },
+  "baseline_feasible_seed_counts": {
+    "random_search": [
+      10,
+      10
+    ],
+    "sobol": [
+      10,
+      10
+    ],
+    "cma_es": [
+      10,
+      10
+    ],
+    "de": [
+      10,
+      10
+    ],
+    "turbo": [
+      10,
+      10
+    ],
+    "gp_bo": [
+      10,
+      10
+    ],
+    "bobyqa": [
+      1,
+      1
+    ],
+    "nelder_mead": [
+      1,
+      1
+    ],
+    "lbfgsb": [
+      1,
+      1
+    ]
+  },
+  "decision_blocks": 11,
+  "noisy": false,
+  "n_constraints": 0,
+  "source_commit": "591e3de6a553c026976e3f785eceb8cac8b6690b",
+  "model": "gpt-6-astra",
+  "effort": "max",
+  "campaign_id": "run-6dd484e708c5",
+  "provenance_dir": "provenance/schaffer50"
+}

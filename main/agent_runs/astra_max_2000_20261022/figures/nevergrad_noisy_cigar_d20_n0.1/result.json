@@ -1,0 +1,65 @@
+{
+  "task": "ng_noisy_cigar20",
+  "task_name": "nevergrad_noisy_cigar_d20_n0.1",
+  "evaluations": 2000,
+  "status": "complete",
+  "run_note": "",
+  "agent_regret": 9993.647396304477,
+  "baseline_mean_regrets": {
+    "random_search": 69146015.48041895,
+    "sobol": 75591907.75668636,
+    "cma_es": 2862064.992805051,
+    "de": 74894062.9298645,
+    "turbo": 1771167.7542401005,
+    "gp_bo": 2429085.635962822,
+    "bobyqa": 32179602.966916602,
+    "nelder_mead": 131272689.13222015,
+    "lbfgsb": 131273583.11641645
+  },
+  "baseline_feasible_seed_counts": {
+    "random_search": [
+      10,
+      10
+    ],
+    "sobol": [
+      10,
+      10
+    ],
+    "cma_es": [
+      10,
+      10
+    ],
+    "de": [
+      10,
+      10
+    ],
+    "turbo": [
+      10,
+      10
+    ],
+    "gp_bo": [
+      10,
+      10
+    ],
+    "bobyqa": [
+      1,
+      1
+    ],
+    "nelder_mead": [
+      1,
+      1
+    ],
+    "lbfgsb": [
+      1,
+      1
+    ]
+  },
+  "decision_blocks": 14,
+  "noisy": true,
+  "n_constraints": 0,
+  "source_commit": "591e3de6a553c026976e3f785eceb8cac8b6690b",
+  "model": "gpt-6-astra",
+  "effort": "max",
+  "campaign_id": "run-593904d049be",
+  "provenance_dir": "provenance/ng_noisy_cigar20"
+}

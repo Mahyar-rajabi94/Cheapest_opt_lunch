@@ -1,0 +1,65 @@
+{
+  "task": "constrained_diffpowers10",
+  "task_name": "bbob_constrained_f38_d10_i1",
+  "evaluations": 2000,
+  "status": "complete",
+  "run_note": "",
+  "agent_regret": 5.7784745877142996e-09,
+  "baseline_mean_regrets": {
+    "random_search": 1075.2340400877224,
+    "sobol": 1175.857591176163,
+    "cma_es": 0.24411551906009663,
+    "de": 947.1546694259803,
+    "turbo": 913.9059482568024,
+    "gp_bo": 1691.1692339845345,
+    "bobyqa": 1404.297836387314,
+    "nelder_mead": 625.0370512900049,
+    "lbfgsb": 1369.1170587979955
+  },
+  "baseline_feasible_seed_counts": {
+    "random_search": [
+      10,
+      10
+    ],
+    "sobol": [
+      10,
+      10
+    ],
+    "cma_es": [
+      10,
+      10
+    ],
+    "de": [
+      10,
+      10
+    ],
+    "turbo": [
+      10,
+      10
+    ],
+    "gp_bo": [
+      10,
+      10
+    ],
+    "bobyqa": [
+      1,
+      1
+    ],
+    "nelder_mead": [
+      1,
+      1
+    ],
+    "lbfgsb": [
+      1,
+      1
+    ]
+  },
+  "decision_blocks": 22,
+  "noisy": false,
+  "n_constraints": 3,
+  "source_commit": "591e3de6a553c026976e3f785eceb8cac8b6690b",
+  "model": "gpt-6-astra",
+  "effort": "max",
+  "campaign_id": "run-b0d5368f28fc",
+  "provenance_dir": "provenance/constrained_diffpowers10"
+}

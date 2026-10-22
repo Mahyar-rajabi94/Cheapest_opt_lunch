@@ -1,0 +1,302 @@
+{
+  "created_at": "2026-10-22T18:19:45.922024+00:00",
+  "source_commit": "591e3de6a553c026976e3f785eceb8cac8b6690b",
+  "source_status": "?? sandbox/\n",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "max",
+  "budget": 2000,
+  "agent_repetitions": 1,
+  "observation_noise_seed": 0,
+  "parallel_campaigns": 4,
+  "baseline_root": "main/results_full",
+  "platform": "macOS-15.7.3-arm64-arm-64bit",
+  "tasks": [
+    {
+      "task": "rosenbrock10",
+      "task_name": "rosenbrock_d10_i1",
+      "dim": 10,
+      "noisy": false,
+      "n_constraints": 0,
+      "f_opt": 149.15,
+      "baseline_runs": 63
+    },
+    {
+      "task": "rosenbrock20",
+      "task_name": "rosenbrock_d20_i1",
+      "dim": 20,
+      "noisy": false,
+      "n_constraints": 0,
+      "f_opt": 149.15,
+      "baseline_runs": 63
+    },
+    {
+      "task": "rosenbrock40",
+      "task_name": "rosenbrock_d40_i1",
+      "dim": 40,
+      "noisy": false,
+      "n_constraints": 0,
+      "f_opt": 149.15,
+      "baseline_runs": 63
+    },
+    {
+      "task": "rastrigin10",
+      "task_name": "rastrigin_d10_i1",
+      "dim": 10,
+      "noisy": false,
+      "n_constraints": 0,
+      "f_opt": 1000.0,
+      "baseline_runs": 63
+    },
+    {
+      "task": "bent_cigar10",
+      "task_name": "bent_cigar_d10_i1",
+      "dim": 10,
+      "noisy": false,
+      "n_constraints": 0,
+      "f_opt": -621.11,
+      "baseline_runs": 63
+    },
+    {
+      "task": "sphere10",
+      "task_name": "sphere_d10_i1",
+      "dim": 10,
+      "noisy": false,
+      "n_constraints": 0,
+      "f_opt": 79.48,
+      "baseline_runs": 63
+    },
+    {
+      "task": "step_ellipsoid10",
+      "task_name": "step_ellipsoid_d10_i1",
+      "dim": 10,
+      "noisy": false,
+      "n_constraints": 0,
+      "f_opt": 92.94,
+      "baseline_runs": 63
+    },
+    {
+      "task": "sharp_ridge10",
+      "task_name": "sharp_ridge_d10_i1",
+      "dim": 10,
+      "noisy": false,
+      "n_constraints": 0,
+      "f_opt": 29.97,
+      "baseline_runs": 63
+    },
+    {
+      "task": "weierstrass10",
+      "task_name": "weierstrass_d10_i1",
+      "dim": 10,
+      "noisy": false,
+      "n_constraints": 0,
+      "f_opt": 71.35,
+      "baseline_runs": 63
+    },
+    {
+      "task": "sep_rastrigin10",
+      "task_name": "sep_rastrigin_d10_i1",
+      "dim": 10,
+      "noisy": false,
+      "n_constraints": 0,
+      "f_opt": -462.09,
+      "baseline_runs": 63
+    },
+    {
+      "task": "schwefel10",
+      "task_name": "schwefel_d10_i1",
+      "dim": 10,
+      "noisy": false,
+      "n_constraints": 0,
+      "f_opt": -546.5,
+      "baseline_runs": 63
+    },
+    {
+      "task": "gallagher101_10",
+      "task_name": "gallagher101_d10_i1",
+      "dim": 10,
+      "noisy": false,
+      "n_constraints": 0,
+      "f_opt": 40.78,
+      "baseline_runs": 63
+    },
+    {
+      "task": "gallagher21_10",
+      "task_name": "gallagher21_d10_i1",
+      "dim": 10,
+      "noisy": false,
+      "n_constraints": 0,
+      "f_opt": -1000.0,
+      "baseline_runs": 63
+    },
+    {
+      "task": "schaffer30",
+      "task_name": "cec2017_f6_d30_b5",
+      "dim": 30,
+      "noisy": false,
+      "n_constraints": 0,
+      "f_opt": 600.0,
+      "baseline_runs": 63
+    },
+    {
+      "task": "schaffer50",
+      "task_name": "cec2017_f6_d50_b5",
+      "dim": 50,
+      "noisy": false,
+      "n_constraints": 0,
+      "f_opt": 600.0,
+      "baseline_runs": 63
+    },
+    {
+      "task": "cec_rastrigin30",
+      "task_name": "cec2017_f5_d30",
+      "dim": 30,
+      "noisy": false,
+      "n_constraints": 0,
+      "f_opt": 500.0,
+      "baseline_runs": 63
+    },
+    {
+      "task": "noncont_rastrigin30",
+      "task_name": "cec2017_f8_d30",
+      "dim": 30,
+      "noisy": false,
+      "n_constraints": 0,
+      "f_opt": 800.0,
+      "baseline_runs": 63
+    },
+    {
+      "task": "pymoo_g04",
+      "task_name": "pymoo_g04",
+      "dim": 5,
+      "noisy": false,
+      "n_constraints": 6,
+      "f_opt": -30665.538671783317,
+      "baseline_runs": 63
+    },
+    {
+      "task": "pymoo_g07",
+      "task_name": "pymoo_g07",
+      "dim": 10,
+      "noisy": false,
+      "n_constraints": 8,
+      "f_opt": 24.306209068925877,
+      "baseline_runs": 63
+    },
+    {
+      "task": "constrained_ellipsoid10",
+      "task_name": "bbob_constrained_f20_d10_i1",
+      "dim": 10,
+      "noisy": false,
+      "n_constraints": 3,
+      "f_opt": 1072.3569958546302,
+      "baseline_runs": 63
+    },
+    {
+      "task": "constrained_diffpowers10",
+      "task_name": "bbob_constrained_f38_d10_i1",
+      "dim": 10,
+      "noisy": false,
+      "n_constraints": 3,
+      "f_opt": 1827.1519738294742,
+      "baseline_runs": 63
+    },
+    {
+      "task": "constrained_rastrigin10",
+      "task_name": "bbob_constrained_f44_d10_i1",
+      "dim": 10,
+      "noisy": false,
+      "n_constraints": 3,
+      "f_opt": -2838.8,
+      "baseline_runs": 63
+    },
+    {
+      "task": "noisy_rosenbrock_gauss5",
+      "task_name": "bbob_noisy_f110_d5_i1",
+      "dim": 5,
+      "noisy": true,
+      "n_constraints": 0,
+      "f_opt": 149.1500000101,
+      "baseline_runs": 63
+    },
+    {
+      "task": "noisy_rosenbrock_unif5",
+      "task_name": "bbob_noisy_f111_d5_i1",
+      "dim": 5,
+      "noisy": true,
+      "n_constraints": 0,
+      "f_opt": 149.1500000101,
+      "baseline_runs": 63
+    },
+    {
+      "task": "noisy_rosenbrock_cauchy5",
+      "task_name": "bbob_noisy_f112_d5_i1",
+      "dim": 5,
+      "noisy": true,
+      "n_constraints": 0,
+      "f_opt": 149.1500000101,
+      "baseline_runs": 63
+    },
+    {
+      "task": "ng_noisy_rosenbrock20",
+      "task_name": "nevergrad_noisy_rosenbrock_d20_n0.1",
+      "dim": 20,
+      "noisy": true,
+      "n_constraints": 0,
+      "f_opt": 0.0,
+      "baseline_runs": 63
+    },
+    {
+      "task": "ng_noisy_cigar20",
+      "task_name": "nevergrad_noisy_cigar_d20_n0.1",
+      "dim": 20,
+      "noisy": true,
+      "n_constraints": 0,
+      "f_opt": 0.0,
+      "baseline_runs": 63
+    },
+    {
+      "task": "mixint_rosenbrock10",
+      "task_name": "bbob_mixint_f8_d10_i1",
+      "dim": 10,
+      "noisy": false,
+      "n_constraints": 0,
+      "f_opt": 1.4915,
+      "baseline_runs": 63
+    },
+    {
+      "task": "mixint_rastrigin10",
+      "task_name": "bbob_mixint_f15_d10_i1",
+      "dim": 10,
+      "noisy": false,
+      "n_constraints": 0,
+      "f_opt": 100.0,
+      "baseline_runs": 63
+    },
+    {
+      "task": "mixint_schaffer10",
+      "task_name": "bbob_mixint_f17_d10_i1",
+      "dim": 10,
+      "noisy": false,
+      "n_constraints": 0,
+      "f_opt": -169.4,
+      "baseline_runs": 63
+    }
+  ],
+  "excluded_nonmathematical_tasks": [
+    "yahpo_svm",
+    "yahpo_xgboost",
+    "opv_pce",
+    "psa_v10"
+  ],
+  "protocol_notes": [
+    "Independent fresh CLI context and opaque workspace for every task; no supervisor optimization advice.",
+    "One prospective agent campaign per task; this is not an aggregate over LLM repetitions.",
+    "Reuse existing baselines; stochastic methods have 10 seeds, deterministic methods have 1.",
+    "Noisy task score is true objective at the lowest-observed-y incumbent; true values stay private.",
+    "Constrained agent receives y and g; standalone baselines receive the repository fixed scalar penalty. Equal evaluation budgets, different constraint-handling interfaces.",
+    "Discrete structure is hidden inside the objective, as specified by the updated repository.",
+    "Preserve failed/incomplete runs; no automatic optimization retries or best-of selection.",
+    "Agent and baseline numeric packages match numpy/scipy versions, but platform/backend differences remain possible."
+  ],
+  "parallel_campaigns_note": "Initial launch limit; subsequently increased to 8, 12, and 16. See supervision_events.jsonl."
+}

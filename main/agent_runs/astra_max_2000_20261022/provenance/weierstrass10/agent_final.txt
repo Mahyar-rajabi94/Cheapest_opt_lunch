@@ -1,0 +1,3 @@
+Best observed value: **71.3571653881**, found at evaluation **1,987**. Used **2,000/2,000** evaluations and stopped at the budget limit.
+
+Saved and verified exactly four files in `results/agent_run/`: `roadmap_initial.md`, `changelog.md`, `trace.csv`, and `meta.json`. The trace and metadata agree on the best point and value.

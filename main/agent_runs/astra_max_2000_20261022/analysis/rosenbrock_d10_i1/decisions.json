@@ -1,0 +1,194 @@
+[
+  {
+    "block": 1,
+    "method": "cma_es",
+    "first_eval": 1,
+    "last_eval": 161,
+    "calls": 161,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "cma_es",
+        "first_eval": 1,
+        "last_eval": 161
+      }
+    ],
+    "decision_text": "# First decision: bounded CMA-ES exploration\n\nMinimize a deterministic scalar objective in 10 real coordinates, each bounded by [-5, 5], with no additional constraints. The hard campaign budget is 2,000 objective calls, including initialization and any repeated points. There are no prior observations. The objective remains a sealed black box; no smoothness, separability, optimum value, or landscape identity is assumed. No noise replication is needed under the public deterministic specification.\n\nUse the installed pycma 4.5.0 `CMAEvolutionStrategy` directly, because the provided wrapper fixes population size. All coordinates are normalized to [0, 1] before optimization and transformed back for the harness. Initialize the distribution at the midpoint (0.5 in every normalized coordinate), with isotropic sigma0 = 0.25, population size 16, seed 104729, active covariance updates enabled, and pycma's bounded-coordinate transform. Inherit pycma 4.5.0 defaults for recombination weights, covariance and step-size adaptation, and stopping tolerances; disable console and disk optimizer logging (`verbose=-9`, `verb_log=0`). This is a rank-based method that can adapt correlated directions without assuming gradients. Population 16 gives a moderately broad sample in 10 dimensions; sigma0 covers a meaningful fraction of the box without choosing a preferred region.\n\nEvaluate the midpoint once as an observed reference, then at most 10 complete CMA-ES generations. Maximum additional calls: 161. Pause by cumulative evaluation 161. The reference point is retained in campaign observations but is not inserted into a synthetic CMA population. Ten generations give initial evidence on improvement, distribution contraction, and objective spread, while using only about 8% of the budget. This is only the first block; no subsequent method or allocation is preselected.\n\nAt the checkpoint inspect the best observed value and point, improvement across generations, generation medians and ranges, normalized step size, covariance axis ratio, and any optimizer stopping condition. Pause earlier at a complete generation if pycma reports a stop condition. A short plateau alone will not establish convergence. On an evaluator error or nonfinite value, stop immediately without retrying an unknown evaluation. The controller checks the block and campaign counters before every real evaluation. All objective values come only from `h.evaluate`; use the same live harness and optimizer across checkpoints, and save harness records after the block.\n"
+  },
+  {
+    "block": 2,
+    "method": "cma_es",
+    "first_eval": 162,
+    "last_eval": 401,
+    "calls": 240,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "cma_es",
+        "first_eval": 162,
+        "last_eval": 401
+      }
+    ],
+    "decision_text": "## Decision after evaluation 161\n**Budget:** 161 used / 2000 total; 1839 remaining.\n**Evidence:** The midpoint value was 17525.44870570111; the best is 1478.2282346723334 at evaluation 123. Generation medians generally declined from 135879.3244 in generation 1 to 27446.2153 in generation 10 (generation 9 was 11972.8281), with substantial variability. Sigma fell from 0.25 to 0.16009165 and axis ratio reached 1.8193. No pycma stopping criterion fired. The objective is deterministic, but population sampling is variable; two generations without a new incumbent are not evidence of convergence.\n**Decision:** Continue the same live CMA-ES distribution, covariance, evolution paths, random state, and observation history.\n**Hyperparameters:** Keep the initial configuration in roadmap_initial.md (pycma 4.5.0, population 16, active covariance, same bounds and internal defaults). The current adapted sigma is 0.16009165; do not manually reset it. Sampling remains broad, and the downward median trend gives no reason to force contraction or expand population.\n**Reason:** Both best value and population quality improved materially, while covariance adaptation has only had 10 updates. Retaining this learned state is justified by the current evidence and 1839 remaining calls.\n**Next step limit:** 240 additional objective calls; pause at cumulative evaluation 401.\n**Why this length:** Fifteen full generations provide more adaptation and a clearer trend than a few noisy population summaries, while leaving most of the budget available for later evidence-driven decisions. This is longer than the first block because useful progress is now observed.\n**Review:** Compare the incumbent, generation median trend, sigma and axis ratio; inspect whether the search continues to improve or becomes persistently unproductive. Pause sooner at a completed generation if pycma reports a stop condition, and stop immediately on an evaluator error or nonfinite value. No later method is selected.\n"
+  },
+  {
+    "block": 3,
+    "method": "bobyqa",
+    "first_eval": 402,
+    "last_eval": 551,
+    "calls": 150,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "bobyqa",
+        "first_eval": 402,
+        "last_eval": 551
+      }
+    ],
+    "decision_text": "## Decision after evaluation 401\n**Budget:** 401 used / 2000 total; 1599 remaining.\n**Evidence:** The incumbent improved from 1478.2282346723334 to 269.75643068585487 (evaluation 391). Generation median fell from 9076.2658 at generation 11 to 416.3261 at generation 25. Adapted sigma is 0.05683772 and axis ratio 1.9951; no stop condition. CMA-ES is progressing and has concentrated its sampling substantially. This supports testing a local model, but does not establish differentiability or global optimality.\n**Decision:** Switch this block to BOBYQA initialized at the best observed point. Keep the live harness, all observations, and the suspended CMA-ES object. Start a new local interpolation model; do not fabricate values for its initialization. Use a campaign-local queued callback adapter so the solver state can be suspended at the exact call limit.\n**Hyperparameters:** Py-BOBYQA 1.5.0 with normalized [0,1] bounds, npt=21 (2d+1 interpolation points), rhobeg=0.05, rhoend=1e-9, objfun_has_noise=False, seek_global_minimum=False, scaling_within_bounds=False (already normalized), restarts.use_restarts=False. Internal maxfun=1599 is only a solver ceiling, not permission for more than the block limit. Inherit Py-BOBYQA 1.5.0 trust-region/model defaults; disable logging. Radius 0.05 is comparable to CMA-ES's current sigma and tests local behavior without immediately imposing a tiny region. The 21-point model is cheaper to initialize than a full 66-point quadratic in 10 dimensions.\n**Reason:** The deterministic objective and progressively concentrated improving population make a local quadratic approximation a plausible way to spend calls efficiently. Smoothness is an explicit working hypothesis tested by observed progress, not known metadata. A bounded trial limits the cost if that hypothesis fails.\n**Next step limit:** 150 additional objective calls; pause at cumulative evaluation 551.\n**Why this length:** Allows the 21-point initialization and roughly 129 adaptive model/trust-region calls, enough to evaluate useful local progress without committing a large share of the remaining budget.\n**Review:** Inspect incumbent reduction, best-value trajectory, candidate displacement and any solver termination. Stop the block early if the solver terminates; stop immediately on an evaluator error or nonfinite value. The queue may hold a proposal at the checkpoint but cannot evaluate it without a new decision.\n"
+  },
+  {
+    "block": 4,
+    "method": "bobyqa",
+    "first_eval": 552,
+    "last_eval": 751,
+    "calls": 200,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "bobyqa",
+        "first_eval": 552,
+        "last_eval": 751
+      }
+    ],
+    "decision_text": "## Decision after evaluation 551\n**Budget:** 551 used / 2000 total; 1449 remaining.\n**Evidence:** The local trial improved the incumbent from 269.75643068585487 to 155.48415931490302, with the incumbent found at the final call. Best values after 25, 50, 75, 100, 125, and 150 local calls were 185.19855, 161.10126, 157.52318, 156.37572, 155.99630, and 155.48416. The best point moved 0.13727 in normalized Euclidean distance. Improvement is slower but remains sustained; the solver has not terminated. These observations support useful local modeling without proving global smoothness or convergence.\n**Decision:** Continue the same live BOBYQA solver and retain its interpolation points, Hessian approximation, trust-region state, and pending proposal. Preserve the harness and all campaign observations; CMA-ES remains suspended.\n**Hyperparameters:** Unchanged from decision 401: Py-BOBYQA 1.5.0, npt=21, initial rhobeg=0.05 (current radius adapts internally), rhoend=1e-9, no restarts or noise, and the same inherited defaults. No radius reset or interpolation-model rebuild: the model still produces improvements, and a restart would discard learned information.\n**Reason:** The 42.36% incumbent reduction is substantial, and the last 25 calls improved by about 0.512. The diminishing gains could reflect a narrow curved region; continued model adaptation is warranted before judging the method unproductive.\n**Next step limit:** 200 additional objective calls; pause at cumulative evaluation 751.\n**Why this length:** The initialization is complete, so 200 sequential model updates give a stronger view of local progress and conditioning than a brief follow-up, at less than 14% of the remaining budget.\n**Review:** Compare progress over successive 50-call intervals, candidate displacement, and termination status. Inspect whether improvements remain material or shrink persistently. Pause early on solver termination; stop immediately on evaluator error or nonfinite values. No subsequent method is committed.\n"
+  },
+  {
+    "block": 5,
+    "method": "bobyqa_full",
+    "first_eval": 752,
+    "last_eval": 820,
+    "calls": 69,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "bobyqa_full",
+        "first_eval": 752,
+        "last_eval": 820
+      }
+    ],
+    "decision_text": "## Decision after evaluation 751\n**Budget:** 751 used / 2000 total; 1249 remaining.\n**Evidence:** Continuing the 21-point BOBYQA model reduced the best from 155.48415931490302 to 150.99081967697114. Best values at 50-call checkpoints were 154.27434, 153.18810, 152.18068, and 150.99082, roughly steady slow improvement. The best point moved 0.16075 in normalized distance; the median distance between the last 20 consecutive candidates was 0.005117. No solver termination occurred. Substantial movement with slow objective improvement is consistent with a difficult local curvature geometry, but is not proof of any landscape identity.\n**Decision:** Adjust BOBYQA by starting a full quadratic interpolation model at the current incumbent. Retain the sparse-model solver in suspended state, retain CMA-ES, and preserve all observations and the same harness. The new model cannot accept arbitrary past interpolation points through this interface, so it initializes using actual counted calls.\n**Hyperparameters:** Py-BOBYQA 1.5.0, npt=66=(d+1)(d+2)/2 rather than 21; rhobeg=0.02 rather than 0.05. Keep rhoend=1e-9, deterministic/no-noise mode, no global search or restarts, normalized bounds, and the other defaults from decision 401. New internal maxfun=1249 is only an upper ceiling; the controller enforces 180 calls. Radius 0.02 is about four times the recent median candidate displacement and is small enough for a local curvature test. The extra interpolation points allow all quadratic cross terms to be determined rather than relying on minimum-change underdetermined model updates.\n**Reason:** The sparse model is productive but has spent 200 calls for 4.49334 improvement despite noticeable travel. Testing a richer curvature model is justified with 1249 calls left; a full-model initialization costs 45 more points than the sparse configuration. This tests a concrete explanation for slow progress, not an assumed optimum value.\n**Next step limit:** 180 additional objective calls; pause at cumulative evaluation 931.\n**Why this length:** Allows 66 initialization calls plus up to 114 adaptive updates, enough to assess whether the additional model detail repays its initialization cost while limiting the commitment to about 14% of the remaining budget.\n**Review:** Compare improvement and travel after initialization, inspect any numerical termination, and assess gain per call against the recent sparse-model block. Pause on solver completion; stop immediately on evaluator error or nonfinite value. No subsequent method is selected.\n"
+  },
+  {
+    "block": 6,
+    "method": "lbfgsb",
+    "first_eval": 821,
+    "last_eval": 1040,
+    "calls": 220,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "lbfgsb",
+        "first_eval": 821,
+        "last_eval": 1040
+      }
+    ],
+    "decision_text": "## Decision after evaluation 820\n**Budget:** 820 used / 2000 total; 1180 remaining.\n**Evidence:** The full-model trial stopped early after 69 calls instead of the allowed 180. It did not improve 150.99081967697114; its block median was 168.00280. Py-BOBYQA returned exit flag -3, 'Singular matrix in mini-model interpolation (main loop)', after a linear-algebra warning. This is an optimizer-model failure, not an evaluator error; all 69 evaluations returned finite values and remain recorded. The numerical failure limits what can be concluded about the richer model's potential.\n**Decision:** Switch to bounded L-BFGS-B, freshly initialized at the best observed point. Preserve all observations, the existing harness, and suspended earlier solvers. Use the queued callback adapter to preserve line-search and quasi-Newton state between blocks. Each finite-difference probe and line-search value is a real counted harness call.\n**Hyperparameters:** scipy 1.17.1 `minimize(method='L-BFGS-B')`, normalized [0,1] bounds, jac=None with absolute forward-difference eps=1e-7 normalized units (1e-6 original units), maxcor=20, ftol=1e-12, gtol=1e-6, maxls=30, maxiter=1000, maxfun=1180 as an internal ceiling only. Inherit remaining SciPy 1.17.1 defaults. Use direct objective values without rescaling. The small finite-difference step targets local slopes under the deterministic specification; derivative accuracy remains a working assumption. A larger-than-default 20-pair memory can capture coupled curvature in this 10-dimensional problem without material storage cost.\n**Reason:** The sparse model showed consistent local progress but the richer interpolation model failed numerically. A finite-difference quasi-Newton method offers a different route to local curvature that does not depend on that interpolation system. The trial is justified by the deterministic, locally modelable behavior observed so far, not by any assumed objective identity.\n**Next step limit:** 220 additional objective calls; pause at cumulative evaluation 1040.\n**Why this length:** A forward-difference objective/gradient request costs about 11 calls, so this allows roughly 20 such requests, including line searches. It gives the new curvature approximation time to become useful while retaining 960 calls if the full block runs.\n**Review:** Inspect incumbent improvement, accepted-iteration history, evaluation costs of line searches, and solver termination. Pause early if the solver finishes; stop immediately on any evaluator error or nonfinite objective. A block may pause mid-gradient; the worker keeps its pending request without evaluating it.\n"
+  },
+  {
+    "block": 7,
+    "method": "fd_newton_trust",
+    "first_eval": 1041,
+    "last_eval": 1172,
+    "calls": 132,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "fd_newton_trust",
+        "first_eval": 1041,
+        "last_eval": 1172
+      }
+    ],
+    "decision_text": "## Decision after evaluation 1040\n**Budget:** 1040 used / 2000 total; 960 remaining.\n**Evidence:** L-BFGS-B improved 150.99081967697114 to 149.65604351588016 in 220 calls, accepting 13 iterations. Accepted values fell steadily, including 150.80918 at iteration 5 and 149.81263 at iteration 10. The best point moved 0.07180 normalized units. The method is productive, but its improvement per call is lower than the preceding sparse BOBYQA continuation. No solver termination occurred. Finite-difference probes returned stable finite values; smooth local modeling remains a hypothesis supported by the successful descent.\n**Decision:** Switch this bounded trial to explicit finite-difference Newton trust-region models at the incumbent. Suspend L-BFGS-B without discarding state. Estimate full curvature directly from controlled probes, avoiding the moving interpolation system that failed earlier. Reuse the incumbent's actual observed center value, and count every new probe and trial through the same harness.\n**Hyperparameters:** Campaign-local `work/newton_trust.py`, using numpy 2.4.6 linear algebra and scipy 1.17.1 brentq. Normalized finite-difference step h=1e-4 (1e-3 original units), central first derivatives and diagonal second derivatives; mixed second derivatives use forward paired probes. In d=10 this costs 20 axial plus 45 mixed probes = 65 new calls per model when the center value is already observed. Choose h to reduce cancellation in second derivatives while remaining much smaller than recent search displacement. Initial trust radius=0.05, maximum radius=0.15; accept actual decreases when actual/predicted reduction >=0.1, shrink radius by 0.25 on poor agreement, double it for ratio>0.75 with a step at least 90% of the radius. Solve the quadratic ball subproblem by eigendecomposition and a scalar secular equation; floor=max(1e-10,1e-12*max(abs(eigenvalues))), root xtol=1e-12. Clip proposed steps to box feasibility and recompute predicted reduction. No objective-value predictions enter the trace.\n**Reason:** Repeated gradient estimates are expensive and the objective appears to have challenging coupled curvature. A full finite-difference Hessian costs about six gradient requests and can directly test whether curvature-aware steps improve efficiency. This is an experimental local optimizer; actual-versus-predicted reduction checks are essential. No objective identity or optimum is assumed.\n**Next step limit:** At most 136 additional objective calls; pause no later than cumulative evaluation 1176, or after two model cycles (each 65 probes and at most three trials).\n**Why this length:** Two local models can reveal whether predicted reductions survive real evaluations and whether trust-radius adaptation is useful. The trial uses at most 14.2% of the remaining budget; successful first trials will use only 132 calls.\n**Review:** Inspect actual reduction, prediction ratios, Hessian eigenvalues, gradient norms, and calls per accepted step. Pause after two models, on nonpositive predicted reduction, or if central differences become infeasible near a bound. Stop immediately on evaluator error or nonfinite objective. No subsequent block is preselected.\n"
+  },
+  {
+    "block": 8,
+    "method": "fd_newton_trust",
+    "first_eval": 1173,
+    "last_eval": 1371,
+    "calls": 199,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "fd_newton_trust",
+        "first_eval": 1173,
+        "last_eval": 1371
+      }
+    ],
+    "decision_text": "## Decision after evaluation 1172\n**Budget:** 1172 used / 2000 total; 828 remaining.\n**Evidence:** Two full finite-difference models and two accepted trial steps used 132 calls, reaching 149.27399431843583 from 149.65604351588016. The block stopped after its two planned model cycles, four calls below its maximum. Actual/predicted reduction ratios were 0.43760 and 1.07263, with actual reductions 0.10400 and 0.27805. Model gradient norms were 84.5081 and 121.1207; gradient norm did not decrease, so convergence is not established. Hessian eigenvalue ranges were [333.7647,168785.4333] and [697.3486,170627.9548], indicating large curvature variation. Accepted step norms were 0.03385 and 0.01167, both inside the 0.05 radius.\n**Decision:** Continue explicit finite-difference Newton trust-region optimization from its accepted incumbent, retaining the trust radius and all observations. The local Hessian is re-estimated as part of the method at each new center; this is not a restart of the campaign.\n**Hyperparameters:** Keep the campaign-local configuration from decision 1040: finite-difference h=1e-4, radius=0.05, maximum radius=0.15, acceptance/shrink/expand settings and eigensolver tolerances unchanged. The second model's prediction agreement supports keeping the current difference scale. Interior steps give no evidence that increasing the radius would help; the method has not needed truncation.\n**Reason:** The gains are modest for the evaluation cost, but both actual steps succeeded and prediction accuracy improved considerably. Three more models can test whether Newton refinement becomes more efficient as it enters a better-approximated local region. Large gradient norms and nontrivial steps provide no basis for declaring convergence.\n**Next step limit:** At most 204 additional objective calls; pause no later than cumulative evaluation 1376, or after three model cycles (each 65 probes and at most three trials).\n**Why this length:** Three cycles permit a trajectory in gradient size, predicted reduction and incumbent value, beyond the two-model initialization test. Successful first trials use 198 calls, leaving 630; extra calls are reserved only for bounded trust-radius retries within this block.\n**Review:** Inspect gradient norms, Hessian eigenvalues, actual/predicted reduction ratios, and progress per call. Pause on model-cycle completion or the previously documented numerical/boundary conditions. Stop immediately on evaluator error or nonfinite value. No later method is committed.\n"
+  },
+  {
+    "block": 9,
+    "method": "precond_bfgs",
+    "first_eval": 1372,
+    "last_eval": 1459,
+    "calls": 88,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "precond_bfgs",
+        "first_eval": 1372,
+        "last_eval": 1459
+      }
+    ],
+    "decision_text": "## Decision after evaluation 1371\n**Budget:** 1371 used / 2000 total; 629 remaining.\n**Evidence:** Three model cycles used 199 calls, stopping before the 204-call maximum when all cycles completed. Best value improved from 149.27399431843583 to 149.1569183243077. The first radius-0.05 trial increased the objective by 0.45384 and was rejected; the radius contracted, and subsequent accepted reduction ratios were 0.93772, 0.69073, and 1.09191. Current radius is 0.025. Model gradient norms were 4.90579, 14.86685, and 56.94269; the final model eigenvalues spanned [188.9781,173878.3911], and its accepted step norm was 0.0083814. Full curvature estimation now costs many probes for modest gains, but the last model predicted the accepted decrease well.\n**Decision:** Hybridize by reusing the last finite-difference Hessian as the initial curvature for a fresh BFGS solve at the incumbent. Reconstruct that Hessian solely from the 65 recorded probes at evaluations 1306-1370 and their real center value at evaluation 1305; no new or synthetic objective observations are introduced. Retain all previous solver states, observations, and the same harness. Keep bounds by optimizing z=logit(u) and mapping proposals through u=expit(z).\n**Hyperparameters:** scipy 1.17.1 `minimize(method='BFGS')` with normalized unit coordinates transformed to unconstrained logits. Initialize inverse Hessian in z coordinates from H_z=J H_u J, J=diag(u*(1-u)) at the current incumbent; symmetrize and floor eigenvalues at max(1e-10,1e-8*max(abs(eigenvalues))) before inversion. This is an initial preconditioner; BFGS learns subsequent curvature. jac=None, forward-difference eps=1e-8 in logit coordinates, gtol=1e-5, xrtol=1e-12, c1=1e-4, c2=0.9, maxiter=1000, with remaining SciPy 1.17.1 defaults. The small deterministic difference scale reduces gradient bias near a possible stationary point. The transform can flatten gradients near bounds, but the current point is well inside the box.\n**Reason:** Explicit Hessians have captured local interactions but their repeated 65-call cost is limiting progress. Reusing the observed curvature and updating it with secant information tests a cheaper local refinement. This also avoids discarding all curvature as a fresh identity-scaled quasi-Newton restart would.\n**Next step limit:** 176 additional objective calls; pause at cumulative evaluation 1547, or earlier if the solver terminates.\n**Why this length:** About 16 objective/gradient requests of 11 calls each can assess whether the seeded curvature yields rapid useful refinement; keep the remaining 453 calls uncommitted.\n**Review:** Inspect actual improvement, accepted steps, gradient or termination status, and evaluation efficiency. A solver may suspend mid-line-search or mid-gradient without losing state. Stop immediately on evaluator error or nonfinite value; pause on optimizer completion. No future method is selected.\n"
+  },
+  {
+    "block": 10,
+    "method": "basin_probe",
+    "first_eval": 1460,
+    "last_eval": 1555,
+    "calls": 96,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "basin_probe",
+        "first_eval": 1460,
+        "last_eval": 1555
+      }
+    ],
+    "decision_text": "## Decision after evaluation 1459\n**Budget:** 1459 used / 2000 total; 541 remaining.\n**Evidence:** Curvature-seeded BFGS terminated successfully after 88 calls and 7 accepted iterations, below the 176-call maximum. The best value is 149.15000000017426 at evaluation 1459. Accepted values progressed through 149.15377, 149.150828, 149.150105, 149.15000367, and 149.1500000372 before convergence. The reported logit-coordinate gradient components were at most 5.6844e-6 in absolute value, below gtol=1e-5. This is strong evidence of local stationarity, subject to finite-difference accuracy; the optimum value is private, so the numerical value itself is not a certificate of global optimality.\n**Decision:** Switch this block to a basin challenge design: evaluate curvature-shaped perturbations around the incumbent and a smaller space-filling design across the full box. Keep the converged solution, all history, and every earlier solver state. This block is only a set of actual exploratory evaluations; no subsequent local restart is preselected.\n**Hyperparameters:** numpy 2.4.6 default_rng seed=161803. Convert the final BFGS inverse Hessian to normalized-unit coordinates using J Hinv_z J. Symmetric eigendecomposition, with eigenvalues floored to 0.01 times their maximum, limits perturbation anisotropy to a standard-deviation ratio of 10. Draw 16 independent Gaussian-shaped unit directions at each normalized Euclidean radius 0.05, 0.15, 0.35, and 0.60, for 64 points. Reflect coordinates at [0,1] bounds using a period-two triangular mapping. Add 32 scipy 1.17.1 scrambled Sobol points in 10 dimensions, random_base2(m=5), seed=271828. No inherited optimizer adaptation defaults apply beyond those library implementations.\n**Reason:** More local descent has little expected value after successful stationarity. A mix of curvature-informed nearby challenges and full-box coverage tests whether the best known basin is easily improved from other locations, while retaining most of the remaining calls for a fresh evidence-based decision. Absence of a better sample would not prove global optimality.\n**Next step limit:** 96 additional objective calls; pause at cumulative evaluation 1555.\n**Why this length:** Sixteen directions at each of four distances provide a coarse scale comparison, while 32 Sobol points give inexpensive broader coverage. This spends less than 18% of the remaining budget and avoids a large commitment to uninformed sampling in 10 dimensions.\n**Review:** Compare best value and value distributions by radius and global design; inspect locations and distances of promising alternatives. Stop immediately on evaluator error or nonfinite values. No automatic follow-up optimization is allowed.\n"
+  },
+  {
+    "block": 11,
+    "method": "bfgs_restart",
+    "first_eval": 1556,
+    "last_eval": 1775,
+    "calls": 220,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "bfgs_restart",
+        "first_eval": 1556,
+        "last_eval": 1775
+      }
+    ],
+    "decision_text": "## Decision after evaluation 1555\n**Budget:** 1555 used / 2000 total; 445 remaining.\n**Evidence:** All 96 exploratory evaluations were worse than the incumbent 149.15000000017426. Best values at normalized radii 0.05, 0.15, 0.35, and 0.60 were 151.04848, 182.37829, 784.31378, and 3973.37299 respectively; the 32 global Sobol samples had best 5889.94329 and median 246203.03786. The best radius-0.35 point was evaluation 1500, exactly 0.35 from the incumbent. Broad sampling is sparse in 10 dimensions and does not rule out other basins.\n**Decision:** Restart curvature-seeded BFGS at the observed radius-0.35 challenger (evaluation 1500), preserving the original incumbent and all history. This resets the BFGS secant history but reuses a regularized curvature preconditioner from the previously converged BFGS run. The original converged solver and all other states remain retained. Use the same harness and transformed bounds.\n**Hyperparameters:** Same SciPy 1.17.1 BFGS/logit configuration as decision 1371 (eps=1e-8, gtol=1e-5, xrtol=1e-12, c1=1e-4, c2=0.9, maxiter=1000). Transfer the old inverse Hessian to unit coordinates using its old Jacobian, then to the new logit coordinates using the new Jacobian. Symmetrize; floor inverse-Hessian eigenvalues at 1e-10, then cap their maximum at 1000 times the smallest to avoid excessively large soft-direction steps far from the old solution. The new starting point was actually evaluated, and its repeated solver initialization evaluation counts normally.\n**Reason:** Restarting from the closest perturbations would mostly test the immediate convergence neighborhood. The best 0.35-distance sample is meaningfully displaced yet far better than the full-box samples, providing a more informative alternative starting point within the remaining budget. Reuse curvature as a preconditioner, with regularization because it may be inaccurate away from the first basin.\n**Next step limit:** 220 additional objective calls; pause at cumulative evaluation 1775, or earlier on solver completion.\n**Why this length:** About 20 forward-difference gradient requests provide a bounded restart trial without spending all 445 remaining calls. The next decision can use its actual trajectory, convergence location, and remaining budget.\n**Review:** Compare restart progress, distance to the incumbent, and whether it finds a distinct competitive endpoint. Pause early on solver termination; stop immediately on evaluator error or nonfinite values. No later method or budget allocation is selected.\n"
+  },
+  {
+    "block": 12,
+    "method": "central_bfgs",
+    "first_eval": 1776,
+    "last_eval": 1859,
+    "calls": 84,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "central_bfgs",
+        "first_eval": 1776,
+        "last_eval": 1859
+      }
+    ],
+    "decision_text": "## Decision after evaluation 1775\n**Budget:** 1775 used / 2000 total; 225 remaining.\n**Evidence:** The displaced BFGS restart fell from 784.313780364086 to accepted value 149.15000000046626 in 220 calls and 17 accepted iterations. Its best probe was 149.1500000004498, slightly worse than the incumbent 149.15000000017426. The latest accepted point is only 1.67083e-6 normalized distance from the original incumbent. The solver has not yet reported termination, but its trajectory strongly supports return to the same local solution rather than discovery of a distinct lower basin. The earlier 96 challenges also failed to improve the incumbent; this still does not establish global optimality.\n**Decision:** Switch to a precision-focused BFGS refinement at the global observed incumbent, replacing forward differences with controlled central differences. Suspend the second restart and retain its state. Initialize curvature from the first converged BFGS result, preserving all observations and the same harness.\n**Hyperparameters:** scipy 1.17.1 BFGS in logit coordinates with supplied central-difference gradient: each gradient component uses two actual objective evaluations at z_i +/- 1e-6, for 20 gradient probes plus the solver's center evaluation. Every call counts. Initial inverse Hessian is the first converged BFGS inverse Hessian, symmetrized. Set gtol=1e-7 and xrtol=1e-13; retain c1=1e-4, c2=0.9, maxiter=1000 and other SciPy 1.17.1 defaults. A fixed central-difference step avoids vanishing relative steps for coordinates near zero and reduces first-order finite-difference bias. Mapping expit keeps all objective calls feasible.\n**Reason:** Two starts approach the same location, while the incumbent was found with one-sided derivatives. A small central-difference check can determine whether meaningful numerical headroom remains and improve the recorded incumbent without another costly Hessian estimate. It does not provide a global-optimality certificate.\n**Next step limit:** 84 additional objective calls; pause at cumulative evaluation 1859, or earlier if the solver terminates.\n**Why this length:** Four objective/central-gradient requests are enough for a bounded precision test from an already converged point with a learned inverse Hessian. This spends at most 37.3% of the remaining budget and preserves room to assess the outcome rather than consuming the remainder automatically.\n**Review:** Inspect objective improvement, central-gradient norm, solver termination, and numerical precision limitations together with the basin-challenge evidence. Stop immediately on evaluator error or nonfinite values. No subsequent action is preselected.\n"
+  }
+]

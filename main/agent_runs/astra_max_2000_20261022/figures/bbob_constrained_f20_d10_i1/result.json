@@ -1,0 +1,65 @@
+{
+  "task": "constrained_ellipsoid10",
+  "task_name": "bbob_constrained_f20_d10_i1",
+  "evaluations": 735,
+  "status": "execution_failure",
+  "run_note": "Execution failure at 735 calls: the agent's checkpoint adapter deadlocked while restarting COBYQA. Saved observations remain valid; 1,265 calls were unused.",
+  "agent_regret": 6.19196692671585,
+  "baseline_mean_regrets": {
+    "random_search": 541.303949410289,
+    "sobol": 523.273890153397,
+    "cma_es": 43.6032367852009,
+    "de": 495.305196015788,
+    "turbo": 289.3960296080839,
+    "gp_bo": 1878.3483525898932,
+    "bobyqa": 2639.246580413158,
+    "nelder_mead": 815.139997500437,
+    "lbfgsb": 263.27285260328335
+  },
+  "baseline_feasible_seed_counts": {
+    "random_search": [
+      10,
+      10
+    ],
+    "sobol": [
+      10,
+      10
+    ],
+    "cma_es": [
+      10,
+      10
+    ],
+    "de": [
+      10,
+      10
+    ],
+    "turbo": [
+      10,
+      10
+    ],
+    "gp_bo": [
+      10,
+      10
+    ],
+    "bobyqa": [
+      1,
+      1
+    ],
+    "nelder_mead": [
+      1,
+      1
+    ],
+    "lbfgsb": [
+      1,
+      1
+    ]
+  },
+  "decision_blocks": 5,
+  "noisy": false,
+  "n_constraints": 3,
+  "source_commit": "591e3de6a553c026976e3f785eceb8cac8b6690b",
+  "model": "gpt-6-astra",
+  "effort": "max",
+  "campaign_id": "run-0bab130d3362",
+  "provenance_dir": "provenance/constrained_ellipsoid10"
+}

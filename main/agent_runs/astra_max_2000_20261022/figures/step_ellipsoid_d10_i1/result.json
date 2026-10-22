@@ -1,0 +1,65 @@
+{
+  "task": "step_ellipsoid10",
+  "task_name": "step_ellipsoid_d10_i1",
+  "evaluations": 2000,
+  "status": "complete",
+  "run_note": "",
+  "agent_regret": 0.012701368428309934,
+  "baseline_mean_regrets": {
+    "random_search": 87.37642992995045,
+    "sobol": 76.10349941445799,
+    "cma_es": 1.927785132806214,
+    "de": 43.61232161361068,
+    "turbo": 2.420767774311865,
+    "gp_bo": 0.23782634096204588,
+    "bobyqa": 85.89291056819997,
+    "nelder_mead": 744.6256321366513,
+    "lbfgsb": 744.6256321366513
+  },
+  "baseline_feasible_seed_counts": {
+    "random_search": [
+      10,
+      10
+    ],
+    "sobol": [
+      10,
+      10
+    ],
+    "cma_es": [
+      10,
+      10
+    ],
+    "de": [
+      10,
+      10
+    ],
+    "turbo": [
+      10,
+      10
+    ],
+    "gp_bo": [
+      10,
+      10
+    ],
+    "bobyqa": [
+      1,
+      1
+    ],
+    "nelder_mead": [
+      1,
+      1
+    ],
+    "lbfgsb": [
+      1,
+      1
+    ]
+  },
+  "decision_blocks": 13,
+  "noisy": false,
+  "n_constraints": 0,
+  "source_commit": "591e3de6a553c026976e3f785eceb8cac8b6690b",
+  "model": "gpt-6-astra",
+  "effort": "max",
+  "campaign_id": "run-6f0158f5c5e9",
+  "provenance_dir": "provenance/step_ellipsoid10"
+}

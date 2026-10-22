@@ -1,0 +1,236 @@
+[
+  {
+    "block": 1,
+    "method": "cma_noise_probe \u2192 cma_es",
+    "first_eval": 1,
+    "last_eval": 200,
+    "calls": 200,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "cma_noise_probe",
+        "first_eval": 1,
+        "last_eval": 8
+      },
+      {
+        "method": "cma_es",
+        "first_eval": 9,
+        "last_eval": 200
+      }
+    ],
+    "decision_text": "# Initial decision: one bounded block\n\nMinimize the noisy scalar objective on 20 coordinates, each in [-5, 5], with no other constraints and no prior observations. The hard total budget is 2,000 calls, including repeats. The public interface says scoring uses the noise-free objective at the point with the smallest observed value; that true value is unavailable to the agent. Noise magnitude and distribution are unknown. Repeats will provide a local diagnostic, not an assumption of uniform noise everywhere. The objective is treated as a sealed black box.\n\nThe first block uses 8 independent calls at the box center x = 0, followed by 12 complete CMA-ES generations of 16 candidates (192 calls). Method labels are `cma_noise_probe` for repeats and `cma_es` for the population search. CMA-ES begins at x = 0 with sigma0 = 2.0 (20% of the box width), identity covariance, full covariance adaptation (`CMA_diagonal=0`), active covariance updates (`CMA_active=True`), population size 16, and reproducible random seed 593904. Bounds are enforced by pycma's default BoundTransform. Use the supported `cma.CMAEvolutionStrategy` ask/tell API in installed pycma 4.5.0, with its inherited default recombination weights, learning rates, step-size adaptation, and termination rules. Logging/console verbosity is disabled (`verb_log=0`, `verbose=-9`). NumPy is 2.4.6; SciPy is 1.17.1. The supplied CMA wrapper was reviewed; the direct API exposes population size and initial scale for this campaign without a new dependency.\n\nA rank-based population method is suitable for an initially unknown noisy landscape and can learn interactions among 20 variables. The initial scale samples a substantial interior region without concentrating on boundaries. A population of 16 modestly increases selection diversity relative to the dimensional default. The 8 center repeats measure noise against the search's between-candidate variation. They are preserved as observations but do not enter CMA's population updates.\n\nMaximum additional calls: **200**. Pause at cumulative evaluation **200**, or sooner if pycma signals termination, any observation is nonfinite, or the evaluator raises an error (no retry). Eight repeats give a useful preliminary variance estimate; 12 generations allow initial directional adaptation while limiting delayed reconsideration to 10% of the budget. A campaign-local evaluation guard enforces this cap and the global remaining counter. The same harness and optimizer process remain alive at the checkpoint.\n\nAt the checkpoint inspect center repeat mean, standard deviation and range; population minima and medians across generations; best observed value and its location; sigma and covariance axis ratio; and calls used/remaining. Judge improvement relative to estimated noise rather than interpreting one low observation as a reliable objective value. Reconsider method, population size, sampling scale, replication and next block length from those observations only. No subsequent block is preselected.\n"
+  },
+  {
+    "block": 2,
+    "method": "cma_recheck \u2192 cma_es",
+    "first_eval": 201,
+    "last_eval": 524,
+    "calls": 324,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "cma_recheck",
+        "first_eval": 201,
+        "last_eval": 204
+      },
+      {
+        "method": "cma_es",
+        "first_eval": 205,
+        "last_eval": 524
+      }
+    ],
+    "decision_text": "## Decision after evaluation 200\n**Budget:** 200 used / 2000 total; 1800 remaining.\n**Evidence:** Eight center observations had mean 131069426.52, sample SD 3406348.16, and range 126627827.29 to 135547127.50. The best observation is 22831608.040149067 at call 169. Across 12 CMA generations, population median fell from 196809506.75 to 45404141.96. Sigma adapted from 2.0 to 1.74036 and covariance axis ratio reached 1.4575. Progress is much larger than measured center noise; noise at lower objective values is still unknown. No early stop occurred.\n**Decision:** Continue CMA-ES, preserving the exact mean, covariance, evolution paths, random state and all observations. First re-evaluate the current best observed point four times under `cma_recheck`, then return to `cma_es` for up to 20 complete generations. The rechecks are diagnostic and do not enter population updates.\n**Hyperparameters:** Retain the initial pycma 4.5.0 configuration: population 16, adaptive sigma/covariance, full active covariance and bounded transform. No restart or manual scale adjustment. Four incumbent repeats give a local comparison with the center repeats; they do not establish constant noise across the domain.\n**Reason:** Population-wide improvement supports retaining the ongoing search. Existing variation between candidates remains substantially larger than center noise, so extra replication of every candidate is not justified yet. Rechecking the incumbent helps distinguish actual progress from one favorable noise draw.\n**Next step limit:** 324 additional objective calls; pause at cumulative evaluation 524.\n**Why this length:** Twenty additional generations allow adaptation beyond the encouraging 12-generation initial trend, while the four rechecks cost little and leave most of the budget for evidence-driven decisions. The longer block is justified by sustained population improvement.\n**Review:** Inspect recheck mean/SD and discrepancy from the incumbent observation, generation minima/medians, recent trend, sigma, axis ratio, and remaining budget. Pause sooner on an optimizer termination signal or nonfinite observation; stop without retry on any evaluator error. No later method is preselected.\n"
+  },
+  {
+    "block": 3,
+    "method": "quadratic_probe",
+    "first_eval": 525,
+    "last_eval": 544,
+    "calls": 20,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "quadratic_probe",
+        "first_eval": 525,
+        "last_eval": 544
+      }
+    ],
+    "decision_text": "## Decision after evaluation 524\n**Budget:** 524 used / 2000 total; 1476 remaining.\n**Evidence:** Best observed y improved to 7228028.662816426 at call 451; generation-32 median was 11692843.13 (versus 45404141.96 at generation 12). Sigma is 0.752331 and axis ratio 1.73598. Four repeats of the earlier 22831608.04 incumbent had mean 20858702.16 and SD 651342.72, supporting improvement and showing smaller absolute noise there than at the center; four repeats are not a precise noise model. A no-evaluation diagnostic fit affine and quadratic surrogates, using every fifth observation as held-out data (105 observations). The weighted ridge quadratic with ridge 0.1 had relative RMSE 0.10556 and median absolute relative error 0.05849; the affine model had relative RMSE 0.4373 and median error 0.3098. On 22 held-out observations below 20 million, quadratic RMSE was 1656209.98. This measures predictive usefulness on sampled data, not objective identity or guaranteed extrapolation accuracy.\n**Decision:** Temporarily hybridize with a short `quadratic_probe` block. Preserve CMA state without updating it. Fit full quadratic models to all 524 observations and evaluate four model minimizers plus the observed incumbent, four calls per location. Initialize surrogate minimization from the incumbent, bounded CMA mean, and zero projected into each local box; choose the lowest predicted candidate. All reported objective values still come only from the harness.\n**Hyperparameters:** Custom quadratic ridge adapter in work/, NumPy 2.4.6 and SciPy 1.17.1. Features: intercept, x/5, all 210 quadratic monomials (231 coefficients total). Normalize y by its median. Row weights are 1/max(y, empirical 20th percentile y), normalized by median weight. Compare ridge strengths 0.1 and 1.0 (penalty on all coefficients); compare coordinatewise trust half-widths 1.0 and 2.0 around the incumbent, intersected with [-5,5]. Use SciPy L-BFGS-B on the surrogate only, analytic gradients, maxiter=500, ftol=1e-12, gtol=1e-8, inherited SciPy 1.17.1 defaults otherwise. Four repetitions per candidate are summarized by their mean and SD; each individual observation remains in the trace. CMA settings remain as previously recorded, paused without reset.\n**Reason:** The held-out quadratic accuracy suggests a model-guided move could improve efficiency. A brief, bounded, repeated comparison limits the cost of model extrapolation error and gives stronger evidence than trusting predicted objective values.\n**Next step limit:** 20 additional objective calls; pause at cumulative evaluation 544.\n**Why this length:** Five locations with four independent measurements each suffice to check whether the model proposals improve over the incumbent at the local noise scale. There is no justification yet for a long surrogate-guided run.\n**Review:** Compare repeated means/SDs and individual values, actual versus predicted changes, candidate displacements and boundary contacts. Retain or revise the method based on measured improvement. Pause on nonfinite observations or optimizer numerical failure; stop without retry on evaluator error. No subsequent block is preselected.\n"
+  },
+  {
+    "block": 4,
+    "method": "quadratic_local_design",
+    "first_eval": 545,
+    "last_eval": 667,
+    "calls": 123,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "quadratic_local_design",
+        "first_eval": 545,
+        "last_eval": 667
+      }
+    ],
+    "decision_text": "## Decision after evaluation 544\n**Budget:** 544 used / 2000 total; 1456 remaining.\n**Evidence:** The incumbent's four new repeats had mean 9965290.28 and SD 2523974.90, versus its original 7228028.66 observation. The four surrogate proposals had means 1007102.79, 361614.18, 1168252.02 and 2744258.45, with SDs 963237.10, 2685248.01, 2136681.24 and 1017190.04 respectively. These support a large improvement, though the candidates' rankings are unresolved. The new raw minimum is -1580493.4486415815 at call 537, on the ridge=1/radius=1 proposal; its repeat mean is 1168252.02. A negative observation is not evidence of a negative noise-free value. The ridge=0.1/radius=2 proposal has the smallest repeat mean and is supported by the earlier surrogate prediction. Low-value noise is large in absolute terms and cannot be treated as purely relative noise.\n**Decision:** Switch the active block to `quadratic_local_design`, retaining all observations and the paused CMA optimizer. Use the lowest repeated-mean proposal (ridge=0.1/radius=2) as the design center, without declaring it the true best. Fit the same full quadratic to all observations and use its orthonormal curvature directions for paired local probes. Evaluate the center and both signs of each of 20 directions, three calls per location; do not refit or change the design within the block.\n**Hyperparameters:** Retain quadratic feature scaling and ridge=0.1 from decision 524, with the same capped row weighting. The weighting floor is the empirical 20th percentile of all y values, which is still positive and avoids division by negative low observations. Compute the analytic Hessian in original coordinate units. For eigenvalue lambda, choose displacement length min(2.0, sqrt(2*5000000/max(lambda,100000))). Thus a well-estimated positive-curvature direction targets a predicted 5-million increase; weak or negative directions have a 2-unit norm cap. Shorten each signed displacement as needed to stay within the box, using at most 95% of the available distance to a boundary. Three repeats per location, fixed center first and then paired eigenvectors in ascending eigenvalue order. NumPy 2.4.6 / SciPy 1.17.1 defaults for eigendecomposition and linear least squares; no stochastic proposal seed is needed.\n**Reason:** The surrogate produced a large verified reduction, but now repeated measurements reveal a substantial absolute noise floor. Paired directions provide local gradient/curvature information with less confounding than unstructured low-noise assumptions. Wider probes improve signal relative to noise, while the norm and box caps limit extrapolation. Further CMA adaptation from its earlier 11.7-million population median is less directly supported than refining the successful model region.\n**Next step limit:** 123 additional objective calls; pause at cumulative evaluation 667.\n**Why this length:** A symmetric design in 20 dimensions needs 41 locations. Three measurements each give 123 calls, allowing direct uncertainty diagnostics and a full directional gradient check without committing to a long model-guided run.\n**Review:** Inspect center mean/SD, direction-pair changes against repeat uncertainty, best observed and repeated-mean values, model residuals, and any evidence of useful weak-curvature movement. Reassess model weighting, regularization, radius and replication before more evaluations. Pause on nonfinite observations or numerical failure; stop without retry on evaluator error.\n"
+  },
+  {
+    "block": 5,
+    "method": "diagonal_probe",
+    "first_eval": 668,
+    "last_eval": 763,
+    "calls": 96,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "diagonal_probe",
+        "first_eval": 668,
+        "last_eval": 763
+      }
+    ],
+    "decision_text": "## Decision after evaluation 667\n**Budget:** 667 used / 2000 total; 1333 remaining.\n**Evidence:** The 41-location symmetric design gave a pooled repeat SD of 2134478.45 over all repeated locations (110 residual degrees of freedom). Its center's 3 new observations had mean -1208345.23; the earlier 4 at that exact location had mean 361614.18. Most two-unit probes increased their repeated means to roughly 2 to 5 million, with some larger values and considerable uncertainty. The raw minimum is -2622611.8821430276 at call 578. Grouped five-fold cross-validation (all repeats at a location stay in one fold, seed 667, 557 unique locations) favored a diagonal quadratic with uniform observation weights and ridge 0.001: overall RMSE 2231490.21 and local RMSE 2028491.25. The best full-quadratic overall RMSE tested was 3686534.56. A Huber fit with threshold 2500000 gave a minimizer only 0.04969 units from the uniform fit, indicating limited outlier sensitivity. Both propose x[0]=5 because estimated curvature there is weakly negative, around -34 thousand; fitted curvatures of the other coordinates are approximately 1.88 to 2.12 million. That weak-coordinate boundary choice is uncertain.\n\nA reporting-only diagnostic raised a NumPy scalar conversion TypeError and closed the worker after the checkpoint. It made zero objective calls; there was no evaluator error or unknown evaluation. The scalar extraction was fixed, all 667 observations were restored from the untouched harness trace, and a replacement transport client reconnected to the same existing evaluator campaign. Public counters were verified as 667 used / 1333 remaining before any further calls. No budget was reset. The paused CMA in-memory state was lost; this decision continues surrogate optimization from recorded observations and does not restart CMA. The replacement worker keeps state alive on non-evaluator reporting errors and still stops without retry on evaluator errors.\n\n**Decision:** Use `diagonal_probe`: retain all observations, rebuild the lower-complexity surrogate, and compare its proposed strong-coordinate optimum at five values of the weak coordinate x[0], with the prior local center as a reference. Use the uniform diagonal fit selected by grouped validation; do not infer the objective's identity from this surrogate.\n**Hyperparameters:** Diagonal quadratic features [1, x/5, (x/5)^2], 41 coefficients, y scale 1e7, uniform row weights, ridge=0.001 on all coefficients. SciPy 1.17.1 linear least squares. Each coordinate minimizer is found analytically by comparing feasible stationary points and box endpoints. The five proposals share fitted coordinates x[1:20] and set x[0] to -5, -2.5, 0, 2.5, 5. Include the previous local center as a sixth point. Use 16 repeats per point, interleaved over 16 balanced rounds. This explicitly examines the uncertain boundary proposal instead of accepting a tiny estimated negative curvature as reliable.\n**Reason:** The simpler model has lower held-out prediction error and its strong-coordinate optimum is insensitive to robust versus squared-error fitting. Replicated comparisons can test this proposal while addressing the remaining weak-coordinate uncertainty. The noise scale argues against fine finite differences or ranking single observations.\n**Next step limit:** 96 additional objective calls; pause at cumulative evaluation 763.\n**Why this length:** Six locations with 16 interleaved repeats each give a mean standard error near 0.53 million at the pooled noise estimate, enough to check material improvement and large weak-coordinate effects while retaining 1237 calls for later evidence-based decisions.\n**Review:** Compare repeated means and standard errors, raw best point, and the weak-coordinate pattern; assess whether observed changes agree with the surrogate. Reconsider local probing versus replication and model complexity. Pause on nonfinite observations; stop without retry on evaluator error.\n"
+  },
+  {
+    "block": 6,
+    "method": "orthogonal_gradient",
+    "first_eval": 764,
+    "last_eval": 955,
+    "calls": 192,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "orthogonal_gradient",
+        "first_eval": 764,
+        "last_eval": 955
+      }
+    ],
+    "decision_text": "## Decision after evaluation 763\n**Budget:** 763 used / 2000 total; 1237 remaining.\n**Evidence:** The five diagonal-model proposals had 16-repeat means -439159.22, -402769.35, -262292.43, -29668.79 and 609525.22 as x[0] ran from -5 to 5. Their mean SEs ranged 438549 to 615164. The reference center mean was 1453957.81 (SE 609172.49). The weak-coordinate differences remain uncertain; a negative-curvature boundary preference is not established. The raw minimum is -6846677.5621912535 at call 668, on the x[0]=-5 proposal, whose repeated mean is -439159.22 and SD 2332345.63. Strong coordinates share the cross-validated diagonal surrogate's fitted minimum; noisy observations alone cannot resolve small refinements there.\n**Decision:** Continue the surrogate-based approach with `orthogonal_gradient`: use a paired, orthogonal experimental design around the x[0]=-5 diagonal proposal. Preserve all observations and surrogate state. Hold the weak coordinate fixed in this block and estimate a local gradient for the 19 better-identified coordinates. This is an information-gathering block, with no automatic subsequent objective step.\n**Hyperparameters:** Use scipy.linalg.hadamard(32) columns 1 through 19 (excluding the constant column) for 32 orthogonal sign vectors. Per-coordinate displacement amplitude is min(1.5, 0.90*min(5-center_i,center_i+5)) for coordinates 1..19; coordinate 0 remains fixed at -5. For each vector evaluate both center+displacement and center-displacement, 3 calls per sign, in interleaved positive/negative order. These symmetric perturbations cancel even quadratic terms in paired differences. Recover gradient by orthogonal least squares, using the known amplitudes; estimate its uncertainty from paired replicate variation. Use the existing diagonal model's curvature as a diagnostic comparison, not as a noise-free observation. SciPy 1.17.1 Hadamard construction and NumPy 2.4.6 linear algebra have no relevant tunable defaults.\n**Reason:** The lower-complexity surrogate produced a promising region. Rather than comparing tiny coordinate moves against 2-million noise, wider balanced perturbations increase gradient signal and avoid fitting 190 unneeded interaction coefficients. Holding the unresolved weak coordinate at the observed incumbent is a pragmatic initialization, not a claim that its boundary is optimal.\n**Next step limit:** 192 additional objective calls; pause at cumulative evaluation 955.\n**Why this length:** Thirty-two paired directions cover 19 coordinates orthogonally, and three repeats per sign give 192 calls. This is enough to estimate directional effects and repeat uncertainty, while retaining 1045 calls for a fresh decision.\n**Review:** Examine paired gradient estimates and SEs, implied movement under fitted curvature, residual lack of fit, objective variability at these broader probes, and unchanged or improved best observation. Reassess amplitudes, repetitions and model assumptions before proposing any refinement. Pause on nonfinite observations; stop without retry on evaluator error.\n"
+  },
+  {
+    "block": 7,
+    "method": "diagonal_refine_replicate",
+    "first_eval": 956,
+    "last_eval": 1083,
+    "calls": 128,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "diagonal_refine_replicate",
+        "first_eval": 956,
+        "last_eval": 1083
+      }
+    ],
+    "decision_text": "## Decision after evaluation 955\n**Budget:** 955 used / 2000 total; 1045 remaining.\n**Evidence:** The orthogonal probes had pooled repeat SD 1819397.45. The paired gradient implied a 0.31136-unit unshrunk step and a predicted reduction of 96347.16, with most gradient components comparable to their SEs. The paired-mean residual RMSE was 252754.41, supporting the symmetric quadratic approximation at this design scale. Fitting the cross-validated diagonal model to all 955 observations instead gives a conservative 0.10665-unit refinement, predicted reduction 11451.43, and approximate coordinate SEs 0.0243 to 0.0456 for coordinates 1..19 (conditional on the regression/noise model). Its robust Huber counterpart differs by 0.03616 units. Regression residual SD is 2069086.19. These are model diagnostics, not objective evaluations. The best observed result remains -6846677.5621912535 at call 668.\n**Decision:** Use `diagonal_refine_replicate` to measure the pooled-model refinement while keeping x[0]=-5 and preserving all observations. Freeze this candidate for the block; do not chase the individual lowest draw or refit between repeats. The surviving worker and evaluator counter remain unchanged.\n**Hyperparameters:** Same uniform diagonal ridge model (ridge 0.001, feature scaling x/5 and response scale 1e7) as decision 667, refitted to all 955 data. Analytic box-constrained coordinate minimizers; override the weak coordinate to the current observed incumbent's -5 because its optimum remains unresolved. Up to 128 repeats, with 32-call reporting batches. At each batch boundary pause early if the candidate becomes the new raw incumbent or its sample SD exceeds 5 million. No optimizer learning-rate or step-size parameter is introduced.\n**Reason:** The pooled fit incorporates both the broad and paired local data, and is more stable than taking a full step from one noisy gradient estimate. The predicted improvement is far below single-call noise. Repeated measurement can detect gross model error and makes this promising refined location eligible under the public rule that selects the lowest individual observed y; it cannot precisely confirm an 11-thousand improvement with this budget.\n**Next step limit:** 128 additional objective calls; pause no later than cumulative evaluation 1083, with the batch-boundary early conditions above.\n**Why this length:** At the measured noise scale, 128 repeats provide an approximate mean SE of 0.18 million. This is adequate to test substantial misspecification, while leaving 917 calls for reconsideration. A short single observation would have little diagnostic value here.\n**Review:** Inspect the frozen candidate's mean, SD, uncertainty, lowest observation and whether it replaced the incumbent; compare its level against the regression prediction of 256707.53 without treating that prediction as truth. Reconsider model information gathering versus replication. Stop without retry on evaluator error; pause on nonfinite observations.\n"
+  },
+  {
+    "block": 8,
+    "method": "orthogonal_gradient",
+    "first_eval": 1084,
+    "last_eval": 1211,
+    "calls": 128,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "orthogonal_gradient",
+        "first_eval": 1084,
+        "last_eval": 1211
+      }
+    ],
+    "decision_text": "## Decision after evaluation 1083\n**Budget:** 1083 used / 2000 total; 917 remaining.\n**Evidence:** All 128 refinement repeats completed; neither early-review condition fired. Their mean is 23801.20, SD 2059134.57, SE 182003.50, and minimum -6123552.64. The mean is compatible with the surrogate's 256707.53 prediction at the available uncertainty. The raw incumbent remains -6846677.5621912535 at the earlier diagonal proposal. The last pooled regression placed approximate strong-coordinate standard errors at 0.0243 to 0.0456; repeated observations at one point primarily constrain its level, not all its directional derivatives.\n**Decision:** Return to `orthogonal_gradient` for a second bounded paired design centered on the now-measured refinement, keeping x[0]=-5 and retaining all previous observations and model fits. This block gathers independent derivative information; it does not automatically choose or evaluate a following candidate.\n**Hyperparameters:** Retain the 32-by-19 Hadamard sign design from decision 763. Increase maximum coordinate amplitude from 1.5 to 1.8 while retaining the 90%-of-boundary-margin cap, to increase gradient signal relative to the observed 2.06-million noise. Use two repeats per sign instead of three, since noise magnitude is better measured and the existing 192-call paired design is retained. Two signs times 32 rows times two repeats = 128 calls. Keep all points box feasible. Diagnostic gradient computation and uncertainty estimation remain unchanged except for the repeat count and new amplitudes.\n**Reason:** The refined point has a convincingly low measured level relative to the initial region, but tiny positional improvements cannot be resolved by direct mean comparisons. Balanced derivative information is a more efficient way to reduce remaining parameter uncertainty. Earlier broad probes showed similar absolute noise to local repeats, supporting a moderate amplitude increase.\n**Next step limit:** 128 additional objective calls; pause at cumulative evaluation 1211.\n**Why this length:** Two repeats for each sign of 32 orthogonal directions give an independent full-rank gradient estimate while spending less than the earlier 192-call design. This leaves 789 calls for reconsideration and avoids using the entire remaining budget on uncertain small improvements.\n**Review:** Compare paired gradients with the first design after accounting for the shifted center, estimate repeat noise and residuals, and refit the pooled model to assess movement and uncertainty. Reconsider amplitude, regularization and replication. Pause on nonfinite observations; stop without retry on evaluator error.\n"
+  },
+  {
+    "block": 9,
+    "method": "diagonal_refine_replicate",
+    "first_eval": 1212,
+    "last_eval": 1403,
+    "calls": 192,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "diagonal_refine_replicate",
+        "first_eval": 1212,
+        "last_eval": 1403
+      }
+    ],
+    "decision_text": "## Decision after evaluation 1211\n**Budget:** 1211 used / 2000 total; 789 remaining.\n**Evidence:** The second paired design had repeat SD 2197749.89 and pair-mean residual RMSE 663379.55. Most gradient components were within about two SEs of zero, and the unpooled Newton step remained noise-sensitive (norm 0.27518). The pooled diagonal fit moved its candidate modestly: it is 0.13347 units from the raw incumbent, with conditional coordinate SEs now 0.0218 to 0.0412 and residual SD 2065416.13. Its robust counterpart is 0.02804 units away. Model-predicted improvement over the raw incumbent is 17802.18; predicted level is 126653.93. These changes are much smaller than observation noise. The raw minimum is unchanged at -6846677.5621912535.\n**Decision:** Continue `diagonal_refine_replicate` at the newly pooled model's strong-coordinate minimum, with x[0]=-5. Preserve all data and model diagnostics, freeze this updated point for the block, and pause early at a reporting boundary if it becomes the new observed incumbent.\n**Hyperparameters:** Retain the uniform diagonal ridge model (0.001), analytic bounded minimization, and weak-coordinate override from decision 955. Refitted parameters use all 1211 observations; this is a state update, not a restart. Increase the repeat cap from 128 to 192 because the previous 128-repeat test supported the low predicted level and the updated model is stable to robust fitting. Keep 32-call reporting batches and the same SD>5-million or new-incumbent early-review conditions.\n**Reason:** Further refinements appear small relative to noise, and direct tiny-step comparisons are inefficient. Measurements at the updated expected minimum both test the model's local level and give a promising point a chance to replace the public-rule incumbent. The raw record is not interpreted as a reliable estimate of the noise-free objective.\n**Next step limit:** 192 additional objective calls; pause no later than cumulative evaluation 1403, or at an earlier specified batch boundary.\n**Why this length:** A 192-repeat cap gives an approximate mean SE of 0.15 million under the observed variance, while retaining 597 calls for reconsideration. The longer measurement block is supported by prior verification and the shrinking model uncertainty, not a preset campaign schedule.\n**Review:** Inspect mean/SD/SE, outliers, whether the candidate becomes the raw incumbent, and consistency with the model's predicted level. Reassess replication and any remaining model uncertainty. Pause on nonfinite observations; stop without retry on evaluator error.\n"
+  },
+  {
+    "block": 10,
+    "method": "diagonal_refine_replicate",
+    "first_eval": 1404,
+    "last_eval": 1595,
+    "calls": 192,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "diagonal_refine_replicate",
+        "first_eval": 1404,
+        "last_eval": 1595
+      }
+    ],
+    "decision_text": "## Decision after evaluation 1403\n**Budget:** 1403 used / 2000 total; 597 remaining.\n**Evidence:** The latest refined point's 192 repeats have mean 116667.42, SD 2092353.07 and SE 151002.58, agreeing with the pooled model prediction 126653.93. Its minimum -6809334.29 narrowly exceeds the earlier record -6846677.56. No early-review condition fired. The earlier refined point had mean 23801.20 with SE 182003.50; that difference does not establish that it is better. The latest candidate uses more derivative data and is stable to robust fitting. Lack of a new raw record is not evidence of stagnation in the underlying expected objective under this noise.\n**Decision:** Continue `diagonal_refine_replicate` unchanged at the exact latest candidate. Retain its 192 repeat observations, all campaign observations and surrogate state. Do not move to a point selected solely by a slightly lower noisy mean or record.\n**Hyperparameters:** Reference decision 1211 for model, candidate and fixed weak coordinate. No parameter refit or coordinate change. Increase this block's repeat cap to 256, retaining 32-call batches. The new-incumbent early-review condition remains, and compare running repeated-point SD to 5 million. Summaries include both the current block and all repeats at this exact point.\n**Reason:** The predicted low level has now been directly corroborated and the objective's noise dominates the potential gains from small moves. The public score selects the point with the lowest individual observation; additional real measurements at the well-supported refined candidate give it a chance to become that selected point. This does not imply that unusually negative observations estimate its noise-free value.\n**Next step limit:** 256 additional objective calls; pause no later than cumulative evaluation 1659, or at the specified earlier reporting boundary.\n**Why this length:** Eight 32-call batches are justified by the candidate's stable measured level and noise. This retains at least 341 calls for a subsequent decision instead of consuming all 597 remaining by default.\n**Review:** Check whether the incumbent changes, pooled candidate mean/SE and variance, and whether new observations challenge the model. If a new raw incumbent appears, stop the block at its next batch boundary for review. Pause on nonfinite observations; stop without retry on evaluator error.\n"
+  },
+  {
+    "block": 11,
+    "method": "orthogonal_gradient",
+    "first_eval": 1596,
+    "last_eval": 1659,
+    "calls": 64,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "orthogonal_gradient",
+        "first_eval": 1596,
+        "last_eval": 1659
+      }
+    ],
+    "decision_text": "## Decision after evaluation 1595\n**Budget:** 1595 used / 2000 total; 405 remaining.\n**Evidence:** The previous block paused early after 192 of its maximum 256 calls because the refined point became the raw incumbent at call 1589, y=-7443546.311674762. Across all 384 repeats at that exact point, mean is 26523.21, SD 2039974.31 and SE 104102.00. The newly selected location is the pooled-model refinement, not a distant noisy probe. Its true objective remains unavailable. Existing model fits place residual coordinate uncertainty at a few hundredths of a unit and show similar noise at earlier 38-million and 51-million designs.\n**Decision:** Use a short `orthogonal_gradient` block around the now-selected point, preserving all observations and fits. This gathers residual derivative information; do not issue any new optimized-candidate evaluation in this block.\n**Hyperparameters:** Same 32 Hadamard directions and paired signs, with maximum coordinate amplitude increased to 2.2 and the same 90%-of-boundary-margin cap. Hold x[0]=-5. Use one observation per sign (64 calls total); use the substantial existing repeat data for noise context instead of duplicating every sign again. Paired-difference gradient and residual diagnostics remain as before. Refit the diagonal ridge=0.001 model to all observations after the design only for checkpoint diagnostics, including its robust counterpart and conditional coefficient uncertainty.\n**Reason:** The scoring rule now selects the intended refined point. Repeating that exact point cannot improve the selected location, although it can improve its mean estimate. A small balanced derivative block can reduce remaining positional uncertainty. Wider feasible amplitudes increase information per call and are supported by past approximately constant absolute noise over broad probes. This is not a guarantee that tiny improvements are identifiable.\n**Next step limit:** 64 additional objective calls; pause at cumulative evaluation 1659.\n**Why this length:** One paired 32-row orthogonal design is the smallest complete instance of the established design. Existing repeat information makes per-sign replication less necessary here, and 64 calls preserve 341 for reconsideration.\n**Review:** Assess consistency of residual gradients, pooled model movement and uncertainty, and whether any new proposal is meaningfully supported. Pause on nonfinite observations; stop without retry on evaluator error.\n"
+  },
+  {
+    "block": 12,
+    "method": "diagonal_refine_replicate",
+    "first_eval": 1660,
+    "last_eval": 1819,
+    "calls": 160,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "diagonal_refine_replicate",
+        "first_eval": 1660,
+        "last_eval": 1819
+      }
+    ],
+    "decision_text": "## Decision after evaluation 1659\n**Budget:** 1659 used / 2000 total; 341 remaining.\n**Evidence:** The 64-call design had paired residual RMSE 1025431.10, consistent with substantial single-measurement noise. The newly pooled diagonal candidate is only 0.03933 units from the current selected point. Its robust counterpart is 0.02911 units away; conditional coordinate SEs are approximately 0.0203 to 0.0398. Model residual SD remains 2063397.51. Predicted level is 67196.54, which is not an objective observation. The selected point remains the call-1589 refinement with raw y=-7443546.311674762 and 384-repeat mean 26523.21 (SE 104102.00). No evidence supports a large remaining move.\n**Decision:** Use `diagonal_refine_replicate` at the latest pooled model candidate, freezing it for this bounded block while retaining all observations and the current observed incumbent. Do not take the much noisier single-design gradient step or change the weak coordinate.\n**Hyperparameters:** Same validated uniform diagonal ridge=0.001 model and bounded coordinate minimization, refitted to all 1659 observations; x[0] remains -5. Cap this new point's measurement block at 160 calls, in 32-call batches. Pause early at a batch boundary for a new raw incumbent or sample SD above 5 million. No new model family, random restart, or manual curvature change.\n**Reason:** A small pooled-data refinement is better supported than extrapolating one noisy gradient. The expected gain is modest, so testing a nearby model-supported point is appropriate, while a broad search or a large step would carry greater chance of selecting an inferior location under the noisy-record rule.\n**Next step limit:** 160 additional objective calls; pause no later than cumulative evaluation 1819, or earlier under the stated conditions.\n**Why this length:** Five batches would give a mean SE around 0.16 million at the measured variance, enough to check a substantial model discrepancy and let the refined point compete for the record. Retaining at least 181 calls permits another decision rather than automatically spending all remaining evaluations.\n**Review:** Inspect the new point's mean/SD/SE, record status, and agreement with the low predicted level. Decide whether further measurements are justified; do not assume this block must be followed by any specific method. Pause on nonfinite observations; stop without retry on evaluator error.\n"
+  },
+  {
+    "block": 13,
+    "method": "diagonal_refine_replicate",
+    "first_eval": 1820,
+    "last_eval": 1947,
+    "calls": 128,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "diagonal_refine_replicate",
+        "first_eval": 1820,
+        "last_eval": 1947
+      }
+    ],
+    "decision_text": "## Decision after evaluation 1819\n**Budget:** 1819 used / 2000 total; 181 remaining.\n**Evidence:** The latest candidate completed 160 repeats with mean -111985.96, SD 2044983.38, SE 161670.13 and minimum -6293492.70. Its mean agrees with a low objective level but does not establish superiority over the selected candidate's 26523.21 mean (SE 104102.00). No early condition fired. The current record remains -7443546.311674762 at call 1589. Model-supported candidate changes are far smaller than the observation noise, and this newest location already incorporates all three paired designs.\n**Decision:** Continue `diagonal_refine_replicate` at the exact latest candidate, preserving its 160 repeats and all earlier observations. Freeze the candidate and spend up to the remaining 181 calls on real measurements. Keep early reconsideration conditions rather than automatically running through a new incumbent event.\n**Hyperparameters:** Reference decision 1659: same pooled uniform diagonal ridge model, same candidate, x[0]=-5, no refit or restart. Use five complete batches of 32 and a final partial batch of 21, bounded by both local and evaluator counters. At each boundary review a new raw incumbent or pooled candidate SD above 5 million. Include previous repeats when calculating the pooled mean and uncertainty.\n**Reason:** Measurements support the candidate's low expected level. The remaining budget is too small to make a statistically persuasive comparison of tiny proposed moves, while additional model exploration would leave little opportunity to measure its proposals. Continuing at this nearby, well-supported point can improve the selected location under the actual scoring rule without introducing an unsupported large move.\n**Next step limit:** 181 additional objective calls; pause no later than cumulative evaluation 2000, or earlier under the batch-boundary conditions.\n**Why this length:** This deliberate final cap brings the latest candidate to 341 repeats, yielding expected mean SE around 0.11 million, close to the selected candidate's 384-repeat precision. The evidence favors completing this comparison over introducing a new design; consuming the remainder is justified by this measured noise and candidate stability, not a default rule.\n**Review:** Inspect final or early-checkpoint mean/SD/SE and raw selected point. If the full cap is used, record the outcome and stop because the hard budget is exhausted, then save and verify the four required files. Stop without retry on evaluator error; pause on nonfinite observations.\n"
+  },
+  {
+    "block": 14,
+    "method": "incumbent_validation",
+    "first_eval": 1948,
+    "last_eval": 2000,
+    "calls": 53,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "incumbent_validation",
+        "first_eval": 1948,
+        "last_eval": 2000
+      }
+    ],
+    "decision_text": "## Decision after evaluation 1947\n**Budget:** 1947 used / 2000 total; 53 remaining.\n**Evidence:** The last block stopped early after 128 of its maximum 181 calls when the latest refinement became the raw incumbent at call 1938, y=-8709448.819378488. Its 288 total measurements have mean -63147.50, SD 2119075.37 and SE 124867.71. This selected location is the pooled-data candidate only 0.03933 units from its predecessor, not an exploratory high-value probe. The very negative record remains a noisy draw and must not be reported as a noise-free estimate.\n**Decision:** Finish with `incumbent_validation`: freeze the now-selected point and obtain 53 fresh observations. Retain all data and the same live evaluator. These new observations provide a post-selection check of its level; no positional change or optimizer restart is made.\n**Hyperparameters:** Fixed-point replication only; 53 measurements, reported after 32 and 53. No model fitting or tunable optimizer parameters apply. A lower observation at this same location does not trigger early reconsideration because the selected location cannot change in this block. Nonfinite observations or evaluator errors still stop execution.\n**Reason:** The current point is already the latest supported refinement and is now selected by the scoring rule. With 53 calls, further 20-dimensional derivative estimation would be poorly resolved and leave almost no candidate testing. Fresh validation is useful for separating the extreme selected observation from the point's typical objective level and reduces uncertainty without changing the selected location.\n**Next step limit:** 53 additional objective calls; pause at cumulative evaluation 2000.\n**Why this length:** The available 53 calls provide an independent post-selection sample, with expected SE approximately 0.29 million, and bring all repeats at the selected point to 341. This is a targeted final uncertainty check rather than an unsupported new search.\n**Review:** Report fresh and pooled repeat statistics, selected x/y and call number; stop at hard-budget exhaustion, append the final outcome, call save(), and verify exactly the four required campaign files. Stop without retry on evaluator error.\n"
+  }
+]

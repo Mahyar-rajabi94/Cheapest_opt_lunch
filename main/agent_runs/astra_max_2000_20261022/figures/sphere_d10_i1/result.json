@@ -1,0 +1,65 @@
+{
+  "task": "sphere10",
+  "task_name": "sphere_d10_i1",
+  "evaluations": 261,
+  "status": "completed_early",
+  "run_note": "",
+  "agent_regret": 0.0,
+  "baseline_mean_regrets": {
+    "random_search": 16.83462650396612,
+    "sobol": 16.126698288755414,
+    "cma_es": 1.4711076801177115e-11,
+    "de": 11.704929726051327,
+    "turbo": 0.0065010024982044,
+    "gp_bo": 0.008362505352117466,
+    "bobyqa": 0.0,
+    "nelder_mead": 3.6842746805915425,
+    "lbfgsb": 7.247535904753022e-13
+  },
+  "baseline_feasible_seed_counts": {
+    "random_search": [
+      10,
+      10
+    ],
+    "sobol": [
+      10,
+      10
+    ],
+    "cma_es": [
+      10,
+      10
+    ],
+    "de": [
+      10,
+      10
+    ],
+    "turbo": [
+      10,
+      10
+    ],
+    "gp_bo": [
+      10,
+      10
+    ],
+    "bobyqa": [
+      1,
+      1
+    ],
+    "nelder_mead": [
+      1,
+      1
+    ],
+    "lbfgsb": [
+      1,
+      1
+    ]
+  },
+  "decision_blocks": 4,
+  "noisy": false,
+  "n_constraints": 0,
+  "source_commit": "591e3de6a553c026976e3f785eceb8cac8b6690b",
+  "model": "gpt-6-astra",
+  "effort": "max",
+  "campaign_id": "run-14db2efa4379",
+  "provenance_dir": "provenance/sphere10"
+}

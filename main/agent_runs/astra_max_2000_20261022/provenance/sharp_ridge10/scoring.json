@@ -1,0 +1,8 @@
+{
+  "task": "sharp_ridge10",
+  "task_name": "sharp_ridge_d10_i1",
+  "f_opt": 29.97,
+  "noisy": false,
+  "n_constraints": 0,
+  "seed": 0
+}

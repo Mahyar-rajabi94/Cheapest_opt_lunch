@@ -1,0 +1,65 @@
+{
+  "task": "cec_rastrigin30",
+  "task_name": "cec2017_f5_d30",
+  "evaluations": 2000,
+  "status": "complete",
+  "run_note": "",
+  "agent_regret": 200.98070618972042,
+  "baseline_mean_regrets": {
+    "random_search": 541.3860017411224,
+    "sobol": 528.0803443279214,
+    "cma_es": 231.94472048136095,
+    "de": 578.4513989196213,
+    "turbo": 181.9351206576178,
+    "gp_bo": 242.9127136188869,
+    "bobyqa": 285.55014742396884,
+    "nelder_mead": 623.7113874789375,
+    "lbfgsb": 303.4591416745516
+  },
+  "baseline_feasible_seed_counts": {
+    "random_search": [
+      10,
+      10
+    ],
+    "sobol": [
+      10,
+      10
+    ],
+    "cma_es": [
+      10,
+      10
+    ],
+    "de": [
+      10,
+      10
+    ],
+    "turbo": [
+      10,
+      10
+    ],
+    "gp_bo": [
+      10,
+      10
+    ],
+    "bobyqa": [
+      1,
+      1
+    ],
+    "nelder_mead": [
+      1,
+      1
+    ],
+    "lbfgsb": [
+      1,
+      1
+    ]
+  },
+  "decision_blocks": 13,
+  "noisy": false,
+  "n_constraints": 0,
+  "source_commit": "591e3de6a553c026976e3f785eceb8cac8b6690b",
+  "model": "gpt-6-astra",
+  "effort": "max",
+  "campaign_id": "run-2b8a9bc96c33",
+  "provenance_dir": "provenance/cec_rastrigin30"
+}

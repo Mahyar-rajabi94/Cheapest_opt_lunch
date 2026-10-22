@@ -1,0 +1,9 @@
+{
+  "constrained_ellipsoid10": {
+    "status": "execution_failure",
+    "note": "Execution failure at 735 calls: the agent's checkpoint adapter deadlocked while restarting COBYQA. Saved observations remain valid; 1,265 calls were unused.",
+    "reason": "A suspended COBYQA call retained SciPy's process-wide lock. A second COBYQA call waited for that lock, while the foreground controller waited for its callback. The agent could not interrupt the blocked controller through the available sandbox interface and stopped.",
+    "evidence": "Final agent response and final decision after evaluation 735 in run-0bab130d3362. No new evaluations followed the failed restart.",
+    "retry": "No retry or supervisor optimization intervention. Preserve as the original campaign outcome."
+  }
+}

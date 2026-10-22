@@ -1,0 +1,8 @@
+Best observed value: **42.82368353265386**, found at evaluation **1,999**. Used **2,000/2,000 evaluations** and stopped at the budget limit.
+
+Saved and verified exactly four campaign files:
+
+- [Initial decision](results/agent_run/roadmap_initial.md)
+- [Decision history](results/agent_run/changelog.md)
+- [Evaluation trace](results/agent_run/trace.csv)
+- [Metadata and best input vector](results/agent_run/meta.json)

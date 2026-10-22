@@ -1,0 +1,11 @@
+# First optimization step
+
+The public task is minimization of a deterministic scalar black box in 30 real coordinates, each in [-100, 100], with no additional constraints and no prior observations. The total hard budget is 2,000 calls, including every initialization point. Objective identity, optimum, smoothness, and landscape structure are unknown. No noise replication is needed under the stated deterministic interface. We will use only the public evaluator and our observations.
+
+The first step uses full-covariance CMA-ES through pycma 4.5.0, in normalized coordinates z=x/100 with bounds [-1,1]. Evaluate the center once as a reference, then run 10 generations with population size 16. Initialize the mean at zero, isotropic sigma=0.4 (40 original units), seed=20261022. Explicit options: popsize=16, bounds=[-1,1], CMA_active=True, verbose=-9, verb_log=0. Boundary transformation, recombination weights, covariance and step-size adaptation, and termination criteria inherit pycma 4.5.0 defaults. The direct supported library API allows the population and initial scale to be chosen; no dependency changes are needed. The reference point is retained as an observation but is not inserted into a sampled generation.
+
+A broad initial scale allows exploration without assuming smoothness or a particular optimum. A population of 16 gives a moderate selection pool while allowing ten adaptation cycles in a small part of the budget. This choice is provisional, based on dimension and bounds, not on unobserved performance.
+
+**Step limit:** at most 161 additional objective calls; pause at cumulative evaluation 161. This includes the center plus 10 complete generations. The driver checks both the block cap and the harness's remaining budget before each call. One harness and live optimizer state are retained across checkpoints. No future block or method is selected here.
+
+**Checkpoint evidence:** inspect the center value, best value and timing, generation minima/medians, scale adaptation, covariance axis ratio, boundary proximity, and observed spread. Assess whether improvement is sustained and whether sampling scale remains useful. Pause earlier at a library termination condition or a nonfinite result. On any evaluator error stop the campaign and report without retrying. Save the harness-generated trace and metadata at the checkpoint.

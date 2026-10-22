@@ -1,0 +1,184 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Mathematical suite · Astra max · 2000 evaluations</title>
+<style>body{font:16px system-ui;max-width:1250px;margin:40px auto;color:#172334}img{width:100%}section{border-top:1px solid #ccd3dc;margin:35px 0;padding-top:24px}table{border-collapse:collapse}td,th{padding:8px 16px;border-bottom:1px solid #ddd;text-align:left}a{color:#235cad}.muted{color:#657286}</style></head><body>
+<h1>Astra max · mathematical black-box suite</h1>
+<p>29/30 campaigns plotted. Budget: 2,000 evaluations per task. One agent run per task; all nine existing standalone baselines.</p>
+<p class="muted">Source 591e3de6. Noise-free scores stay private during optimization. Baselines use 10 stochastic seeds or 1 deterministic seed. Constrained agent receives objective and constraint values; baseline wrappers use a fixed penalty. These figures describe individual agent campaigns, not replicate-averaged agent performance.</p>
+<p><a href="summary.csv">Download numerical summary</a> · <a href="cohort.json">Protocol and provenance</a> · <a href="campaign_status.json">Campaign status at export</a></p>
+<table><tr><th>Task</th><th>Status</th><th>Calls</th><th>Agent regret</th><th>Blocks</th></tr>
+<tr><td><a href='#rosenbrock10'>rosenbrock10</a></td><td>completed_early</td><td>1859</td><td>0</td><td>12</td></tr>
+<tr><td><a href='#pymoo_g04'>pymoo_g04</a></td><td>completed_early</td><td>499</td><td>1.2127e-06</td><td>5</td></tr>
+<tr><td><a href='#noisy_rosenbrock_gauss5'>noisy_rosenbrock_gauss5</a></td><td>complete</td><td>2000</td><td>2.4067</td><td>14</td></tr>
+<tr><td><a href='#mixint_rosenbrock10'>mixint_rosenbrock10</a></td><td>completed_early</td><td>1986</td><td>0</td><td>15</td></tr>
+<tr><td><a href='#rosenbrock20'>rosenbrock20</a></td><td>complete</td><td>2000</td><td>23.638</td><td>14</td></tr>
+<tr><td><a href='#rosenbrock40'>rosenbrock40</a></td><td>complete</td><td>2000</td><td>74.077</td><td>9</td></tr>
+<tr><td><a href='#rastrigin10'>rastrigin10</a></td><td>complete</td><td>2000</td><td>15.919</td><td>19</td></tr>
+<tr><td><a href='#bent_cigar10'>bent_cigar10</a></td><td>complete</td><td>2000</td><td>0.00021912</td><td>15</td></tr>
+<tr><td><a href='#sphere10'>sphere10</a></td><td>completed_early</td><td>261</td><td>0</td><td>4</td></tr>
+<tr><td><a href='#step_ellipsoid10'>step_ellipsoid10</a></td><td>complete</td><td>2000</td><td>0.012701</td><td>13</td></tr>
+<tr><td><a href='#sharp_ridge10'>sharp_ridge10</a></td><td>complete</td><td>2000</td><td>3.7308e-05</td><td>15</td></tr>
+<tr><td><a href='#weierstrass10'>weierstrass10</a></td><td>complete</td><td>2000</td><td>0.0071654</td><td>14</td></tr>
+<tr><td><a href='#sep_rastrigin10'>sep_rastrigin10</a></td><td>completed_early</td><td>1964</td><td>1.7053e-12</td><td>14</td></tr>
+<tr><td><a href='#schwefel10'>schwefel10</a></td><td>complete</td><td>2000</td><td>0.23688</td><td>17</td></tr>
+<tr><td><a href='#gallagher101_10'>gallagher101_10</a></td><td>complete</td><td>2000</td><td>2.0437</td><td>14</td></tr>
+<tr><td><a href='#gallagher21_10'>gallagher21_10</a></td><td>complete</td><td>2000</td><td>0.69186</td><td>16</td></tr>
+<tr><td><a href='#schaffer30'>schaffer30</a></td><td>complete</td><td>2000</td><td>0.98499</td><td>13</td></tr>
+<tr><td><a href='#schaffer50'>schaffer50</a></td><td>complete</td><td>2000</td><td>2.0832</td><td>11</td></tr>
+<tr><td><a href='#cec_rastrigin30'>cec_rastrigin30</a></td><td>complete</td><td>2000</td><td>200.98</td><td>13</td></tr>
+<tr><td><a href='#noncont_rastrigin30'>noncont_rastrigin30</a></td><td>complete</td><td>2000</td><td>87.092</td><td>15</td></tr>
+<tr><td><a href='#pymoo_g07'>pymoo_g07</a></td><td>completed_early</td><td>556</td><td>-7.4591e-10</td><td>6</td></tr>
+<tr><td><a href='#constrained_ellipsoid10'>constrained_ellipsoid10</a></td><td>execution_failure</td><td>735</td><td>6.192</td><td>5</td></tr>
+<tr><td><a href='#constrained_diffpowers10'>constrained_diffpowers10</a></td><td>complete</td><td>2000</td><td>5.7785e-09</td><td>22</td></tr>
+<tr><td><a href='#constrained_rastrigin10'>constrained_rastrigin10</a></td><td>complete</td><td>2000</td><td>1.8819e-08</td><td>20</td></tr>
+<tr><td><a href='#noisy_rosenbrock_unif5'>noisy_rosenbrock_unif5</a></td><td>complete</td><td>2000</td><td>16.732</td><td>11</td></tr>
+<tr><td><a href='#noisy_rosenbrock_cauchy5'>noisy_rosenbrock_cauchy5</a></td><td>complete</td><td>2000</td><td>0.046326</td><td>16</td></tr>
+<tr><td><a href='#ng_noisy_rosenbrock20'>ng_noisy_rosenbrock20</a></td><td>complete</td><td>2000</td><td>820.66</td><td>12</td></tr>
+<tr><td><a href='#ng_noisy_cigar20'>ng_noisy_cigar20</a></td><td>complete</td><td>2000</td><td>9993.6</td><td>14</td></tr>
+<tr><td><a href='#mixint_rastrigin10'>mixint_rastrigin10</a></td><td>complete</td><td>2000</td><td>5.0129</td><td>16</td></tr>
+<tr><td><a href='#mixint_schaffer10'>mixint_schaffer10</a></td><td>running</td><td>1901</td><td>—</td><td>—</td></tr>
+</table>
+<section id='constrained_ellipsoid10'><h2>constrained_ellipsoid10</h2>
+<p><a href='figures/bbob_constrained_f20_d10_i1/03_decision_timeline.pdf'>PDF</a> · <a href='figures/bbob_constrained_f20_d10_i1/03_decision_timeline.svg'>SVG</a> · <a href='figures/bbob_constrained_f20_d10_i1/03_decision_timeline.png'>PNG</a></p><img loading='lazy' src='figures/bbob_constrained_f20_d10_i1/03_decision_timeline.png' alt='03_decision_timeline'>
+<p><a href='figures/bbob_constrained_f20_d10_i1/02_convergence.pdf'>PDF</a> · <a href='figures/bbob_constrained_f20_d10_i1/02_convergence.svg'>SVG</a> · <a href='figures/bbob_constrained_f20_d10_i1/02_convergence.png'>PNG</a></p><img loading='lazy' src='figures/bbob_constrained_f20_d10_i1/02_convergence.png' alt='02_convergence'>
+<p><a href='figures/bbob_constrained_f20_d10_i1/01_final_regret.pdf'>PDF</a> · <a href='figures/bbob_constrained_f20_d10_i1/01_final_regret.svg'>SVG</a> · <a href='figures/bbob_constrained_f20_d10_i1/01_final_regret.png'>PNG</a></p><img loading='lazy' src='figures/bbob_constrained_f20_d10_i1/01_final_regret.png' alt='01_final_regret'>
+</section>
+<section id='constrained_diffpowers10'><h2>constrained_diffpowers10</h2>
+<p><a href='figures/bbob_constrained_f38_d10_i1/03_decision_timeline.pdf'>PDF</a> · <a href='figures/bbob_constrained_f38_d10_i1/03_decision_timeline.svg'>SVG</a> · <a href='figures/bbob_constrained_f38_d10_i1/03_decision_timeline.png'>PNG</a></p><img loading='lazy' src='figures/bbob_constrained_f38_d10_i1/03_decision_timeline.png' alt='03_decision_timeline'>
+<p><a href='figures/bbob_constrained_f38_d10_i1/02_convergence.pdf'>PDF</a> · <a href='figures/bbob_constrained_f38_d10_i1/02_convergence.svg'>SVG</a> · <a href='figures/bbob_constrained_f38_d10_i1/02_convergence.png'>PNG</a></p><img loading='lazy' src='figures/bbob_constrained_f38_d10_i1/02_convergence.png' alt='02_convergence'>
+<p><a href='figures/bbob_constrained_f38_d10_i1/01_final_regret.pdf'>PDF</a> · <a href='figures/bbob_constrained_f38_d10_i1/01_final_regret.svg'>SVG</a> · <a href='figures/bbob_constrained_f38_d10_i1/01_final_regret.png'>PNG</a></p><img loading='lazy' src='figures/bbob_constrained_f38_d10_i1/01_final_regret.png' alt='01_final_regret'>
+</section>
+<section id='constrained_rastrigin10'><h2>constrained_rastrigin10</h2>
+<p><a href='figures/bbob_constrained_f44_d10_i1/03_decision_timeline.pdf'>PDF</a> · <a href='figures/bbob_constrained_f44_d10_i1/03_decision_timeline.svg'>SVG</a> · <a href='figures/bbob_constrained_f44_d10_i1/03_decision_timeline.png'>PNG</a></p><img loading='lazy' src='figures/bbob_constrained_f44_d10_i1/03_decision_timeline.png' alt='03_decision_timeline'>
+<p><a href='figures/bbob_constrained_f44_d10_i1/02_convergence.pdf'>PDF</a> · <a href='figures/bbob_constrained_f44_d10_i1/02_convergence.svg'>SVG</a> · <a href='figures/bbob_constrained_f44_d10_i1/02_convergence.png'>PNG</a></p><img loading='lazy' src='figures/bbob_constrained_f44_d10_i1/02_convergence.png' alt='02_convergence'>
+<p><a href='figures/bbob_constrained_f44_d10_i1/01_final_regret.pdf'>PDF</a> · <a href='figures/bbob_constrained_f44_d10_i1/01_final_regret.svg'>SVG</a> · <a href='figures/bbob_constrained_f44_d10_i1/01_final_regret.png'>PNG</a></p><img loading='lazy' src='figures/bbob_constrained_f44_d10_i1/01_final_regret.png' alt='01_final_regret'>
+</section>
+<section id='mixint_rastrigin10'><h2>mixint_rastrigin10</h2>
+<p><a href='figures/bbob_mixint_f15_d10_i1/03_decision_timeline.pdf'>PDF</a> · <a href='figures/bbob_mixint_f15_d10_i1/03_decision_timeline.svg'>SVG</a> · <a href='figures/bbob_mixint_f15_d10_i1/03_decision_timeline.png'>PNG</a></p><img loading='lazy' src='figures/bbob_mixint_f15_d10_i1/03_decision_timeline.png' alt='03_decision_timeline'>
+<p><a href='figures/bbob_mixint_f15_d10_i1/02_convergence.pdf'>PDF</a> · <a href='figures/bbob_mixint_f15_d10_i1/02_convergence.svg'>SVG</a> · <a href='figures/bbob_mixint_f15_d10_i1/02_convergence.png'>PNG</a></p><img loading='lazy' src='figures/bbob_mixint_f15_d10_i1/02_convergence.png' alt='02_convergence'>
+<p><a href='figures/bbob_mixint_f15_d10_i1/01_final_regret.pdf'>PDF</a> · <a href='figures/bbob_mixint_f15_d10_i1/01_final_regret.svg'>SVG</a> · <a href='figures/bbob_mixint_f15_d10_i1/01_final_regret.png'>PNG</a></p><img loading='lazy' src='figures/bbob_mixint_f15_d10_i1/01_final_regret.png' alt='01_final_regret'>
+</section>
+<section id='mixint_rosenbrock10'><h2>mixint_rosenbrock10</h2>
+<p><a href='figures/bbob_mixint_f8_d10_i1/03_decision_timeline.pdf'>PDF</a> · <a href='figures/bbob_mixint_f8_d10_i1/03_decision_timeline.svg'>SVG</a> · <a href='figures/bbob_mixint_f8_d10_i1/03_decision_timeline.png'>PNG</a></p><img loading='lazy' src='figures/bbob_mixint_f8_d10_i1/03_decision_timeline.png' alt='03_decision_timeline'>
+<p><a href='figures/bbob_mixint_f8_d10_i1/02_convergence.pdf'>PDF</a> · <a href='figures/bbob_mixint_f8_d10_i1/02_convergence.svg'>SVG</a> · <a href='figures/bbob_mixint_f8_d10_i1/02_convergence.png'>PNG</a></p><img loading='lazy' src='figures/bbob_mixint_f8_d10_i1/02_convergence.png' alt='02_convergence'>
+<p><a href='figures/bbob_mixint_f8_d10_i1/01_final_regret.pdf'>PDF</a> · <a href='figures/bbob_mixint_f8_d10_i1/01_final_regret.svg'>SVG</a> · <a href='figures/bbob_mixint_f8_d10_i1/01_final_regret.png'>PNG</a></p><img loading='lazy' src='figures/bbob_mixint_f8_d10_i1/01_final_regret.png' alt='01_final_regret'>
+</section>
+<section id='noisy_rosenbrock_gauss5'><h2>noisy_rosenbrock_gauss5</h2>
+<p><a href='figures/bbob_noisy_f110_d5_i1/03_decision_timeline.pdf'>PDF</a> · <a href='figures/bbob_noisy_f110_d5_i1/03_decision_timeline.svg'>SVG</a> · <a href='figures/bbob_noisy_f110_d5_i1/03_decision_timeline.png'>PNG</a></p><img loading='lazy' src='figures/bbob_noisy_f110_d5_i1/03_decision_timeline.png' alt='03_decision_timeline'>
+<p><a href='figures/bbob_noisy_f110_d5_i1/02_convergence.pdf'>PDF</a> · <a href='figures/bbob_noisy_f110_d5_i1/02_convergence.svg'>SVG</a> · <a href='figures/bbob_noisy_f110_d5_i1/02_convergence.png'>PNG</a></p><img loading='lazy' src='figures/bbob_noisy_f110_d5_i1/02_convergence.png' alt='02_convergence'>
+<p><a href='figures/bbob_noisy_f110_d5_i1/01_final_regret.pdf'>PDF</a> · <a href='figures/bbob_noisy_f110_d5_i1/01_final_regret.svg'>SVG</a> · <a href='figures/bbob_noisy_f110_d5_i1/01_final_regret.png'>PNG</a></p><img loading='lazy' src='figures/bbob_noisy_f110_d5_i1/01_final_regret.png' alt='01_final_regret'>
+</section>
+<section id='noisy_rosenbrock_unif5'><h2>noisy_rosenbrock_unif5</h2>
+<p><a href='figures/bbob_noisy_f111_d5_i1/03_decision_timeline.pdf'>PDF</a> · <a href='figures/bbob_noisy_f111_d5_i1/03_decision_timeline.svg'>SVG</a> · <a href='figures/bbob_noisy_f111_d5_i1/03_decision_timeline.png'>PNG</a></p><img loading='lazy' src='figures/bbob_noisy_f111_d5_i1/03_decision_timeline.png' alt='03_decision_timeline'>
+<p><a href='figures/bbob_noisy_f111_d5_i1/02_convergence.pdf'>PDF</a> · <a href='figures/bbob_noisy_f111_d5_i1/02_convergence.svg'>SVG</a> · <a href='figures/bbob_noisy_f111_d5_i1/02_convergence.png'>PNG</a></p><img loading='lazy' src='figures/bbob_noisy_f111_d5_i1/02_convergence.png' alt='02_convergence'>
+<p><a href='figures/bbob_noisy_f111_d5_i1/01_final_regret.pdf'>PDF</a> · <a href='figures/bbob_noisy_f111_d5_i1/01_final_regret.svg'>SVG</a> · <a href='figures/bbob_noisy_f111_d5_i1/01_final_regret.png'>PNG</a></p><img loading='lazy' src='figures/bbob_noisy_f111_d5_i1/01_final_regret.png' alt='01_final_regret'>
+</section>
+<section id='noisy_rosenbrock_cauchy5'><h2>noisy_rosenbrock_cauchy5</h2>
+<p><a href='figures/bbob_noisy_f112_d5_i1/03_decision_timeline.pdf'>PDF</a> · <a href='figures/bbob_noisy_f112_d5_i1/03_decision_timeline.svg'>SVG</a> · <a href='figures/bbob_noisy_f112_d5_i1/03_decision_timeline.png'>PNG</a></p><img loading='lazy' src='figures/bbob_noisy_f112_d5_i1/03_decision_timeline.png' alt='03_decision_timeline'>
+<p><a href='figures/bbob_noisy_f112_d5_i1/02_convergence.pdf'>PDF</a> · <a href='figures/bbob_noisy_f112_d5_i1/02_convergence.svg'>SVG</a> · <a href='figures/bbob_noisy_f112_d5_i1/02_convergence.png'>PNG</a></p><img loading='lazy' src='figures/bbob_noisy_f112_d5_i1/02_convergence.png' alt='02_convergence'>
+<p><a href='figures/bbob_noisy_f112_d5_i1/01_final_regret.pdf'>PDF</a> · <a href='figures/bbob_noisy_f112_d5_i1/01_final_regret.svg'>SVG</a> · <a href='figures/bbob_noisy_f112_d5_i1/01_final_regret.png'>PNG</a></p><img loading='lazy' src='figures/bbob_noisy_f112_d5_i1/01_final_regret.png' alt='01_final_regret'>
+</section>
+<section id='bent_cigar10'><h2>bent_cigar10</h2>
+<p><a href='figures/bent_cigar_d10_i1/03_decision_timeline.pdf'>PDF</a> · <a href='figures/bent_cigar_d10_i1/03_decision_timeline.svg'>SVG</a> · <a href='figures/bent_cigar_d10_i1/03_decision_timeline.png'>PNG</a></p><img loading='lazy' src='figures/bent_cigar_d10_i1/03_decision_timeline.png' alt='03_decision_timeline'>
+<p><a href='figures/bent_cigar_d10_i1/02_convergence.pdf'>PDF</a> · <a href='figures/bent_cigar_d10_i1/02_convergence.svg'>SVG</a> · <a href='figures/bent_cigar_d10_i1/02_convergence.png'>PNG</a></p><img loading='lazy' src='figures/bent_cigar_d10_i1/02_convergence.png' alt='02_convergence'>
+<p><a href='figures/bent_cigar_d10_i1/01_final_regret.pdf'>PDF</a> · <a href='figures/bent_cigar_d10_i1/01_final_regret.svg'>SVG</a> · <a href='figures/bent_cigar_d10_i1/01_final_regret.png'>PNG</a></p><img loading='lazy' src='figures/bent_cigar_d10_i1/01_final_regret.png' alt='01_final_regret'>
+</section>
+<section id='cec_rastrigin30'><h2>cec_rastrigin30</h2>
+<p><a href='figures/cec2017_f5_d30/03_decision_timeline.pdf'>PDF</a> · <a href='figures/cec2017_f5_d30/03_decision_timeline.svg'>SVG</a> · <a href='figures/cec2017_f5_d30/03_decision_timeline.png'>PNG</a></p><img loading='lazy' src='figures/cec2017_f5_d30/03_decision_timeline.png' alt='03_decision_timeline'>
+<p><a href='figures/cec2017_f5_d30/02_convergence.pdf'>PDF</a> · <a href='figures/cec2017_f5_d30/02_convergence.svg'>SVG</a> · <a href='figures/cec2017_f5_d30/02_convergence.png'>PNG</a></p><img loading='lazy' src='figures/cec2017_f5_d30/02_convergence.png' alt='02_convergence'>
+<p><a href='figures/cec2017_f5_d30/01_final_regret.pdf'>PDF</a> · <a href='figures/cec2017_f5_d30/01_final_regret.svg'>SVG</a> · <a href='figures/cec2017_f5_d30/01_final_regret.png'>PNG</a></p><img loading='lazy' src='figures/cec2017_f5_d30/01_final_regret.png' alt='01_final_regret'>
+</section>
+<section id='schaffer30'><h2>schaffer30</h2>
+<p><a href='figures/cec2017_f6_d30_b5/03_decision_timeline.pdf'>PDF</a> · <a href='figures/cec2017_f6_d30_b5/03_decision_timeline.svg'>SVG</a> · <a href='figures/cec2017_f6_d30_b5/03_decision_timeline.png'>PNG</a></p><img loading='lazy' src='figures/cec2017_f6_d30_b5/03_decision_timeline.png' alt='03_decision_timeline'>
+<p><a href='figures/cec2017_f6_d30_b5/02_convergence.pdf'>PDF</a> · <a href='figures/cec2017_f6_d30_b5/02_convergence.svg'>SVG</a> · <a href='figures/cec2017_f6_d30_b5/02_convergence.png'>PNG</a></p><img loading='lazy' src='figures/cec2017_f6_d30_b5/02_convergence.png' alt='02_convergence'>
+<p><a href='figures/cec2017_f6_d30_b5/01_final_regret.pdf'>PDF</a> · <a href='figures/cec2017_f6_d30_b5/01_final_regret.svg'>SVG</a> · <a href='figures/cec2017_f6_d30_b5/01_final_regret.png'>PNG</a></p><img loading='lazy' src='figures/cec2017_f6_d30_b5/01_final_regret.png' alt='01_final_regret'>
+</section>
+<section id='schaffer50'><h2>schaffer50</h2>
+<p><a href='figures/cec2017_f6_d50_b5/03_decision_timeline.pdf'>PDF</a> · <a href='figures/cec2017_f6_d50_b5/03_decision_timeline.svg'>SVG</a> · <a href='figures/cec2017_f6_d50_b5/03_decision_timeline.png'>PNG</a></p><img loading='lazy' src='figures/cec2017_f6_d50_b5/03_decision_timeline.png' alt='03_decision_timeline'>
+<p><a href='figures/cec2017_f6_d50_b5/02_convergence.pdf'>PDF</a> · <a href='figures/cec2017_f6_d50_b5/02_convergence.svg'>SVG</a> · <a href='figures/cec2017_f6_d50_b5/02_convergence.png'>PNG</a></p><img loading='lazy' src='figures/cec2017_f6_d50_b5/02_convergence.png' alt='02_convergence'>
+<p><a href='figures/cec2017_f6_d50_b5/01_final_regret.pdf'>PDF</a> · <a href='figures/cec2017_f6_d50_b5/01_final_regret.svg'>SVG</a> · <a href='figures/cec2017_f6_d50_b5/01_final_regret.png'>PNG</a></p><img loading='lazy' src='figures/cec2017_f6_d50_b5/01_final_regret.png' alt='01_final_regret'>
+</section>
+<section id='noncont_rastrigin30'><h2>noncont_rastrigin30</h2>
+<p><a href='figures/cec2017_f8_d30/03_decision_timeline.pdf'>PDF</a> · <a href='figures/cec2017_f8_d30/03_decision_timeline.svg'>SVG</a> · <a href='figures/cec2017_f8_d30/03_decision_timeline.png'>PNG</a></p><img loading='lazy' src='figures/cec2017_f8_d30/03_decision_timeline.png' alt='03_decision_timeline'>
+<p><a href='figures/cec2017_f8_d30/02_convergence.pdf'>PDF</a> · <a href='figures/cec2017_f8_d30/02_convergence.svg'>SVG</a> · <a href='figures/cec2017_f8_d30/02_convergence.png'>PNG</a></p><img loading='lazy' src='figures/cec2017_f8_d30/02_convergence.png' alt='02_convergence'>
+<p><a href='figures/cec2017_f8_d30/01_final_regret.pdf'>PDF</a> · <a href='figures/cec2017_f8_d30/01_final_regret.svg'>SVG</a> · <a href='figures/cec2017_f8_d30/01_final_regret.png'>PNG</a></p><img loading='lazy' src='figures/cec2017_f8_d30/01_final_regret.png' alt='01_final_regret'>
+</section>
+<section id='gallagher101_10'><h2>gallagher101_10</h2>
+<p><a href='figures/gallagher101_d10_i1/03_decision_timeline.pdf'>PDF</a> · <a href='figures/gallagher101_d10_i1/03_decision_timeline.svg'>SVG</a> · <a href='figures/gallagher101_d10_i1/03_decision_timeline.png'>PNG</a></p><img loading='lazy' src='figures/gallagher101_d10_i1/03_decision_timeline.png' alt='03_decision_timeline'>
+<p><a href='figures/gallagher101_d10_i1/02_convergence.pdf'>PDF</a> · <a href='figures/gallagher101_d10_i1/02_convergence.svg'>SVG</a> · <a href='figures/gallagher101_d10_i1/02_convergence.png'>PNG</a></p><img loading='lazy' src='figures/gallagher101_d10_i1/02_convergence.png' alt='02_convergence'>
+<p><a href='figures/gallagher101_d10_i1/01_final_regret.pdf'>PDF</a> · <a href='figures/gallagher101_d10_i1/01_final_regret.svg'>SVG</a> · <a href='figures/gallagher101_d10_i1/01_final_regret.png'>PNG</a></p><img loading='lazy' src='figures/gallagher101_d10_i1/01_final_regret.png' alt='01_final_regret'>
+</section>
+<section id='gallagher21_10'><h2>gallagher21_10</h2>
+<p><a href='figures/gallagher21_d10_i1/03_decision_timeline.pdf'>PDF</a> · <a href='figures/gallagher21_d10_i1/03_decision_timeline.svg'>SVG</a> · <a href='figures/gallagher21_d10_i1/03_decision_timeline.png'>PNG</a></p><img loading='lazy' src='figures/gallagher21_d10_i1/03_decision_timeline.png' alt='03_decision_timeline'>
+<p><a href='figures/gallagher21_d10_i1/02_convergence.pdf'>PDF</a> · <a href='figures/gallagher21_d10_i1/02_convergence.svg'>SVG</a> · <a href='figures/gallagher21_d10_i1/02_convergence.png'>PNG</a></p><img loading='lazy' src='figures/gallagher21_d10_i1/02_convergence.png' alt='02_convergence'>
+<p><a href='figures/gallagher21_d10_i1/01_final_regret.pdf'>PDF</a> · <a href='figures/gallagher21_d10_i1/01_final_regret.svg'>SVG</a> · <a href='figures/gallagher21_d10_i1/01_final_regret.png'>PNG</a></p><img loading='lazy' src='figures/gallagher21_d10_i1/01_final_regret.png' alt='01_final_regret'>
+</section>
+<section id='ng_noisy_cigar20'><h2>ng_noisy_cigar20</h2>
+<p><a href='figures/nevergrad_noisy_cigar_d20_n0.1/03_decision_timeline.pdf'>PDF</a> · <a href='figures/nevergrad_noisy_cigar_d20_n0.1/03_decision_timeline.svg'>SVG</a> · <a href='figures/nevergrad_noisy_cigar_d20_n0.1/03_decision_timeline.png'>PNG</a></p><img loading='lazy' src='figures/nevergrad_noisy_cigar_d20_n0.1/03_decision_timeline.png' alt='03_decision_timeline'>
+<p><a href='figures/nevergrad_noisy_cigar_d20_n0.1/02_convergence.pdf'>PDF</a> · <a href='figures/nevergrad_noisy_cigar_d20_n0.1/02_convergence.svg'>SVG</a> · <a href='figures/nevergrad_noisy_cigar_d20_n0.1/02_convergence.png'>PNG</a></p><img loading='lazy' src='figures/nevergrad_noisy_cigar_d20_n0.1/02_convergence.png' alt='02_convergence'>
+<p><a href='figures/nevergrad_noisy_cigar_d20_n0.1/01_final_regret.pdf'>PDF</a> · <a href='figures/nevergrad_noisy_cigar_d20_n0.1/01_final_regret.svg'>SVG</a> · <a href='figures/nevergrad_noisy_cigar_d20_n0.1/01_final_regret.png'>PNG</a></p><img loading='lazy' src='figures/nevergrad_noisy_cigar_d20_n0.1/01_final_regret.png' alt='01_final_regret'>
+</section>
+<section id='ng_noisy_rosenbrock20'><h2>ng_noisy_rosenbrock20</h2>
+<p><a href='figures/nevergrad_noisy_rosenbrock_d20_n0.1/03_decision_timeline.pdf'>PDF</a> · <a href='figures/nevergrad_noisy_rosenbrock_d20_n0.1/03_decision_timeline.svg'>SVG</a> · <a href='figures/nevergrad_noisy_rosenbrock_d20_n0.1/03_decision_timeline.png'>PNG</a></p><img loading='lazy' src='figures/nevergrad_noisy_rosenbrock_d20_n0.1/03_decision_timeline.png' alt='03_decision_timeline'>
+<p><a href='figures/nevergrad_noisy_rosenbrock_d20_n0.1/02_convergence.pdf'>PDF</a> · <a href='figures/nevergrad_noisy_rosenbrock_d20_n0.1/02_convergence.svg'>SVG</a> · <a href='figures/nevergrad_noisy_rosenbrock_d20_n0.1/02_convergence.png'>PNG</a></p><img loading='lazy' src='figures/nevergrad_noisy_rosenbrock_d20_n0.1/02_convergence.png' alt='02_convergence'>
+<p><a href='figures/nevergrad_noisy_rosenbrock_d20_n0.1/01_final_regret.pdf'>PDF</a> · <a href='figures/nevergrad_noisy_rosenbrock_d20_n0.1/01_final_regret.svg'>SVG</a> · <a href='figures/nevergrad_noisy_rosenbrock_d20_n0.1/01_final_regret.png'>PNG</a></p><img loading='lazy' src='figures/nevergrad_noisy_rosenbrock_d20_n0.1/01_final_regret.png' alt='01_final_regret'>
+</section>
+<section id='pymoo_g04'><h2>pymoo_g04</h2>
+<p><a href='figures/pymoo_g04/03_decision_timeline.pdf'>PDF</a> · <a href='figures/pymoo_g04/03_decision_timeline.svg'>SVG</a> · <a href='figures/pymoo_g04/03_decision_timeline.png'>PNG</a></p><img loading='lazy' src='figures/pymoo_g04/03_decision_timeline.png' alt='03_decision_timeline'>
+<p><a href='figures/pymoo_g04/02_convergence.pdf'>PDF</a> · <a href='figures/pymoo_g04/02_convergence.svg'>SVG</a> · <a href='figures/pymoo_g04/02_convergence.png'>PNG</a></p><img loading='lazy' src='figures/pymoo_g04/02_convergence.png' alt='02_convergence'>
+<p><a href='figures/pymoo_g04/01_final_regret.pdf'>PDF</a> · <a href='figures/pymoo_g04/01_final_regret.svg'>SVG</a> · <a href='figures/pymoo_g04/01_final_regret.png'>PNG</a></p><img loading='lazy' src='figures/pymoo_g04/01_final_regret.png' alt='01_final_regret'>
+</section>
+<section id='pymoo_g07'><h2>pymoo_g07</h2>
+<p><a href='figures/pymoo_g07/03_decision_timeline.pdf'>PDF</a> · <a href='figures/pymoo_g07/03_decision_timeline.svg'>SVG</a> · <a href='figures/pymoo_g07/03_decision_timeline.png'>PNG</a></p><img loading='lazy' src='figures/pymoo_g07/03_decision_timeline.png' alt='03_decision_timeline'>
+<p><a href='figures/pymoo_g07/02_convergence.pdf'>PDF</a> · <a href='figures/pymoo_g07/02_convergence.svg'>SVG</a> · <a href='figures/pymoo_g07/02_convergence.png'>PNG</a></p><img loading='lazy' src='figures/pymoo_g07/02_convergence.png' alt='02_convergence'>
+<p><a href='figures/pymoo_g07/01_final_regret.pdf'>PDF</a> · <a href='figures/pymoo_g07/01_final_regret.svg'>SVG</a> · <a href='figures/pymoo_g07/01_final_regret.png'>PNG</a></p><img loading='lazy' src='figures/pymoo_g07/01_final_regret.png' alt='01_final_regret'>
+</section>
+<section id='rastrigin10'><h2>rastrigin10</h2>
+<p><a href='figures/rastrigin_d10_i1/03_decision_timeline.pdf'>PDF</a> · <a href='figures/rastrigin_d10_i1/03_decision_timeline.svg'>SVG</a> · <a href='figures/rastrigin_d10_i1/03_decision_timeline.png'>PNG</a></p><img loading='lazy' src='figures/rastrigin_d10_i1/03_decision_timeline.png' alt='03_decision_timeline'>
+<p><a href='figures/rastrigin_d10_i1/02_convergence.pdf'>PDF</a> · <a href='figures/rastrigin_d10_i1/02_convergence.svg'>SVG</a> · <a href='figures/rastrigin_d10_i1/02_convergence.png'>PNG</a></p><img loading='lazy' src='figures/rastrigin_d10_i1/02_convergence.png' alt='02_convergence'>
+<p><a href='figures/rastrigin_d10_i1/01_final_regret.pdf'>PDF</a> · <a href='figures/rastrigin_d10_i1/01_final_regret.svg'>SVG</a> · <a href='figures/rastrigin_d10_i1/01_final_regret.png'>PNG</a></p><img loading='lazy' src='figures/rastrigin_d10_i1/01_final_regret.png' alt='01_final_regret'>
+</section>
+<section id='rosenbrock10'><h2>rosenbrock10</h2>
+<p><a href='figures/rosenbrock_d10_i1/03_decision_timeline.pdf'>PDF</a> · <a href='figures/rosenbrock_d10_i1/03_decision_timeline.svg'>SVG</a> · <a href='figures/rosenbrock_d10_i1/03_decision_timeline.png'>PNG</a></p><img loading='lazy' src='figures/rosenbrock_d10_i1/03_decision_timeline.png' alt='03_decision_timeline'>
+<p><a href='figures/rosenbrock_d10_i1/02_convergence.pdf'>PDF</a> · <a href='figures/rosenbrock_d10_i1/02_convergence.svg'>SVG</a> · <a href='figures/rosenbrock_d10_i1/02_convergence.png'>PNG</a></p><img loading='lazy' src='figures/rosenbrock_d10_i1/02_convergence.png' alt='02_convergence'>
+<p><a href='figures/rosenbrock_d10_i1/01_final_regret.pdf'>PDF</a> · <a href='figures/rosenbrock_d10_i1/01_final_regret.svg'>SVG</a> · <a href='figures/rosenbrock_d10_i1/01_final_regret.png'>PNG</a></p><img loading='lazy' src='figures/rosenbrock_d10_i1/01_final_regret.png' alt='01_final_regret'>
+</section>
+<section id='rosenbrock20'><h2>rosenbrock20</h2>
+<p><a href='figures/rosenbrock_d20_i1/03_decision_timeline.pdf'>PDF</a> · <a href='figures/rosenbrock_d20_i1/03_decision_timeline.svg'>SVG</a> · <a href='figures/rosenbrock_d20_i1/03_decision_timeline.png'>PNG</a></p><img loading='lazy' src='figures/rosenbrock_d20_i1/03_decision_timeline.png' alt='03_decision_timeline'>
+<p><a href='figures/rosenbrock_d20_i1/02_convergence.pdf'>PDF</a> · <a href='figures/rosenbrock_d20_i1/02_convergence.svg'>SVG</a> · <a href='figures/rosenbrock_d20_i1/02_convergence.png'>PNG</a></p><img loading='lazy' src='figures/rosenbrock_d20_i1/02_convergence.png' alt='02_convergence'>
+<p><a href='figures/rosenbrock_d20_i1/01_final_regret.pdf'>PDF</a> · <a href='figures/rosenbrock_d20_i1/01_final_regret.svg'>SVG</a> · <a href='figures/rosenbrock_d20_i1/01_final_regret.png'>PNG</a></p><img loading='lazy' src='figures/rosenbrock_d20_i1/01_final_regret.png' alt='01_final_regret'>
+</section>
+<section id='rosenbrock40'><h2>rosenbrock40</h2>
+<p><a href='figures/rosenbrock_d40_i1/03_decision_timeline.pdf'>PDF</a> · <a href='figures/rosenbrock_d40_i1/03_decision_timeline.svg'>SVG</a> · <a href='figures/rosenbrock_d40_i1/03_decision_timeline.png'>PNG</a></p><img loading='lazy' src='figures/rosenbrock_d40_i1/03_decision_timeline.png' alt='03_decision_timeline'>
+<p><a href='figures/rosenbrock_d40_i1/02_convergence.pdf'>PDF</a> · <a href='figures/rosenbrock_d40_i1/02_convergence.svg'>SVG</a> · <a href='figures/rosenbrock_d40_i1/02_convergence.png'>PNG</a></p><img loading='lazy' src='figures/rosenbrock_d40_i1/02_convergence.png' alt='02_convergence'>
+<p><a href='figures/rosenbrock_d40_i1/01_final_regret.pdf'>PDF</a> · <a href='figures/rosenbrock_d40_i1/01_final_regret.svg'>SVG</a> · <a href='figures/rosenbrock_d40_i1/01_final_regret.png'>PNG</a></p><img loading='lazy' src='figures/rosenbrock_d40_i1/01_final_regret.png' alt='01_final_regret'>
+</section>
+<section id='schwefel10'><h2>schwefel10</h2>
+<p><a href='figures/schwefel_d10_i1/03_decision_timeline.pdf'>PDF</a> · <a href='figures/schwefel_d10_i1/03_decision_timeline.svg'>SVG</a> · <a href='figures/schwefel_d10_i1/03_decision_timeline.png'>PNG</a></p><img loading='lazy' src='figures/schwefel_d10_i1/03_decision_timeline.png' alt='03_decision_timeline'>
+<p><a href='figures/schwefel_d10_i1/02_convergence.pdf'>PDF</a> · <a href='figures/schwefel_d10_i1/02_convergence.svg'>SVG</a> · <a href='figures/schwefel_d10_i1/02_convergence.png'>PNG</a></p><img loading='lazy' src='figures/schwefel_d10_i1/02_convergence.png' alt='02_convergence'>
+<p><a href='figures/schwefel_d10_i1/01_final_regret.pdf'>PDF</a> · <a href='figures/schwefel_d10_i1/01_final_regret.svg'>SVG</a> · <a href='figures/schwefel_d10_i1/01_final_regret.png'>PNG</a></p><img loading='lazy' src='figures/schwefel_d10_i1/01_final_regret.png' alt='01_final_regret'>
+</section>
+<section id='sep_rastrigin10'><h2>sep_rastrigin10</h2>
+<p><a href='figures/sep_rastrigin_d10_i1/03_decision_timeline.pdf'>PDF</a> · <a href='figures/sep_rastrigin_d10_i1/03_decision_timeline.svg'>SVG</a> · <a href='figures/sep_rastrigin_d10_i1/03_decision_timeline.png'>PNG</a></p><img loading='lazy' src='figures/sep_rastrigin_d10_i1/03_decision_timeline.png' alt='03_decision_timeline'>
+<p><a href='figures/sep_rastrigin_d10_i1/02_convergence.pdf'>PDF</a> · <a href='figures/sep_rastrigin_d10_i1/02_convergence.svg'>SVG</a> · <a href='figures/sep_rastrigin_d10_i1/02_convergence.png'>PNG</a></p><img loading='lazy' src='figures/sep_rastrigin_d10_i1/02_convergence.png' alt='02_convergence'>
+<p><a href='figures/sep_rastrigin_d10_i1/01_final_regret.pdf'>PDF</a> · <a href='figures/sep_rastrigin_d10_i1/01_final_regret.svg'>SVG</a> · <a href='figures/sep_rastrigin_d10_i1/01_final_regret.png'>PNG</a></p><img loading='lazy' src='figures/sep_rastrigin_d10_i1/01_final_regret.png' alt='01_final_regret'>
+</section>
+<section id='sharp_ridge10'><h2>sharp_ridge10</h2>
+<p><a href='figures/sharp_ridge_d10_i1/03_decision_timeline.pdf'>PDF</a> · <a href='figures/sharp_ridge_d10_i1/03_decision_timeline.svg'>SVG</a> · <a href='figures/sharp_ridge_d10_i1/03_decision_timeline.png'>PNG</a></p><img loading='lazy' src='figures/sharp_ridge_d10_i1/03_decision_timeline.png' alt='03_decision_timeline'>
+<p><a href='figures/sharp_ridge_d10_i1/02_convergence.pdf'>PDF</a> · <a href='figures/sharp_ridge_d10_i1/02_convergence.svg'>SVG</a> · <a href='figures/sharp_ridge_d10_i1/02_convergence.png'>PNG</a></p><img loading='lazy' src='figures/sharp_ridge_d10_i1/02_convergence.png' alt='02_convergence'>
+<p><a href='figures/sharp_ridge_d10_i1/01_final_regret.pdf'>PDF</a> · <a href='figures/sharp_ridge_d10_i1/01_final_regret.svg'>SVG</a> · <a href='figures/sharp_ridge_d10_i1/01_final_regret.png'>PNG</a></p><img loading='lazy' src='figures/sharp_ridge_d10_i1/01_final_regret.png' alt='01_final_regret'>
+</section>
+<section id='sphere10'><h2>sphere10</h2>
+<p><a href='figures/sphere_d10_i1/03_decision_timeline.pdf'>PDF</a> · <a href='figures/sphere_d10_i1/03_decision_timeline.svg'>SVG</a> · <a href='figures/sphere_d10_i1/03_decision_timeline.png'>PNG</a></p><img loading='lazy' src='figures/sphere_d10_i1/03_decision_timeline.png' alt='03_decision_timeline'>
+<p><a href='figures/sphere_d10_i1/02_convergence.pdf'>PDF</a> · <a href='figures/sphere_d10_i1/02_convergence.svg'>SVG</a> · <a href='figures/sphere_d10_i1/02_convergence.png'>PNG</a></p><img loading='lazy' src='figures/sphere_d10_i1/02_convergence.png' alt='02_convergence'>
+<p><a href='figures/sphere_d10_i1/01_final_regret.pdf'>PDF</a> · <a href='figures/sphere_d10_i1/01_final_regret.svg'>SVG</a> · <a href='figures/sphere_d10_i1/01_final_regret.png'>PNG</a></p><img loading='lazy' src='figures/sphere_d10_i1/01_final_regret.png' alt='01_final_regret'>
+</section>
+<section id='step_ellipsoid10'><h2>step_ellipsoid10</h2>
+<p><a href='figures/step_ellipsoid_d10_i1/03_decision_timeline.pdf'>PDF</a> · <a href='figures/step_ellipsoid_d10_i1/03_decision_timeline.svg'>SVG</a> · <a href='figures/step_ellipsoid_d10_i1/03_decision_timeline.png'>PNG</a></p><img loading='lazy' src='figures/step_ellipsoid_d10_i1/03_decision_timeline.png' alt='03_decision_timeline'>
+<p><a href='figures/step_ellipsoid_d10_i1/02_convergence.pdf'>PDF</a> · <a href='figures/step_ellipsoid_d10_i1/02_convergence.svg'>SVG</a> · <a href='figures/step_ellipsoid_d10_i1/02_convergence.png'>PNG</a></p><img loading='lazy' src='figures/step_ellipsoid_d10_i1/02_convergence.png' alt='02_convergence'>
+<p><a href='figures/step_ellipsoid_d10_i1/01_final_regret.pdf'>PDF</a> · <a href='figures/step_ellipsoid_d10_i1/01_final_regret.svg'>SVG</a> · <a href='figures/step_ellipsoid_d10_i1/01_final_regret.png'>PNG</a></p><img loading='lazy' src='figures/step_ellipsoid_d10_i1/01_final_regret.png' alt='01_final_regret'>
+</section>
+<section id='weierstrass10'><h2>weierstrass10</h2>
+<p><a href='figures/weierstrass_d10_i1/03_decision_timeline.pdf'>PDF</a> · <a href='figures/weierstrass_d10_i1/03_decision_timeline.svg'>SVG</a> · <a href='figures/weierstrass_d10_i1/03_decision_timeline.png'>PNG</a></p><img loading='lazy' src='figures/weierstrass_d10_i1/03_decision_timeline.png' alt='03_decision_timeline'>
+<p><a href='figures/weierstrass_d10_i1/02_convergence.pdf'>PDF</a> · <a href='figures/weierstrass_d10_i1/02_convergence.svg'>SVG</a> · <a href='figures/weierstrass_d10_i1/02_convergence.png'>PNG</a></p><img loading='lazy' src='figures/weierstrass_d10_i1/02_convergence.png' alt='02_convergence'>
+<p><a href='figures/weierstrass_d10_i1/01_final_regret.pdf'>PDF</a> · <a href='figures/weierstrass_d10_i1/01_final_regret.svg'>SVG</a> · <a href='figures/weierstrass_d10_i1/01_final_regret.png'>PNG</a></p><img loading='lazy' src='figures/weierstrass_d10_i1/01_final_regret.png' alt='01_final_regret'>
+</section>
+</body></html>

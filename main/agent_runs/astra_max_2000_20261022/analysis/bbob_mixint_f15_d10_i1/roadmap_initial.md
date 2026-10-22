@@ -1,0 +1,12 @@
+# Initial decision
+
+Minimize a sealed, deterministic scalar black box in 10 real coordinates with bounds [[0,1],[0,1],[0,3],[0,3],[0,7],[0,7],[0,15],[0,15],[-5,5],[-5,5]]. There are no additional constraints and no prior observations. The hard total budget is 2,000 calls, including all initialization and probes. Smoothness, separability, and the optimum are unknown; no function identity is assumed or sought.
+
+## First block only
+Use CMA-ES via the supported `cma.CMAEvolutionStrategy` API, cma 4.5.0, in normalized coordinates z=(x-lower)/(upper-lower). Initialize the mean at z=0.5 in every coordinate and sigma=0.28. Use population size 16, seed 20261022, active covariance adaptation (`CMA_active=True`), and `BoundTransform` with bounds [0,1]. All other adaptation, recombination, and termination settings inherit cma 4.5.0 defaults. Disable library file logging and console verbosity. NumPy is 2.4.6. Direct library use permits explicit scaling, population size, and step-size choices beyond the provided wrapper.
+
+The broad initial radius explores a substantial fraction of each coordinate range. A population of 16 trades some update frequency for more diverse ranked samples in 10 dimensions. Covariance adaptation can learn useful search directions without assuming derivatives or smoothness. Normalization prevents wider physical units alone from setting mutation scale. These choices are prior design judgments, not evidence of objective structure.
+
+**Step limit:** at most 160 additional objective calls, pausing at cumulative evaluation 160 (10 complete populations). This allows an initial view of movement and covariance adaptation while keeping most of the budget uncommitted. Pause earlier on any CMA termination signal after a generation. Stop on an evaluator error or a nonfinite objective; do not retry an unknown evaluation. Every objective call is guarded by both the block limit and the same harness's remaining counter.
+
+**Checkpoint review:** inspect best and median values by generation, improvement timing, best location, normalized step size and coordinate standard deviations, covariance condition, and termination signals. Assess whether the search is improving and whether its spread is useful. Determinism removes measurement-noise uncertainty, but sparse coverage leaves substantial uncertainty about unsampled regions. No subsequent method or budget allocation is selected here.

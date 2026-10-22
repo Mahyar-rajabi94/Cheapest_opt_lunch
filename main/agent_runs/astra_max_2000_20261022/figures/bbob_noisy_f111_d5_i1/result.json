@@ -1,0 +1,65 @@
+{
+  "task": "noisy_rosenbrock_unif5",
+  "task_name": "bbob_noisy_f111_d5_i1",
+  "evaluations": 2000,
+  "status": "complete",
+  "run_note": "",
+  "agent_regret": 16.732180811155217,
+  "baseline_mean_regrets": {
+    "random_search": 13060.599019788682,
+    "sobol": 23088.926971190926,
+    "cma_es": 1159.7592155087461,
+    "de": 21642.494852714844,
+    "turbo": 4083.620448472227,
+    "gp_bo": 17561.165132125177,
+    "bobyqa": 484.5409840594883,
+    "nelder_mead": 1327.048434064548,
+    "lbfgsb": 1327.057257345201
+  },
+  "baseline_feasible_seed_counts": {
+    "random_search": [
+      10,
+      10
+    ],
+    "sobol": [
+      10,
+      10
+    ],
+    "cma_es": [
+      10,
+      10
+    ],
+    "de": [
+      10,
+      10
+    ],
+    "turbo": [
+      10,
+      10
+    ],
+    "gp_bo": [
+      10,
+      10
+    ],
+    "bobyqa": [
+      1,
+      1
+    ],
+    "nelder_mead": [
+      1,
+      1
+    ],
+    "lbfgsb": [
+      1,
+      1
+    ]
+  },
+  "decision_blocks": 11,
+  "noisy": true,
+  "n_constraints": 0,
+  "source_commit": "591e3de6a553c026976e3f785eceb8cac8b6690b",
+  "model": "gpt-6-astra",
+  "effort": "max",
+  "campaign_id": "run-6f48af0d6688",
+  "provenance_dir": "provenance/noisy_rosenbrock_unif5"
+}

@@ -1,0 +1,65 @@
+{
+  "task": "bent_cigar10",
+  "task_name": "bent_cigar_d10_i1",
+  "evaluations": 2000,
+  "status": "complete",
+  "run_note": "",
+  "agent_regret": 0.00021911866156187898,
+  "baseline_mean_regrets": {
+    "random_search": 20553751.564449687,
+    "sobol": 17571073.13444394,
+    "cma_es": 6.421323473078632,
+    "de": 11626297.444560066,
+    "turbo": 881425.7574845807,
+    "gp_bo": 15067386.681250697,
+    "bobyqa": 0.00047125718924689863,
+    "nelder_mead": 1194510.8987079922,
+    "lbfgsb": 9.189646675622498e-06
+  },
+  "baseline_feasible_seed_counts": {
+    "random_search": [
+      10,
+      10
+    ],
+    "sobol": [
+      10,
+      10
+    ],
+    "cma_es": [
+      10,
+      10
+    ],
+    "de": [
+      10,
+      10
+    ],
+    "turbo": [
+      10,
+      10
+    ],
+    "gp_bo": [
+      10,
+      10
+    ],
+    "bobyqa": [
+      1,
+      1
+    ],
+    "nelder_mead": [
+      1,
+      1
+    ],
+    "lbfgsb": [
+      1,
+      1
+    ]
+  },
+  "decision_blocks": 15,
+  "noisy": false,
+  "n_constraints": 0,
+  "source_commit": "591e3de6a553c026976e3f785eceb8cac8b6690b",
+  "model": "gpt-6-astra",
+  "effort": "max",
+  "campaign_id": "run-fb6ec398c732",
+  "provenance_dir": "provenance/bent_cigar10"
+}

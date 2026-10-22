@@ -1,0 +1,190 @@
+## Decision after evaluation 160
+**Budget:** 160 used / 2000 total; 1840 remaining.
+**Evidence:** Best observed value is 1121.9539679360869 at evaluation 106, versus first-generation best 1261.8502737333188. The generation median decreased from 1747.979381886389 to 1238.2912827634439; the best has not improved in the last three generations. Sigma is 1.7946287762548168 and axis ratio 1.83166. Coordinate standard deviations remain about 1.52–1.96. No library stop condition is active. Some latent-mean coordinates are near/beyond a box edge, but pycma's bound transformation keeps all evaluated candidates feasible. These are deterministic observations; three generations without a best improvement do not establish stagnation.
+**Decision:** Continue CMA-ES, retaining its mean, covariance, evolution paths, random-generator state, and all observations in the same live harness.
+**Hyperparameters:** Unchanged from roadmap_initial.md: pycma 4.5.0, population 16, active full covariance, initial sigma 2.5 with ordinary adaptive updates, same bounds and seed state. The current broad coordinate scales and improved medians support retaining the adaptation settings.
+**Reason:** The population distribution has improved substantially and covariance learning is still developing. Continuing can test whether the learned region yields further progress without discarding useful state.
+**Next step limit:** 240 additional objective calls; pause at cumulative evaluation 400.
+**Why this length:** Fifteen complete generations provide a longer view than the three-generation best-value plateau and permit meaningful covariance adaptation, while keeping 1600 calls available for subsequent evidence-based decisions.
+**Review:** Inspect generation medians/minima, best-value improvements, step size, covariance conditioning, and boundary proximity. Pause sooner on any library stopping condition, non-finite observation, or evaluator error; an evaluator error terminates the campaign without retry.
+
+## Decision after evaluation 400
+**Budget:** 400 used / 2000 total; 1600 remaining.
+**Evidence:** This block improved the best from 1121.9539679360869 to 1086.201142208956 (evaluation 394). The final generation median is 1154.8668108386073, down from 1238.2912827634439. Sigma is 1.47285 and axis ratio 2.59127; coordinate standard deviations remain 1.08–1.55. The best point has coordinate 4 at 4.99880587, close to its upper bound. CMA-ES remains productive, but broad proposals still have a substantial value gap above the incumbent. Smoothness has not been established.
+**Decision:** Switch the active evaluator label to bobyqa_local and test Py-BOBYQA initialized at the best observed feasible point. Keep the CMA-ES object, all data, and the same harness intact; the local quadratic model starts fresh. A queue adapter pauses the sequential solver before any unapproved further real call and preserves its state between blocks.
+**Hyperparameters:** Py-BOBYQA 1.5.0; npt=21 (2*d+1), scaling_within_bounds=True, rhobeg=0.05 in scaled coordinates (0.5 original units), rhoend=1e-8, objfun_has_noise=False, seek_global_minimum=False, restarts.use_restarts=False, maxfun=1600 as the maximum residual campaign allowance. The external block guard is tighter. Other trust-region, interpolation, and termination parameters inherit Py-BOBYQA 1.5.0 defaults. No replication is requested. The small initial radius examines local structure relative to CMA-ES's current spread. Bound handling is delegated to the supported solver API and checked before evaluation.
+**Reason:** The best basin merits a bounded test of model-based refinement. This is an empirical test of a local approximation, not an assumption that the objective is globally smooth or that CMA-ES is unsuitable.
+**Next step limit:** 180 additional objective calls; pause at cumulative evaluation 580.
+**Why this length:** This allows a 21-point interpolation set and up to 159 further proposals, enough to judge sustained local gains without committing most of the remaining budget.
+**Review:** Inspect best-value gain and its timing, local value spread, the trajectory near bounds, and solver status. Pause earlier if the solver converges/stops or an invalid/non-finite value appears; evaluator errors terminate without retry. No subsequent method is selected.
+
+## Decision after evaluation 580
+**Budget:** 580 used / 2000 total; 1420 remaining.
+**Evidence:** The first local block improved the incumbent from 1086.201142208956 to 1045.767931981412. Its best at local call 150 was 1045.7694459209763, so the last 30 calls gained only 0.00151394. The last ten objective values span roughly 7.4e-5 and recent proposal distances are 5e-5 to 3.6e-4 original units. The solver is still active, so this is strong evidence of diminishing local returns, not a formal convergence certificate. The second-best CMA-ES observation (evaluation 324) has value 1094.266371991365 and lies 4.44463 Euclidean units from the current best.
+**Decision:** Restart BOBYQA at observation 324 to test a spatially distinct promising region. Save the first live local solver in local_runs and leave it paused; create a fresh local model. Preserve all observations, the original CMA-ES state, and the same harness. Use the same bobyqa_local method label.
+**Hyperparameters:** Same local settings as the decision at 400: Py-BOBYQA 1.5.0, npt=21, normalized rhobeg=0.05, rhoend=1e-8, deterministic, bounds scaling on, internal restarts and global search off. Set this new solver's maxfun to the current 1420-call residual allowance; the block guard remains controlling. Keep the radius because it gave a useful 40.43-unit gain in the first basin. Initialization is the observed point X[323], selected by best objective among candidates over 3 units from the incumbent.
+**Reason:** The data support effective local refinement but do not establish that the first basin is best. A promising seed far beyond the first run's total displacement (0.329) provides a direct test of another region with no additional initial-design cost beyond actual local calls.
+**Next step limit:** 140 additional objective calls; pause at cumulative evaluation 720.
+**Why this length:** The previous run realized almost all of its 40.43-unit improvement within 120–150 calls. A 140-call check allows interpolation construction and meaningful refinement while avoiding an automatic commitment to high-precision convergence.
+**Review:** Compare this basin's best and improvement trajectory to the incumbent, inspect proposal scales and solver status, and reconsider whether further refinement is worthwhile. Stop earlier on solver termination, invalid/non-finite observations, or evaluator error; never retry an unknown evaluator call.
+
+## Decision after evaluation 720
+**Budget:** 720 used / 2000 total; 1280 remaining.
+**Evidence:** The second local run improved its seed value 1094.266371991365 to a new campaign best 1041.2421929932325; only 0.00805079 improvement occurred over its last 20 calls. The two refined regions differ substantially. A coarse quadratic ridge model fitted solely to the first 400 real CMA-ES observations gives fivefold CV R2=0.77325 and RMSE=92.34082, versus linear-model R2=0.44469 and RMSE=144.50475. Quadratic RMSE is 31.96293 on the best-value quartile and 44.51313 when trained on the first 320 and tested on the next 80. These errors are substantial; the model is a coarse proposal mechanism, not evidence of objective values. Its bounded minimizer lies 8.39638 units from the current best, and its prediction 1050.74469 is explicitly unobserved.
+**Decision:** Switch to a surrogate-guided Sobol probe of that distinct region. Evaluate the model minimizer once and a 32-point scrambled Sobol design in a bounded neighborhood around it. Preserve all optimizer states and observations; no local solver resumes automatically.
+**Hyperparameters:** The proposal model uses all linear, square, and pairwise cross terms in x/5, with ridge penalty 1e-6 on non-intercept coefficients, fitted by NumPy 2.4.6 linear algebra to 400 CMA-ES observations. The validation split seed is 813. SciPy 1.17.1 L-BFGS-B minimizes this surrogate only (maxiter=500, ftol=1e-12; other SciPy defaults) from the center, incumbent, and ten best initial observations. These surrogate evaluations are not objective evaluations and do not enter the trace. Real design: SciPy 1.17.1 qmc.Sobol(d=10, scramble=True, seed=20261023), random_base2(m=5); map its 32 points into [candidate-1, candidate+1] intersected with the original bounds. The separate center candidate is [-1.7752089749924074, 1.3889374003664239, 0.30200684679986944, 2.541312275339434, -2.906453240493342, -3.7489653768155704, -1.2148140280209978, 1.9068556638485925, -1.2479076172465102, -0.9527082739162709].
+**Reason:** Local refinement has helped in two regions, while the coarse model provides an inexpensive data-based way to investigate a substantially different location. Uncertain predictions justify a limited real test before committing more calls there.
+**Next step limit:** 33 additional objective calls; pause at cumulative evaluation 753.
+**Why this length:** One center check plus a power-of-two Sobol design gives a balanced, inexpensive 10-dimensional neighborhood sample and tests whether apparent model gains survive real evaluation.
+**Review:** Compare actual center/neighborhood values to the incumbent and original CMA-ES distribution, inspect whether improvements cluster, and assess prediction error. Pause sooner on invalid/non-finite observations or evaluator error; an evaluator error stops the campaign without retry.
+
+## Decision after evaluation 753
+**Budget:** 753 used / 2000 total; 1247 remaining.
+**Evidence:** The surrogate center actually evaluated to 1191.9143461438903, 141.17 above its prediction. The 32 nearby probes had best 1113.252020835037 and median 1202.3989064993202. None improved the incumbent 1041.2421929932325. Thus the quadratic model's extrapolation into this region was unreliable. Among the first 400 evaluated points at least 3 units from both refined centers, evaluation 386 is best: value 1097.772556374278, distances 4.25361 and 3.11230 from the first and second local endpoints.
+**Decision:** Switch back to bobyqa_local with a fresh model at observation 386. Retain both prior local solvers in local_runs, all observations, and the original CMA-ES state. The surrogate does not control this block.
+**Hyperparameters:** Reuse the Py-BOBYQA 1.5.0 configuration recorded at 400 (npt=21, scaled rhobeg=0.05, rhoend=1e-8, deterministic, scaled bounds, internal restarts/global mode off), with maxfun=1247 as an outer library limit. The explicit 120-call block guard controls actual calls. The seed separation criterion is Euclidean distance >=3 from X[579] and X[719]. The initial radius is retained because it produced substantial gains in two tested regions.
+**Reason:** A directly observed promising and spatially distinct seed has stronger supporting evidence than the failed surrogate region. The prior local runs demonstrated useful gains within approximately 120 calls.
+**Next step limit:** 120 additional objective calls; pause at cumulative evaluation 873.
+**Why this length:** This covers the 21-point initialization and almost 100 refinement proposals, sufficient to compare this region's progress while limiting expenditure on a potentially inferior basin.
+**Review:** Compare best value and late-block progress against 1041.2421929932325, inspect proposal scales and active bounds, and reconsider the value of continuing this model. Pause earlier on solver termination, invalid/non-finite observations, or an evaluator error; never retry an unknown evaluation.
+
+## Decision after evaluation 873
+**Budget:** 873 used / 2000 total; 1127 remaining.
+**Evidence:** The third BOBYQA run reduced its seed 1097.772556374278 to 1029.9153499546142, improving the campaign incumbent by 11.32684. Best values at local calls 60, 90, and 120 were 1035.5559886645603, 1030.3495619611042, and 1029.9153499546142. The most recent 30 calls gained 0.43421, and recent values still show consistent improvement. No local solver stop condition has occurred.
+**Decision:** Continue the current BOBYQA solver without restarting, retaining its interpolation set, trust-region state, all observations, and the same harness.
+**Hyperparameters:** Unchanged from the decision at 753, inheriting Py-BOBYQA 1.5.0 defaults as specified at 400. The solver's internal trust-region adaptation continues normally. The existing model remains productive, so there is no evidence supporting a change in radius or interpolation count.
+**Reason:** This is the strongest region observed so far, and its late-block gains remain appreciable compared with the first two refined regions' plateaus.
+**Next step limit:** 60 additional objective calls; pause at cumulative evaluation 933.
+**Why this length:** A shorter continuation gives two 30-call progress windows, enough to measure the rate of local refinement without presuming that all remaining budget belongs in this basin.
+**Review:** Inspect best-value improvement over each 30-call interval, recent proposal distances, and solver status. Pause earlier on solver termination, invalid/non-finite observations, or evaluator error; do not retry an unknown objective call.
+
+## Decision after evaluation 933
+**Budget:** 933 used / 2000 total; 1067 remaining.
+**Evidence:** Continuing the third local solver improved the best from 1029.9153499546142 to 1029.8489026111836. The first 30 continuation calls gained 0.06428; the next 30 gained only 0.00216678. Recent values span about 5.8e-5, indicating diminishing returns without a formal convergence certificate. The best unrefined initial candidate at least 3 units from all three refined centers is observation 378, value 1099.090196259156, with distances 3.50127, 4.74565, and 3.67573.
+**Decision:** Restart BOBYQA at observation 378 using a fresh interpolation model. Retain the current solver in local_runs, all collected data, other paused optimizer states, and the same harness.
+**Hyperparameters:** Retain the Py-BOBYQA 1.5.0 settings from the decision at 400: npt=21, scaled rhobeg=0.05, rhoend=1e-8, deterministic and bounds-scaled, internal restarts/global mode off. New maxfun=1067, subordinate to the external step limit. Use the same >=3 Euclidean separation rule, now relative to the three refined centers. The repeated success of these settings in three different regions supports retaining them.
+**Reason:** The current local gain rate is small, whereas each of three distinct seeds has produced a useful refined solution. Another strong, separated observation offers a supported opportunity for further improvement.
+**Next step limit:** 120 additional objective calls; pause at cumulative evaluation 1053.
+**Why this length:** The third run had already achieved nearly its final value after 120 calls. Reusing that interval is justified here by measured local progress, while retaining over 900 calls for later decisions.
+**Review:** Compare the refined result and late-block gains against 1029.8489026111836, inspect bounds and solver status, and reassess the exploration/refinement balance. Pause earlier on solver termination, invalid/non-finite observations, or evaluator error; no unknown evaluation is retried.
+
+## Decision after evaluation 1053
+**Budget:** 1053 used / 2000 total; 947 remaining.
+**Evidence:** The fourth local run reduced observation 378 from 1099.090196259156 to 1024.8257832112174, improving the global incumbent by 5.02312. Its best at local call 90 was 1026.1866543394772, so the latest 30 calls gained 1.36087. Recent values are still changing at the 0.1 scale. The best lies on the lower bound of coordinate 1, which the bounded solver handles directly.
+**Decision:** Continue the current BOBYQA solver with its full live interpolation and trust-region state; preserve the same harness and all data.
+**Hyperparameters:** Unchanged from the decision at 933 and the Py-BOBYQA 1.5.0 configuration at 400. Keep the active boundary and ordinary radius adaptation; do not restart a productive model.
+**Reason:** Late-block gains are larger than in the third run at the same stage, and this is the best region currently observed.
+**Next step limit:** 60 additional objective calls; pause at cumulative evaluation 1113.
+**Why this length:** Two 30-call windows allow the rate of improvement to be reassessed without committing excessive calls to convergence.
+**Review:** Inspect best values by 30-call interval, proposal distances, and solver termination. Pause sooner on solver termination, invalid/non-finite observations, or evaluator error; do not retry an unknown evaluation.
+
+## Decision after evaluation 1113
+**Budget:** 1113 used / 2000 total; 887 remaining.
+**Evidence:** The continuation improved 1024.8257832112174 to 1024.801293488236. Its last 30 calls gained only 0.00105355. Across the four local runs, seed-to-best-endpoint distances are 0.32864, 0.40320, 0.62151, and 0.67702. This shows useful refinement remained local. Observation 268 has value 1100.8411375415146 and distances 3.79634, 5.34657, 4.55624, and 2.57365 from those endpoints.
+**Decision:** Start a fresh BOBYQA model at observation 268. Keep the previous model paused in local_runs, retain all observations and other solver states, and use the same harness.
+**Hyperparameters:** Keep the Py-BOBYQA 1.5.0 configuration from 400 (npt=21, scaled rhobeg=0.05, rhoend=1e-8, deterministic, bounds scaling on, internal restarts/global mode off). New maxfun=887 is only the library outer limit. Adjust the seed-selection separation from 3 to 2 original-coordinate Euclidean units, applied to all four refined endpoints. Two units remains about three times the largest observed seed-to-endpoint displacement and admits previously excluded nearby regions.
+**Reason:** Four local starts have each improved the campaign best, while the incumbent run now has small marginal gains. The observed localization justifies testing a closer unrefined seed rather than excluding it with an unnecessarily wide diversity threshold.
+**Next step limit:** 120 additional objective calls; pause at cumulative evaluation 1233.
+**Why this length:** In the completed runs, 120 calls consistently established the basin's quality and most of the improvement. This leaves 767 calls for subsequent decisions without presuming those decisions.
+**Review:** Assess whether this region improves the incumbent, whether 120-call gains remain ongoing, and whether the revised separation reaches a distinct local solution. Pause earlier on solver termination, invalid/non-finite observations, or evaluator error; never retry an unknown evaluation.
+
+## Decision after evaluation 1233
+**Budget:** 1233 used / 2000 total; 767 remaining.
+**Evidence:** The fifth local run improved its seed from 1100.8411375415146 to 1035.3492335696692 (evaluation 1231), but this remains 10.54794 above the incumbent 1024.801293488236. Its recent values are near 1035.35–1035.46. Previous runs' gains after 120 calls were much smaller than this deficit, although that does not prove the basin cannot improve further. The best remaining initial candidate satisfying >=2 units from all five refined centers is observation 365, value 1102.7627866788307, minimum distance 3.09043.
+**Decision:** Pause the fifth solver and start a fresh BOBYQA model at observation 365. Preserve all prior solver objects, observations, and the same harness.
+**Hyperparameters:** Local model settings remain those of Py-BOBYQA 1.5.0 at decision 400: npt=21, scaled rhobeg=0.05, rhoend=1e-8, deterministic bounds-scaled search, internal restarts/global mode off. Keep the >=2-unit seed-separation rule and set the new library maxfun=767. No radius change is justified by successful local reduction in all five regions.
+**Reason:** The first noncompetitive refined region demonstrates that strong initial values do not guarantee an improved local optimum. A new observed seed offers a better information/gain tradeoff than high-precision work on a basin currently over 10 units worse.
+**Next step limit:** 90 additional objective calls; pause at cumulative evaluation 1323.
+**Why this length:** Every completed run revealed most of its relative quality by around 90 calls. A shorter initial review is appropriate now that the incumbent is stronger and the remaining budget smaller; it still allows 21 initialization points plus 69 further proposals.
+**Review:** Inspect this region's best relative to 1024.801293488236 and its recent improvement rate, considering that some prior runs gained 1–2 units between calls 90 and 120. Pause earlier on solver termination, invalid/non-finite observations, or evaluator error; no unknown evaluation is retried.
+
+## Decision after evaluation 1323
+**Budget:** 1323 used / 2000 total; 677 remaining.
+**Evidence:** The sixth local run reached 1050.2232645627248, 25.42197 above the campaign best 1024.801293488236. Together with the fifth basin at 1035.34923, this is two successive uncompetitive restarts from the old CMA-ES ranking. The incumbent has x1=-5 and is locally well refined. Other successful local endpoints stayed within 0.68 units of their seeds, motivating fresh proposals farther around this strong region.
+**Decision:** Switch to a neighborhood Sobol probe centered on the incumbent. Evaluate 16 full-dimensional candidates and 16 matched candidates with coordinate 1 fixed to its incumbent bound -5. Pause all local optimizers and retain their states, all observations, and the same harness.
+**Hyperparameters:** SciPy 1.17.1 qmc.Sobol(d=10, scramble=True, seed=20261025), random_base2(m=4). Map into [incumbent-1, incumbent+1] intersected with [-5,5]^10. For each candidate, also evaluate a copy with x1=-5. All 32 actual calls count, without substituting model values or cached results. The one-unit coordinate radius explores beyond the observed local displacements; paired boundary proposals test the relevance of the active bound without assuming it is globally optimal. Other Sobol settings inherit SciPy 1.17.1 defaults.
+**Reason:** Fresh local-neighborhood exploration is supported by the strong incumbent and diminishing returns from the initial seed ranking. Paired points make the boundary comparison interpretable while maintaining exploration in the other coordinates.
+**Next step limit:** 32 additional objective calls; pause at cumulative evaluation 1355.
+**Why this length:** Sixteen matched pairs give a low-cost, balanced neighborhood sample and direct boundary comparisons while using under 5% of the remaining budget.
+**Review:** Inspect actual minima, medians, face-versus-interior paired differences, distances from the incumbent, and whether the new observations improve the search's prospects. Pause sooner on invalid/non-finite observations or evaluator error; do not retry an unknown evaluation.
+
+## Decision after evaluation 1355
+**Budget:** 1355 used / 2000 total; 645 remaining.
+**Evidence:** The neighborhood probe did not improve 1024.801293488236. Its best interior observation is 1091.907816753998 at evaluation 1326; the best boundary-face observation is 1109.9838625241518. The face was better in only 7 of 16 matched pairs, and median(face minus interior) was +13.01377. This argues against freezing x1 at -5 for the new search. The new best seed is competitive with earlier seeds that refined into useful solutions, although that does not guarantee its basin quality.
+**Decision:** Switch to bobyqa_local with a fresh model at observation 1326, the best new neighborhood point. Preserve all previous optimizers and data in the same harness. Keep all coordinates free within the original bounds.
+**Hyperparameters:** Same supported Py-BOBYQA 1.5.0 settings as decision 400: npt=21, scaled rhobeg=0.05 (0.5 original units), rhoend=1e-8, deterministic, bounds scaling on, restarts/global mode off; new maxfun=645. The empirical paired-boundary evidence supports retaining full-dimensional search. The local radius remains effective across previous runs.
+**Reason:** The neighborhood probe provides a fresh observed seed near the strongest region. Local optimization has repeatedly removed 40–74 objective units from comparable raw seeds, making a bounded test reasonable.
+**Next step limit:** 100 additional objective calls; pause at cumulative evaluation 1455.
+**Why this length:** One hundred calls permit interpolation setup and 79 model-based proposals, slightly beyond the 90-call basin screens while avoiding an automatic full 180-call refinement commitment.
+**Review:** Compare the new local minimum and late-block improvement to 1024.801293488236; inspect displacement and boundary activity. Pause sooner on solver termination, invalid/non-finite observations, or evaluator error; no unknown evaluation is retried.
+
+## Decision after evaluation 1455
+**Budget:** 1455 used / 2000 total; 545 remaining.
+**Evidence:** The seventh local run reached 1029.2189369380815 after 100 calls, still 4.41764 above the incumbent 1024.801293488236. It gained roughly 0.5 in the last ten calls, so it is not declared converged, but recent starts have not improved the incumbent. The original CMA-ES state was paused at generation 25/evaluation 400 with best 1086.20114, median 1154.86681, sigma 1.47285, axis ratio 2.59127, and no stop condition. That search was still improving when paused; its existing covariance information remains available.
+**Decision:** Switch back to the original live CMA-ES object for broader exploration. Preserve its complete state from evaluation 400, including mean, covariance, evolution paths, and random-generator state. Pause the current BOBYQA solver without discarding it. Keep all real observations and the same campaign harness; no objective values are replayed or synthesized.
+**Hyperparameters:** Reuse the initial pycma 4.5.0 configuration: population 16, active full covariance, bounds transformation, and inherited adaptation/stopping defaults. Start from the preserved adaptive sigma 1.4728467735506703 rather than resetting sigma or the mean. Keep population 16 because there is sufficient budget for ten complete ranking updates and broader exploration remains the purpose of this block. No external injection or restart is performed.
+**Reason:** The old CMA-ES seed ranking and a small neighborhood test have produced several noncompetitive local solutions. Resuming a still-productive population search provides fresh directions and candidate regions while retaining learned geometry.
+**Next step limit:** 160 additional objective calls; pause at cumulative evaluation 1615.
+**Why this length:** Ten complete generations give covariance adaptation and candidate quality time to change measurably, using less than one third of the remaining budget while preserving a checkpoint with 385 calls left.
+**Review:** Inspect new generation minima/medians, candidate distances from previously refined endpoints, sigma/covariance diagnostics, and global best. Evaluate progress in the new raw samples even if a highly refined incumbent is not immediately beaten. Pause earlier on a library stop condition, invalid/non-finite observations, or evaluator error; no unknown evaluation is retried.
+
+## Decision after evaluation 1615
+**Budget:** 1615 used / 2000 total; 385 remaining.
+**Evidence:** The resumed CMA-ES block improved its raw best from 1086.201142208956 to 1063.8960644596257 at evaluation 1602, while the final generation median fell to 1122.9057091067689. Sigma is 0.99317849 and axis ratio 3.19463. The campaign best remains 1024.801293488236. Observation 1602 is 3.47699 units from that incumbent, so this promising fresh sample is spatially distinct. Its raw value is better than all previous local-start values.
+**Decision:** Switch to bobyqa_local and initialize a fresh model at observation 1602. Preserve the resumed CMA-ES state, all prior local solvers and real observations, and the same harness.
+**Hyperparameters:** Retain the tested Py-BOBYQA 1.5.0 configuration from 400: npt=21, scaled rhobeg=0.05, rhoend=1e-8, deterministic bounds scaling, internal restarts/global mode off. New maxfun=385; the 120-call external cap is controlling. The broad-to-local scale transition is comparable to the earlier successful local starts, so no radius change is justified.
+**Reason:** Renewed population search delivered a substantially better raw seed than earlier ones. Local refinement has been the campaign's strongest source of actual best-value gains and is well motivated at this new point.
+**Next step limit:** 120 additional objective calls; pause at cumulative evaluation 1735.
+**Why this length:** A 120-call block consistently exposed basin quality and most local improvement in earlier runs. With a particularly strong seed, this is enough to assess its potential while retaining 265 calls for the next evidence-based decision.
+**Review:** Inspect whether the incumbent improves, gains in the last 30 calls, bounds, and solver status. Pause earlier on solver termination, invalid/non-finite observations, or evaluator error; never retry an unknown evaluation.
+
+## Decision after evaluation 1735
+**Budget:** 1735 used / 2000 total; 265 remaining.
+**Evidence:** The eighth local run improved 1063.8960644596257 to 1016.1172279060706, beating the former incumbent by 8.68407. Its best at local call 90 was 1018.104177657983, so the last 30 calls gained 1.98695. The final ten values span about 0.406 and still include new improvements. No solver stop condition is reported.
+**Decision:** Continue the current BOBYQA instance with its existing interpolation model and trust-region state. Retain all collected data and the same harness.
+**Hyperparameters:** Unchanged from decision 1615, using Py-BOBYQA 1.5.0 defaults as detailed at 400. Ordinary radius/model adaptation continues; a restart or radius reset would discard a still-productive model.
+**Reason:** The newest region is now best and continues to improve meaningfully, so further local work has stronger immediate evidence than another new start.
+**Next step limit:** 60 additional objective calls; pause at cumulative evaluation 1795.
+**Why this length:** Two 30-call windows provide enough time to measure whether the current improvement rate persists, without automatically spending all 265 remaining calls.
+**Review:** Compare the two interval gains, current best, recent proposal distances, and solver status. Pause earlier on solver termination, invalid/non-finite observations, or evaluator error; no unknown evaluation is retried.
+
+## Decision after evaluation 1795
+**Budget:** 1795 used / 2000 total; 205 remaining.
+**Evidence:** Continuing the eighth local model improved 1016.1172279060706 to 1015.9212493551306 at evaluation 1794. The first 30 calls gained 0.18786; the next 30 gained only 0.00812002. The last values are near 1015.92125, indicating reduced marginal gains. The next best fresh CMA-ES point is evaluation 1506 with raw value 1084.6881844560949; it differs in several coordinates from the incumbent and has not been locally refined.
+**Decision:** Pause the best local solver, preserving its complete state, and start a fresh BOBYQA model at observation 1506. Preserve all other states and observations and continue the same harness.
+**Hyperparameters:** Keep Py-BOBYQA 1.5.0 settings from 400: npt=21, scaled rhobeg=0.05, rhoend=1e-8, deterministic bounds-scaled search, internal restarts/global mode off. New maxfun=205 is the outer residual budget, with an explicit 100-call block cap. The seed is selected by actual objective rank among unrefined points in the resumed population block.
+**Reason:** The incumbent's improvements are now small, whereas a new observed point can test a different local basin. This is an uncertainty-driven exploration decision; the higher raw value does not guarantee competitiveness, and no global optimality is claimed.
+**Next step limit:** 100 additional objective calls; pause at cumulative evaluation 1895.
+**Why this length:** One hundred calls have been sufficient to reveal most basin quality in prior starts. This is a bounded test that leaves a checkpoint with 105 calls remaining, instead of spending the entire residual budget without review.
+**Review:** Compare local best and recent gains to 1015.9212493551306; assess whether continuing this model is justified relative to other retained states. Pause earlier on solver termination, invalid/non-finite observations, or evaluator error; no unknown evaluation is retried.
+
+## Decision after evaluation 1895
+**Budget:** 1895 used / 2000 total; 105 remaining.
+**Evidence:** The ninth local run improved its seed 1084.6881844560949 to 1019.4543308286293 in 100 calls. It is 3.53308 worse than the incumbent 1015.9212493551306. Values at local calls 60 and 90 were around 1037.89 and 1020.24; the best decreased by approximately 0.79 over the last ten calls. This model is still making appreciable progress, unlike the near-flat incumbent model.
+**Decision:** Continue the current ninth BOBYQA instance, retaining its interpolation and trust-region state. Keep the best local solver paused and available, with all observations and the same harness intact.
+**Hyperparameters:** Unchanged from decision 1795 and Py-BOBYQA 1.5.0 configuration at 400. No restart or radius change is supported while the model is actively improving.
+**Reason:** The current basin remains worse, but its recent gains justify a short continuation to resolve that uncertainty before choosing how to use the final residual budget.
+**Next step limit:** 40 additional objective calls; pause at cumulative evaluation 1935.
+**Why this length:** Forty calls extend this run to 140, beyond the point where previous basins' quality was generally clear, and preserve a separate decision with 65 calls remaining.
+**Review:** Compare remaining deficit and recent gain rate to the incumbent, inspect solver status, and reconsider which retained state merits further calls. Pause earlier on solver termination, invalid/non-finite observations, or evaluator error; no unknown evaluation is retried.
+
+## Decision after evaluation 1935
+**Budget:** 1935 used / 2000 total; 65 remaining.
+**Evidence:** The ninth local model improved from 1019.4543308286293 to 1017.9345590097852. The latest ten values lie near 1017.9346–1017.9682, and the last ten-call gain is only about 0.0095. It remains 2.01331 worse than the incumbent. The retained best solver reached 1015.9212493551306 after 180 local calls, with its last 30-call improvement 0.00812 and no reported convergence.
+**Decision:** Pause the ninth solver and resume the retained best_local BOBYQA instance from its existing interpolation/trust-region state. All observations and the same live harness are retained. This is a state selection among existing local models, not a fresh start.
+**Hyperparameters:** Unchanged Py-BOBYQA 1.5.0 configuration of the best solver from decision 1615/400: npt=21, scaled initial rhobeg=0.05 with ongoing internal adaptation, rhoend=1e-8, deterministic bounds scaling, internal restarts/global mode off. No model or radius reset is performed.
+**Reason:** The alternative model has slowed while remaining clearly worse. The best model still has measurable precision gains available. Only 65 calls remain, less than the 90–120 calls that earlier fresh models needed to reveal basin quality, so existing-model refinement is better supported than another initialization.
+**Next step limit:** 65 additional objective calls; pause at cumulative evaluation 2000, or earlier if the best solver terminates.
+**Why this length:** This is a modest continuation comparable to the previous 60-call refinement windows. It can improve local accuracy using an already built model and happens to equal the remaining budget; budget exhaustion is not being used to skip a decision about method or state.
+**Review:** Record the final best observed value and point, any early solver termination, and final call count. Stop at the block/budget limit; if the solver ends sooner, review the residual budget before stopping. Evaluator errors terminate without retry.
+
+## Decision after evaluation 2000
+**Budget:** 2000 used / 2000 total; 0 remaining.
+**Evidence:** The final 65-call continuation improved the best from 1015.9212493551306 to 1015.9193308493706 at evaluation 2000. The last ten observed values decreased from approximately 1015.91933285 to 1015.91933085. The best feasible point is [-3.02947428506588, 3.848625778958546, 3.8294808705658667, 4.2521662006937575, 2.6294762479816463, -4.488832999330619, -0.43117885036985015, -0.5524162113466344, -2.440132929036596, -1.8530840915768936]. No evaluator errors or non-finite observations occurred. The objective is deterministic, but a global optimum is not certified.
+**Decision:** Stop because the hard evaluation budget is exhausted. Issue no further objective calls. Save the final canonical outputs through the existing harness and verify the four required files.
+**Hyperparameters:** Not applicable to stopping. The final active method was the retained best Py-BOBYQA 1.5.0 model with settings recorded at 400 and 1615.
+**Reason:** All 2000 authorized evaluations have been consumed. The best result is an actual evaluated observation, not a surrogate prediction.
+**Next step limit:** 0 additional objective calls; final cumulative count 2000.
+**Why this length:** No budget remains.
+**Review:** Not applicable; campaign complete. Validate the saved trace count, best result, bounds, method labels, and exact four-file output set without modifying harness-generated results.
+

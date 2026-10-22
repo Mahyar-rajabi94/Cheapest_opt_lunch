@@ -9,6 +9,8 @@ experiments. [CLAUDE.md](CLAUDE.md) imports it; there is only one maintained pro
 The automated isolated runner below drives either Codex CLI or Claude Code CLI
 (`--agent codex|claude`); both use Codex's native sandbox for every agent command.
 
+[Published Astra max results: 30 mathematical tasks, 2,000-evaluation allowance](main/agent_runs/astra_max_2000_20261022/README.md).
+
 ## Install once
 
 Use Python 3.11+ and an installed `codex` CLI, authenticated for `--agent codex`.

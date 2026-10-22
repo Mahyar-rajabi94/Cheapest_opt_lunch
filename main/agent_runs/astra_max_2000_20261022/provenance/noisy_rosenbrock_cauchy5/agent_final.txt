@@ -1,0 +1,5 @@
+Completed **2,000/2,000 evaluations** and stopped at the budget limit.
+
+Best observed value: **1,046.8950278722**, at approximately `[-0.059560, -0.378929, 0.012940, 1.819177, -2.796038]`. This was a noise outlier; the refined candidate’s 255-repeat median was **1,149.1500006137**.
+
+Saved and verified exactly four files—`roadmap_initial.md`, `changelog.md`, `trace.csv`, and `meta.json`—in [results/agent_run](/Users/iamthomaspruyn/Documents/PhD/Projects/OSI_Hackathon/Cheapest_opt_lunch/runs/paper-2000-20261022/campaigns/run-d86c88064995/workspace/results/agent_run).

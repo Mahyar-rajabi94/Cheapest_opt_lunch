@@ -1,0 +1,226 @@
+[
+  {
+    "block": 1,
+    "method": "cma_es",
+    "first_eval": 1,
+    "last_eval": 193,
+    "calls": 193,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "cma_es",
+        "first_eval": 1,
+        "last_eval": 193
+      }
+    ],
+    "decision_text": "# Initial decision: first block only\n\nThe task is to minimize a deterministic scalar black-box function in 10 real coordinates, each in [-5, 5], with no additional constraints and no prior observations. The hard campaign budget is 2,000 evaluations, including every initialization and repeated call. Objective identity and smoothness are unknown; the search uses only observed values. No replication is planned because the public interface states there is no noise.\n\nUse CMA-ES through the supported `cma.CMAEvolutionStrategy` API, pycma 4.5.0. The underlying API is used because the provided wrapper fixes settings that this campaign chooses explicitly. Initialize at the midpoint x0 = (0,...,0), sigma0 = 2.5, population size 16, random seed 2202, bounds [-5,5] in every coordinate, full covariance from the first generation (`CMA_diagonal=0`), active covariance adaptation enabled, and elitism disabled. Use pycma 4.5.0 inherited recombination/covariance/step-size adaptation defaults (8 selected parents for population 16), its BoundTransform boundary handler, and its default convergence tolerances (`tolx=1e-11`, `tolfun=1e-11`, `tolfunhist=1e-12`, default stagnation test). Disable library output/logging. These settings provide broad initial sampling, rank-based robustness to an unknown objective scale, and capacity to learn coordinate correlations. They do not assume differentiability or unimodality.\n\nEvaluate the midpoint once as a recorded baseline, then perform at most 12 complete generations of 16 candidates. The maximum additional calls are 193; pause at cumulative evaluation 193. A dozen generations should reveal the initial objective scale, progress, sampling spread and early covariance adaptation without postponing review for a large part of the budget. The midpoint baseline is retained among campaign observations but does not replace an individual in a CMA generation.\n\nAt the checkpoint inspect baseline and best values, generation minima and medians, number/timing of improvements, step size, per-coordinate sampling scales, covariance axis ratio, boundaries and termination flags. Keep the same harness and optimizer in a live process and save the harness files at the checkpoint. Pause sooner if pycma reports termination, the evaluator errors, or a nonfinite value appears; an evaluator error ends the campaign without retrying the unknown call. These are review triggers only, with no next method preselected.\n"
+  },
+  {
+    "block": 2,
+    "method": "bobyqa_local",
+    "first_eval": 194,
+    "last_eval": 339,
+    "calls": 146,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "bobyqa_local",
+        "first_eval": 194,
+        "last_eval": 339
+      }
+    ],
+    "decision_text": "## Decision after evaluation 193\n**Budget:** 193 used / 2000 total; 1807 remaining.\n**Evidence:** The midpoint value was 175.02451776511123. Best observed value is 90.84804694790826 at evaluation 15. None of the following 178 calls improved it. Generation medians fluctuated between 129.32 and 164.36 without sustained decline; sigma rose from 2.5 to 4.0941 and coordinate sampling standard deviations are about 3.22-3.33. Covariance axis ratio is 2.382 and there are no termination flags. The objective is deterministic; broad-sampling variation is not observation noise. Twelve generations do not prove CMA-ES cannot work, but they provide little evidence of useful concentration.\n**Decision:** Switch to a local Py-BOBYQA run initialized at the best observed point. Retain all observations, the same harness and the dormant CMA state. A campaign-local queue adapter will suspend the solver between individual objective requests, preserving its interpolation model and trust-region state across checkpoints. Count the solver's initial reevaluation normally.\n**Hyperparameters:** Py-BOBYQA 1.5.0, npt=21 (2d+1), rhobeg=0.5 and rhoend=1e-6 in original coordinates, scaling_within_bounds=False, objfun_has_noise=False, seek_global_minimum=False, restarts.use_restarts=False, maxfun=1807 as a solver safety ceiling. Use inherited deterministic initialization, minimum-change-Hessian interpolation and trust-region parameters (eta1=0.1, eta2=0.7, gamma_dec=0.5, gamma_inc=2, gamma_inc_overline=4). Other defaults are those of Py-BOBYQA 1.5.0. The smaller starting radius probes local behavior at one twentieth of the domain width; 21 interpolation points limit setup cost.\n**Reason:** Test whether values around the incumbent admit useful local modeling after broad sampling failed to concentrate. This decision does not presume global smoothness or a particular objective identity.\n**Next step limit:** 160 additional objective calls; pause at cumulative evaluation 353.\n**Why this length:** Covers the 21-point initialization plus 139 adaptive trials/model-improvement calls, enough to assess a local trend while leaving substantial budget for an evidence-based next decision.\n**Review:** Inspect best-value improvement, improvement timing, range of recent values and distances of recent proposals from the incumbent. Pause earlier if the solver returns or encounters numerical failure. An evaluator error or nonfinite objective stops execution without retrying.\n"
+  },
+  {
+    "block": 3,
+    "method": "cma_local_restart",
+    "first_eval": 340,
+    "last_eval": 579,
+    "calls": 240,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "cma_local_restart",
+        "first_eval": 340,
+        "last_eval": 579
+      }
+    ],
+    "decision_text": "## Decision after evaluation 339\n**Budget:** 339 used / 2000 total; 1661 remaining.\n**Evidence:** Py-BOBYQA used 146 of its permitted 160 calls and returned normally because rho reached rhoend=1e-6. The best value improved from 90.84804694790826 to 82.45173843151524, at evaluation 335. Forty-call minima were 84.2945, 82.5928 and 82.4581. Final proposals lie roughly 1e-6 to 5.6e-6 from the incumbent, with values 82.4517-82.4586. The model reports large derivative/curvature estimates; those are model outputs, not measured derivatives. These observations leave local smoothness uncertain and show that this model contracted sharply after a modest improvement. The early checkpoint follows the documented solver-return trigger.\n**Decision:** Restart CMA-ES at the best observed point with a substantially smaller sampling scale. Preserve all observations and the same harness. Retain the earlier CMA object as dormant state, but reset the new run's covariance, paths and mean to an isotropic distribution around the incumbent. The completed BOBYQA state remains available but will make no calls.\n**Hyperparameters:** pycma 4.5.0, sigma0=0.6, population 16, seed 2203; bounds, full active covariance, no elitism, inherited adaptation and convergence settings unchanged from the initial configuration. The scale is greater than the exhausted local trust region while small relative to the 10-unit domain. Resetting covariance avoids transferring the broad run's weakly informative large sampling scales.\n**Reason:** A neighborhood-focused rank-based search can cross local irregularities without relying on the fitted quadratic derivatives. The local improvement is evidence for centering here; the original broad distribution supplied no sustained trend.\n**Next step limit:** 240 additional objective calls (15 complete generations); pause at cumulative evaluation 579.\n**Why this length:** Fifteen generations give the new, smaller distribution time to adapt beyond its initial sampling while retaining 1421 calls for subsequent evidence-based decisions. This is longer than the first CMA block because it specifically tests sustained neighborhood adaptation after initialization.\n**Review:** Compare generation medians, best-value improvements and their timing, sigma and axis ratio. Pause earlier on optimizer termination, evaluator error or a nonfinite objective; do not retry an evaluator error.\n"
+  },
+  {
+    "block": 4,
+    "method": "cma_local_restart",
+    "first_eval": 580,
+    "last_eval": 835,
+    "calls": 256,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "cma_local_restart",
+        "first_eval": 580,
+        "last_eval": 835
+      }
+    ],
+    "decision_text": "## Decision after evaluation 579\n**Budget:** 579 used / 2000 total; 1421 remaining.\n**Evidence:** The neighborhood CMA run improved the incumbent from 82.45173843151524 to 80.14847906788754 at evaluation 414. Although the best has not improved in the subsequent 165 calls, generation medians declined from 144.95 initially to 102.89 in generation 15. The final four medians were 114.49, 127.29, 116.96 and 102.89. Sigma contracted from 0.6 to 0.42157, coordinate scales are 0.336-0.432, and covariance axis ratio is 2.541. There are no termination flags. Population variation remains large, so the trend is suggestive rather than a convergence guarantee.\n**Decision:** Continue the current neighborhood CMA-ES run, preserving its mean, covariance, evolution paths, RNG and all observations. Do not restart.\n**Hyperparameters:** Unchanged from the configuration recorded after evaluation 339 (pycma 4.5.0, population 16, full active covariance, bounded nonelitist search and inherited adaptation/termination defaults). The current sigma=0.42157 is an adapted state, not a manual reset. The observed contraction supports retaining step-size adaptation; population 16 continues to supply 8 selected parents without additional setup cost.\n**Reason:** The improving population distribution provides evidence for continuing despite a short plateau in the single best value. Resetting now would discard useful neighborhood adaptation.\n**Next step limit:** 256 additional calls (16 generations); pause at cumulative evaluation 835.\n**Why this length:** Roughly as many additional generations as have elapsed allows the observed distribution trend to become a clearer improvement or plateau. Sixteen full updates test learned-state continuation while preserving over half the full campaign budget at the next checkpoint.\n**Review:** Inspect generation medians and minima, fresh incumbent improvements, sampling contraction and covariance conditioning. Pause sooner on library termination, evaluator error or nonfinite objective.\n"
+  },
+  {
+    "block": 5,
+    "method": "cma_local_restart",
+    "first_eval": 836,
+    "last_eval": 1059,
+    "calls": 224,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "cma_local_restart",
+        "first_eval": 836,
+        "last_eval": 1059
+      }
+    ],
+    "decision_text": "## Decision after evaluation 835\n**Budget:** 835 used / 2000 total; 1165 remaining.\n**Evidence:** Continuing CMA-ES improved the best from 80.14847906788754 to 74.88857830904115 (evaluation 806). Generation medians fell from 103.89 to 81.17, and generations 25, 26, 28, 29 and 30 produced new incumbents. Sigma decreased from 0.42157 to 0.21637; coordinate scales are 0.130-0.228 and axis ratio is 3.901. No termination flags are present. This is stronger evidence of concentration than the preceding block, although it establishes no global-optimality claim.\n**Decision:** Continue the same live CMA-ES instance, retaining all adapted state and observations.\n**Hyperparameters:** Unchanged configuration from evaluation 339, as continued at evaluation 579; pycma 4.5.0 defaults remain in effect. The population of 16 is delivering repeated improvements, and active full covariance is developing moderate anisotropy, so neither population resizing nor covariance reset is supported by the present evidence. Retain endogenous step-size adaptation at its current sigma=0.21637.\n**Reason:** Both the population's typical value and its best samples are improving. Continuing exploits this empirical trend without paying another initialization cost.\n**Next step limit:** 224 additional calls (14 generations); pause at cumulative evaluation 1059.\n**Why this length:** The search has halved its sampling scale during the last 16 generations. Fourteen more generations provide a comparable adaptation interval, but bring the next review slightly sooner as concentration increases and local stagnation becomes more plausible.\n**Review:** Compare recent progress per call, best and median values, sample spread and stopping diagnostics. Pause sooner on optimizer termination, evaluator error or nonfinite value.\n"
+  },
+  {
+    "block": 6,
+    "method": "cma_local_restart",
+    "first_eval": 1060,
+    "last_eval": 1347,
+    "calls": 288,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "cma_local_restart",
+        "first_eval": 1060,
+        "last_eval": 1347
+      }
+    ],
+    "decision_text": "## Decision after evaluation 1059\n**Budget:** 1059 used / 2000 total; 941 remaining.\n**Evidence:** The last 224 calls improved the best from 74.88857830904115 to 72.23010027938979 at evaluation 1033. Seven generations set new incumbents (32, 34, 35, 36, 38, 39 and 44). Population medians declined from 82.51 to 74.26, and sigma decreased from 0.21637 to 0.16559. Axis ratio increased from 3.901 to 6.605; coordinate scales are 0.092-0.192. Best-point displacement during this block is appreciable in several coordinates. These data support continuing correlated moves, while the smaller absolute gains indicate diminishing progress. There are no termination flags.\n**Decision:** Continue the current CMA-ES instance with its full learned state, harness and accumulated observations intact.\n**Hyperparameters:** Retain the evaluation-339 configuration and pycma 4.5.0 defaults, including population 16 and active full covariance. The increasingly anisotropic distribution argues against resetting covariance; the continued median decrease argues against manually forcing a larger step. Current sigma=0.16559 remains under normal internal adaptation.\n**Reason:** Correlation learning is still translating into improvements. The narrower distribution and better typical samples provide more evidence for continued adaptation than for spending calls on a fresh broad start at this checkpoint.\n**Next step limit:** 288 additional calls (18 complete generations); pause at cumulative evaluation 1347.\n**Why this length:** A somewhat longer interval gives the developing anisotropic covariance time to change the productive search directions. Eighteen updates are still bounded, leave 653 calls at the next review, and allow a meaningful comparison of progress rate with the previous 14-generation block.\n**Review:** Assess best-value gains, their distribution across the block, median-to-best gap, sigma, covariance conditioning and proximity to the box edges. Pause sooner on optimizer termination, evaluator error or nonfinite value.\n"
+  },
+  {
+    "block": 7,
+    "method": "covariance_poll",
+    "first_eval": 1348,
+    "last_eval": 1407,
+    "calls": 60,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "covariance_poll",
+        "first_eval": 1348,
+        "last_eval": 1407
+      }
+    ],
+    "decision_text": "## Decision after evaluation 1347\n**Budget:** 1347 used / 2000 total; 653 remaining.\n**Evidence:** The last CMA block improved the incumbent by 0.6755572734, from 72.23010027938979 to 71.55454300601487 at evaluation 1277. The most recent four generation minima did not improve that incumbent; the final median is 72.13379. Sigma decreased to 0.07602, coordinate scales are 0.035-0.073 and axis ratio is 7.107. The last several medians hover near 72.0-72.3. The best point's closest boundary is about 0.449 away. The run has made real progress, but its gain per call has declined and it is concentrating within a small region.\n**Decision:** Temporarily switch to a deterministic multiscale covariance-axis poll centered on the current incumbent. Keep the CMA state dormant and retain all observations and the same harness. Use the learned physical covariance to define directions; do not infer objective values from that covariance.\n**Hyperparameters:** Campaign-local NumPy 2.4.6 adapter: symmetric probes along all 10 eigenvectors of the current CMA physical covariance, with step lengths equal to 1, 4 and 16 times each axis's learned standard deviation. Start with radius multiplier 1 and descend through eigenvalues within each radius; evaluate positive then negative directions. Keep the poll center fixed for the whole block. Clip each proposed point to [-5,5] and record any clipping. No fitted objective model or derivative is used, and there are no other optimizer defaults. The covariance includes pycma's coordinate scaling.\n**Reason:** Learned directions can test larger, coordinated moves more efficiently than an uninformed broad restart. The small radius tests refinement; the two larger radii test whether the current contraction is missing a nearby improvement. This is a bounded evidence-gathering search, not a claim that the region is exhausted.\n**Next step limit:** At most 60 additional objective calls; pause by cumulative evaluation 1407. Pause sooner if any measured value is at least 1.0 below the block's starting incumbent, or on evaluator error/nonfinite output.\n**Why this length:** Exactly two signs times ten axes times three radii give a complete, interpretable multiscale poll for less than one quarter of the previous block's cost. A one-unit improvement would exceed the previous 288-call gain and warrants immediate reconsideration.\n**Review:** Compare success counts and best values by radius and direction, identify whether useful directions align with large or small covariance axes, and examine clipping. The next method is undecided until these observations are available.\n"
+  },
+  {
+    "block": 8,
+    "method": "surrogate_line_poll",
+    "first_eval": 1408,
+    "last_eval": 1416,
+    "calls": 9,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "surrogate_line_poll",
+        "first_eval": 1408,
+        "last_eval": 1416
+      }
+    ],
+    "decision_text": "## Decision after evaluation 1407\n**Budget:** 1407 used / 2000 total; 593 remaining.\n**Evidence:** The 60-call covariance poll improved the incumbent from 71.55454300601487 to 71.46688963078677. Three of the 20 unit-radius probes beat the starting incumbent; none of the 40 larger-radius probes did. The best values at radius multipliers 4 and 16 were 71.70729 and 74.59240. No points required clipping and the early-improvement trigger did not fire. A subsequent analysis used no objective calls: a regularized full quadratic fit on 317 observed points within Mahalanobis radius 8 gave held-out RMSE 0.43458 (64 points) against held-out value standard deviation 0.79473. Its predicted gain of 0.29956 at a radius-4 constrained minimizer is smaller than that error; it is an uncertain candidate, not a measured result.\n**Decision:** Conduct a small measured line poll along that quadratic model's proposed displacement from the incumbent. Preserve the CMA state, observations and harness. The model generates candidate locations only; every reported objective remains an actual harness result.\n**Hyperparameters:** NumPy 2.4.6 least-squares full quadratic with 66 coefficients in covariance-normalized coordinates, Hessian-coefficient ridge penalty 1e-3, local cutoff radius 8, residual weights proportional to (1+(r/4)^4)^(-1/2); every fifth local observation was held out for diagnostics only. Refit all 317 points for the candidate. SciPy 1.17.1 SLSQP minimizes the surrogate inside normalized radius 4 with ftol=1e-12, maxiter=200 and analytic model gradient; its other defaults are inherited from SciPy 1.17.1. These surrogate calculations consume no objective budget. Poll displacement multipliers [0.25,0.5,0.75,1,1.25,1.5,1.75,2,-0.5] in that order, with a fixed center and bounds clipping if necessary. No extrapolated value is entered in the observation history.\n**Reason:** A possible joint-coordinate direction is supported only weakly by the model. Nine direct observations can validate whether that direction is useful at low cost; committing a long model-driven block would exceed what its prediction error supports.\n**Next step limit:** 9 additional objective calls; pause at cumulative evaluation 1416.\n**Why this length:** Eight positive multipliers and one opposite-direction control distinguish an interior improvement, extrapolation benefit, and a misleading direction. Nine calls keep this uncertainty check small relative to the 593 remaining calls.\n**Review:** Compare measured values to the incumbent and model predictions; decide whether any improvement supports further local modeling. Pause early only on evaluator error or nonfinite value.\n"
+  },
+  {
+    "block": 9,
+    "method": "covariance_pattern",
+    "first_eval": 1417,
+    "last_eval": 1576,
+    "calls": 160,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "covariance_pattern",
+        "first_eval": 1417,
+        "last_eval": 1576
+      }
+    ],
+    "decision_text": "## Decision after evaluation 1416\n**Budget:** 1416 used / 2000 total; 584 remaining.\n**Evidence:** The nine model-direction probes improved the incumbent by only 0.0151780651, to 71.45171156564327 at displacement multiplier 0.75. The model's nominal multiplier 1 point measured 71.46206410858585, far above its predicted roughly 71.1673. Multipliers 1.25 through 2 worsened progressively, while the opposite-direction control was 71.7141. The broad quadratic was useful for locating a modest improvement but not accurate enough to justify trusting its predicted gain.\n**Decision:** Switch to a covariance-axis direct pattern search initialized at the new measured incumbent. Keep the covariance basis from the diagnostic poll fixed, reset the direct-search center to the incumbent, and preserve all data, dormant optimizer states and the same harness. Accept/reject points only using real evaluations.\n**Hyperparameters:** Campaign-local NumPy 2.4.6 implementation, initial mesh multiplier 1 on the 10 axis standard deviations recorded after evaluation 1347, longest axis first. For each axis evaluate both signs from the same current center, then accept the best strictly improving result (improvement threshold 1e-12). Update the center after each pair. A full sweep uses 20 calls; retain the mesh after any successful sweep, and halve it after a fully unsuccessful sweep. Clip proposals to the bounds. Pause for review if the mesh reaches 1/32; no expansion and no fitted objective surrogate are used.\n**Reason:** The covariance poll and line probes found local improvements but exposed unreliable broad predictions. Direct search can combine those improving directions through sequential recentering without relying on model derivatives. Keeping the learned basis preserves information about coordinate correlations.\n**Next step limit:** At most 160 additional calls (eight complete sweeps); pause by cumulative evaluation 1576, or earlier at the mesh threshold, evaluator error or a nonfinite output.\n**Why this length:** Eight sweeps give each direction several opportunities after center changes and allow scale reduction when necessary. This is enough to assess success frequency and local progress without spending the full 584-call remainder on the method.\n**Review:** Inspect successful pairs/sweeps, best-value improvement per sweep, mesh changes and displacement. Decide whether direct refinement is productive given its measured gains and the remaining budget.\n"
+  },
+  {
+    "block": 10,
+    "method": "bobyqa_challenger",
+    "first_eval": 1577,
+    "last_eval": 1685,
+    "calls": 109,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "bobyqa_challenger",
+        "first_eval": 1577,
+        "last_eval": 1685
+      }
+    ],
+    "decision_text": "## Decision after evaluation 1576\n**Budget:** 1576 used / 2000 total; 424 remaining.\n**Evidence:** Eight direct-search sweeps improved the best from 71.45171156564327 to 71.36192471373167, a gain of 0.0897868519. Eleven of 80 direction pairs succeeded. Three unsuccessful sweeps reduced the mesh from 1 to 0.125; the last sweep gained only 0.0046489. An archive review without evaluations identified the best distinct initial sample at evaluation 35: value 101.43076074740662, Euclidean distance 4.6455 from the incumbent and 4.9810 from the original local start. Distinctness was required to exceed distances 3 and 2 respectively. This candidate is much worse in measured value and offers only an uncertain diversification opportunity.\n**Decision:** Start a bounded BOBYQA challenger from the evaluation-35 point. Preserve the incumbent, direct-search center/mesh/basis, dormant CMA state, every observation and the same harness. This is an explicitly new local model, not a continuation or counter reset.\n**Hyperparameters:** Py-BOBYQA 1.5.0 with npt=21, rhobeg=1.0, rhoend=1e-4 in original coordinates, maxfun=424 as the solver ceiling, scaling_within_bounds=False, deterministic objective, no global-minimum mode and no automatic restarts. Other trust-region/interpolation defaults are as recorded after evaluation 193. A larger initial radius tests a broader neighborhood; the coarser terminal radius avoids spending this exploratory trial on microscopic refinement. The queue adapter retains live model state if the block ends first.\n**Reason:** Measured local gains are now small, so a limited trial from a genuinely different observed region has value despite its worse starting score. The existing best solution remains the fallback; no improvement from the challenger is assumed.\n**Next step limit:** 120 additional objective calls; pause by cumulative evaluation 1696, or earlier if the solver returns, the evaluator errors or a nonfinite value occurs.\n**Why this length:** Twenty-one initialization points plus up to 99 adaptive calls should reveal whether the challenger descends toward a competitive value. This limits the speculative expenditure and leaves 304 calls for a fresh decision at the nominal checkpoint.\n**Review:** Compare the challenger's progress trajectory and final score with the 71.3619247 incumbent, along with its proposal scales and termination status. Do not continue it automatically merely because its internal budget remains.\n"
+  },
+  {
+    "block": 11,
+    "method": "cma_injected_refine",
+    "first_eval": 1686,
+    "last_eval": 1845,
+    "calls": 160,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "cma_injected_refine",
+        "first_eval": 1686,
+        "last_eval": 1845
+      }
+    ],
+    "decision_text": "## Decision after evaluation 1685\n**Budget:** 1685 used / 2000 total; 315 remaining.\n**Evidence:** The challenger used 109 of its permitted 120 calls and stopped normally at rhoend=1e-4. It improved its own start from 101.43076074740662 to 82.08717583202287, but remained 10.72525 above the campaign incumbent 71.36192471373167. Forty-call minima of 86.6063 and 82.3680 preceded contraction to a tiny local region. The early checkpoint was the documented solver-return trigger. The dormant CMA run last had sigma 0.07602 and a learned axis ratio about 7.1; the incumbent has since improved through direct searches.\n**Decision:** Resume that existing CMA-ES instance, preserving mean, covariance, evolution paths, RNG and all data. Inject the current incumbent once via pycma's supported `inject(..., force=True)` API before the first ask, converting the feasible phenotype to genotype through the existing boundary/genotype mappings. Reevaluate every generated candidate, including the injected point; its repeated measurement counts against the budget. Retain the paused direct-search state.\n**Hyperparameters:** Configuration and inherited pycma 4.5.0 defaults remain those recorded after evaluation 339. Population=16, full active covariance, unchanged step-size adaptation and tolerances. One forced incumbent injection is the only adjustment; do not reset sigma or covariance. pycma handles injected candidates specially in its active update as documented by the library.\n**Reason:** The alternate region did not become competitive. The current best region has only been refined along a fixed basis recently; simultaneous multivariate proposals using its learned covariance can check for improvements missed by those directional sweeps. Injection shares the measured progress without discarding the learned covariance.\n**Next step limit:** 160 additional objective calls (10 generations); pause at cumulative evaluation 1845.\n**Why this length:** Ten generations let the external incumbent influence several population updates while limiting the resumed run to about half the remaining calls. A shorter block than earlier CMA blocks is appropriate because recent gains are small and the budget is now tight.\n**Review:** Inspect generation medians, best-value changes, covariance/step-size evolution and whether the incumbent injection yields fresh improvements. Pause sooner on termination, evaluator error or nonfinite output.\n"
+  },
+  {
+    "block": 12,
+    "method": "covariance_pattern",
+    "first_eval": 1846,
+    "last_eval": 1925,
+    "calls": 80,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "covariance_pattern",
+        "first_eval": 1846,
+        "last_eval": 1925
+      }
+    ],
+    "decision_text": "## Decision after evaluation 1845\n**Budget:** 1845 used / 2000 total; 155 remaining.\n**Evidence:** Ten resumed CMA generations produced no fresh incumbent; the best 71.36192471373167 in this block was the injected point's real reevaluation. Median generation values declined from 71.8996 to 71.5122, sigma contracted from 0.07602 to 0.05188 and axis ratio reached 8.246. The last generation minimum was 71.4137. These samples show improving concentration but remain above the incumbent. The preserved direct-search state ended with three successful pairs and a 0.00465 gain at mesh 0.125.\n**Decision:** Resume the original direct pattern-search instance at its unchanged incumbent and mesh. Preserve its fixed covariance basis, sweep count and center, alongside all other states, observations and the same harness. No restart or extra initialization is needed.\n**Hyperparameters:** Unchanged from evaluation 1416: two signs per axis, longest axis first, accept measured improvements exceeding 1e-12, mesh halved only after a failed full sweep, and review at mesh <=1/32. Current mesh is 0.125. Retain the original basis rather than silently substituting the later CMA covariance.\n**Reason:** The direct method was still producing accepted improvements when paused, while the covariance population has not surpassed its result. Direct refinement at the already established small scale is the better-supported use of the limited remainder.\n**Next step limit:** At most 100 additional objective calls (five sweeps); pause by cumulative evaluation 1945, or earlier at the mesh threshold, evaluator error or nonfinite output.\n**Why this length:** Five sweeps allow both successful recentering and up to two failed-scale contractions from the current mesh, while reserving a fresh decision before the budget is exhausted. This is a shorter interval than its first eight-sweep block because measured gains are now very small.\n**Review:** Assess cumulative gain, successful pairs, terminal mesh and whether a new direction or smaller scale has empirical support. No final method is preselected.\n"
+  },
+  {
+    "block": 13,
+    "method": "covariance_pattern",
+    "first_eval": 1926,
+    "last_eval": 1985,
+    "calls": 60,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "covariance_pattern",
+        "first_eval": 1926,
+        "last_eval": 1985
+      }
+    ],
+    "decision_text": "## Decision after evaluation 1925\n**Budget:** 1925 used / 2000 total; 75 remaining.\n**Evidence:** Direct search used 80 of its permitted 100 calls and reached mesh 1/32 after a failed sweep at 1/16. It improved the best from 71.36192471373167 to 71.35961431330378 at evaluation 1893. Sweeps at meshes 1/8 and 1/16 each found improvements before a later sweep failed; three of 40 direction pairs succeeded. The early pause followed the documented mesh threshold. Gains are small and give no evidence of global convergence.\n**Decision:** Continue the same direct-search instance, lowering only the mesh review threshold to test finer local scales. Preserve its center, basis, current mesh=1/32, counters, observations and harness.\n**Hyperparameters:** Same direction order, two-sign polling, strict acceptance and mesh-halving rules as the evaluation-1416 configuration. Change the review threshold from 1/32 to 1/256 through the campaign adapter's explicit argument. All other settings are unchanged; no state is rebuilt.\n**Reason:** The most recent successful sweep occurred after a mesh reduction, so a small number of finer sweeps has empirical support. This is a local refinement test, not an inference that the incumbent is optimal.\n**Next step limit:** 60 additional calls (three sweeps); pause by cumulative evaluation 1985, or earlier at mesh <=1/256, evaluator error or nonfinite objective.\n**Why this length:** Three sweeps can test the current smaller scale and, if unsuccessful, two further halvings. The block does not automatically consume all 75 remaining evaluations and leaves a final evidence-based decision.\n**Review:** Inspect whether smaller steps yield further measured gains and the final mesh. Reassess whether the residual budget can target a useful direction or whether stopping is preferable.\n"
+  },
+  {
+    "block": 14,
+    "method": "directional_polish",
+    "first_eval": 1986,
+    "last_eval": 2000,
+    "calls": 15,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "directional_polish",
+        "first_eval": 1986,
+        "last_eval": 2000
+      }
+    ],
+    "decision_text": "## Decision after evaluation 1985\n**Budget:** 1985 used / 2000 total; 15 remaining.\n**Evidence:** Three finer sweeps improved the incumbent from 71.35961431330378 to 71.3575558665898. The first sweep gained 0.0020248679 through five successful pairs, the next failed and halved the mesh, and the final sweep gained 0.0000335788 through one successful pair at mesh 1/64. The final successful move was evaluation 1979 along the negative direction of covariance axis 3, with physical displacement about 0.0004272. The current mesh remains 1/64. These are measured small local gains, not evidence of global optimality.\n**Decision:** Switch to a fixed-center directional polishing poll along the final successful displacement. Initialize at the measured incumbent and derive the displacement from the actual incumbent change during the last sweep. Preserve all states, observations and the same harness.\n**Hyperparameters:** Campaign-local NumPy 2.4.6 line poll with displacement multipliers [-0.75,-0.5,-0.25,0.125,0.25,0.5,0.75,1.25,1.5,2,3,4,6,8,12], relative to the current incumbent. This includes interpolation near the successful move and moderate extrapolation; omit zero and known adjacent tested multipliers. Keep the center/direction fixed and enforce bounds by clipping. No surrogate predictions or gradient estimates are used.\n**Reason:** The last real success identifies one productive direction. With only 15 calls left, an interpolation model would have insufficient initialization budget, while a full two-sign, ten-axis sweep needs 20 calls. Concentrating these calls on the latest successful direction is supported by measured progress.\n**Next step limit:** 15 additional objective calls; pause at cumulative evaluation 2000, or immediately on evaluator error/nonfinite output.\n**Why this length:** Fifteen calls test both sides of the incumbent and several forward scales along the observed successful move. This uses the remaining budget for a specific evidence-based refinement rather than filling it with unrelated samples.\n**Review:** Record the final best measured point/value and stop at the hard budget. Save and verify the four required campaign files.\n"
+  }
+]

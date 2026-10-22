@@ -1,0 +1,66 @@
+[
+  {
+    "block": 1,
+    "method": "sobol_initial",
+    "first_eval": 1,
+    "last_eval": 65,
+    "calls": 65,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "sobol_initial",
+        "first_eval": 1,
+        "last_eval": 65
+      }
+    ],
+    "decision_text": "# Initial decision: broad, reproducible sampling\n\n**Problem:** Minimize a deterministic scalar objective in 10 real coordinates, each in [-5, 5], with no additional constraints. There are no prior observations. The total hard budget is 2,000 objective calls, including repeated points. The objective is sealed; no assumptions about its identity, optimum, smoothness, or separability will be made.\n\n**First step:** Evaluate the box center once, then 64 scrambled Sobol points across the full box. Use the supplied `src.optimizers.sobol_search.SobolSearch` wrapper over SciPy 1.17.1 `scipy.stats.qmc.Sobol`, with dimension 10, scramble=True, seed=20261022, and affine scaling to the bounds. Inherited SciPy defaults include bits=None (30 bits) and optimization=None. There is no observation noise, so this block contains no intentional replications. The center is an explicit reference point, not a claim about where the optimum lies. NumPy version is 2.4.6.\n\n**Why this method and configuration:** With no observations, a low-discrepancy design provides broad spatial coverage without requiring derivatives or a smooth response model. A power-of-two Sobol sample preserves its balance properties. The fixed scrambling seed makes the sampling reproducible.\n\n**Step limit:** At most 65 additional objective calls; pause at cumulative evaluation 65. This is 3.25% of the total budget and provides a baseline and useful value distribution without delaying adaptation for a large fraction of the campaign.\n\n**Checkpoint review:** Inspect the center value, best observed point and value, response quantiles, variation among nearby samples, and whether better points cluster spatially. These are sparse observations in 10 dimensions and cannot establish global optimality or smoothness. Decide the next bounded step only after seeing this evidence. Pause immediately on an evaluator error or nonfinite response; do not retry an unknown evaluation.\n\n**Execution integrity:** Use one live harness and persistent optimizer state, with a checked objective-call limit for every block. Every response is obtained from `h.evaluate`; call `h.save()` at checkpoints. Scripts live in `work/`; this file will remain unchanged and subsequent decisions will be appended to `changelog.md` before further evaluation.\n"
+  },
+  {
+    "block": 2,
+    "method": "bobyqa_local",
+    "first_eval": 66,
+    "last_eval": 120,
+    "calls": 55,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "bobyqa_local",
+        "first_eval": 66,
+        "last_eval": 120
+      }
+    ],
+    "decision_text": "## Decision after evaluation 65\n**Budget:** 65 used / 2000 total; 1935 remaining.\n**Evidence:** The center gives 104.51646976, lower than every one of the 64 full-box Sobol observations (best Sobol value 126.53671373419773). Overall quartiles are 155.73176, 182.61281, and 216.81924, with maximum 279.39438. The five best points are spatially dispersed, so the design does not establish one globally preferred basin. The objective is deterministic; uncertainty here is sparse spatial coverage rather than measurement noise.\n**Decision:** Switch to local BOBYQA initialized at the observed best point, the center. Use the supplied `src.optimizers.bobyqa.BOBYQA` queue-based ask/tell wrapper. Retain all observations and the same harness; preserve Sobol state but build a new local model. This wrapper does not import previous observations, so its center evaluation is counted again.\n**Hyperparameters:** Py-BOBYQA 1.5.0, bounds as supplied, scaling_within_bounds=True, default initial radius rhobeg=0.1 in the scaled box (1 coordinate unit), rhoend=1e-8 in scaled coordinates, deterministic objective and seek_global_minimum=False. The wrapper uses maxfun=20000 internally; the campaign's guarded callback and block loop enforce the stricter 140-call block and 2000-call total. Other interpolation, trust-region update, and termination parameters inherit Py-BOBYQA 1.5.0 defaults. Reconsidered the radius: 10% of box width is a useful local scale around a center that beat all broad samples; there is no evidence yet for shrinking it.\n**Reason:** The observed advantage of the center justifies testing a locally learned quadratic model before spending more on broad coverage. BOBYQA can use deterministic responses efficiently without assuming that numerical derivatives will be reliable.\n**Next step limit:** 140 additional objective calls, pause at cumulative evaluation 205.\n**Why this length:** This covers the roughly 21-point initial interpolation model and multiple model/trust-region updates in 10 dimensions, enough to assess progress while leaving most of the budget available.\n**Review:** Inspect improvement by successive 20-call groups, candidate displacement, and solver termination if any. Preserve the live solver if it is still proposing points. Pause earlier if the solver terminates; an evaluator error or nonfinite response ends execution without retry. No later method is preselected.\n"
+  },
+  {
+    "block": 3,
+    "method": "bobyqa_restart",
+    "first_eval": 121,
+    "last_eval": 177,
+    "calls": 57,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "bobyqa_restart",
+        "first_eval": 121,
+        "last_eval": 177
+      }
+    ],
+    "decision_text": "\n## Decision after evaluation 120\n**Budget:** 120 used / 2000 total; 1880 remaining.\n**Evidence:** BOBYQA terminated after 55 calls rather than using its 140-call allowance, with success status `rho has reached rhoend`. The observed best decreased from 104.51646976 to 79.48 (first attained at evaluation 88). Twenty local calls had reached 100.15486976; forty had reached 79.48. Later local values differ by about 1e-14, consistent with floating-point precision for this deterministic objective. The reported local gradient norm is approximately 9e-8. These observations support local convergence, not global optimality.\n**Decision:** Restart BOBYQA at the best observed Sobol point, [1.7449793219566345, -1.1123617738485336, -0.36776711232960224, 1.3330325298011303, 2.5872171204537153, 2.9043513163924217, 2.8889832366257906, 1.2588042486459017, -1.334075266495347, -2.7406482584774494], whose observed value is 126.53671373419773. The old solver has terminated. Retain all observations, the incumbent, Sobol state, and the same harness. Reset the interpolation model at this spatially distinct start. Use a campaign-local queue adapter to expose the supported x0 and radius arguments, following the supplied wrapper's pauseable design.\n**Hyperparameters:** Py-BOBYQA 1.5.0 with npt=21, rhobeg=0.1 and rhoend=1e-8 in scaled coordinates, scaling_within_bounds=True, objfun_has_noise=False, seek_global_minimum=False. The radius matches the successful previous configuration. Other defaults unchanged from the prior block. Internal maxfun=2000; the external guard limits this block to 100 real calls and total use to 2000. Changing the initial point requires a new optimizer instance, not a new evaluator.\n**Reason:** Fast local convergence leaves ample budget to challenge the basin dependence of the result. A distinct promising start is a more informative test than additional tiny steps around the converged incumbent.\n**Next step limit:** 100 additional objective calls, pause no later than cumulative evaluation 220.\n**Why this length:** The first local solve needed 55 calls; 100 allows an independently initialized solve to handle a different path while providing an early checkpoint if its behavior differs.\n**Review:** Inspect the terminal value and point, progress, displacement from the current incumbent, and solver status. Pause earlier on solver termination. Stop without retry on evaluator errors or nonfinite responses. A short unchanged best by itself will not establish global optimality.\n"
+  },
+  {
+    "block": 4,
+    "method": "quadratic_validation",
+    "first_eval": 178,
+    "last_eval": 261,
+    "calls": 84,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "quadratic_validation",
+        "first_eval": 178,
+        "last_eval": 261
+      }
+    ],
+    "decision_text": "\n## Decision after evaluation 177\n**Budget:** 177 used / 2000 total; 1823 remaining.\n**Evidence:** The independently initialized BOBYQA solve terminated successfully after 57 calls, again at 79.48. Its terminal coordinates agree with the first solution to roughly 3e-14, and its reported gradient norm is 8.87e-8. To assess whether the response data support a broader search model, fitted a general 66-coefficient quadratic surrogate in x/5 using the first 86 observations only. The design has full rank 66 and condition number 275.35. Maximum absolute training residual is 2.27e-13; maximum error on the other 91 already collected observations is 1.28e-13. The surrogate Hessian is positive definite, with extreme eigenvalues approximately 2.0 in original coordinates. Its unconstrained minimizer is inside the box and 6.94e-14 from the actual observed incumbent. This is an empirical surrogate fit, not an identification or inspection of the hidden objective. Most held-out observations were generated by local searches, so fresh broad checks remain informative.\n**Decision:** Switch to a bounded surrogate-validation sampling block. Freeze the fitted model (no refitting during this block). Continue the existing Sobol generator for 64 new full-box points, bringing its cumulative sample count to 128. Then evaluate 20 boundary probes formed by replacing each coordinate of the incumbent in turn with its lower or upper bound. Retain all observations, the incumbent, the same harness, and the existing Sobol state. Both local solvers have terminated.\n**Hyperparameters:** Sobol configuration unchanged from the initial record: SciPy 1.17.1 via the supplied wrapper, scramble=True, seed=20261022. Quadratic surrogate uses NumPy 2.4.6 least squares with rcond=None, an intercept, 10 linear terms, and 55 degree-two terms; scale coordinates by 5, no regularization. Freeze the first-86-observation coefficients. Boundary probes are deterministic and need no tuning. Pause early if any new observation improves the incumbent by more than 1e-10 or differs from the frozen surrogate by more than 1e-8 absolute. Surrogate predictions are diagnostic only; every recorded objective value still comes from evaluate().\n**Reason:** Two distinct local searches agree at floating-point precision, and the fitted model is consistent with all collected data. Fresh full-box and boundary evaluations directly challenge that evidence instead of spending more calls on a converged local model. Finite checks cannot rule out every unsampled basin.\n**Next step limit:** 84 additional objective calls, pause no later than cumulative evaluation 261.\n**Why this length:** Another 64 Sobol points preserves the power-of-two balance of the full sequence and supplies an independent broad test. Twenty boundary probes cover both bounds of every coordinate, which the interior Sobol design cannot test exactly. This answers a specific uncertainty at modest cost.\n**Review:** Check new best values and the frozen surrogate's maximum absolute prediction error, separately for broad and boundary points. Reconsider on either early trigger; otherwise assess whether the empirical evidence supports useful further search or stopping. Stop without retry on evaluator errors or nonfinite responses.\n"
+  }
+]

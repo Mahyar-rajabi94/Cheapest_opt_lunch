@@ -1,0 +1,10 @@
+Best observed value: **79.48**, using **261 of 2,000 evaluations**.
+
+```text
+x ≈ [0.2528, -1.1568, -0.7240, 1.9264, -2.6808,
+     0.4392, -0.1168, 0.1200, -1.6376, -3.0512]
+```
+
+Stopped early after two independent searches converged to the same point and 84 fresh checks supported convergence at numerical precision.
+
+Saved and verified exactly the four required campaign files in [results/agent_run](/Users/iamthomaspruyn/Documents/PhD/Projects/OSI_Hackathon/Cheapest_opt_lunch/runs/paper-2000-20261022/campaigns/run-14db2efa4379/workspace/results/agent_run).

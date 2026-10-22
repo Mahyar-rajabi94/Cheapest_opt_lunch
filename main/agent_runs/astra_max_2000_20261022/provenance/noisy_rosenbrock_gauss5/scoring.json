@@ -1,0 +1,8 @@
+{
+  "task": "noisy_rosenbrock_gauss5",
+  "task_name": "bbob_noisy_f110_d5_i1",
+  "f_opt": 149.1500000101,
+  "noisy": true,
+  "n_constraints": 0,
+  "seed": 0
+}

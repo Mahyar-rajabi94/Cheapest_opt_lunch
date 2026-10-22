@@ -1,0 +1,210 @@
+[
+  {
+    "block": 1,
+    "method": "bobyqa",
+    "first_eval": 1,
+    "last_eval": 181,
+    "calls": 181,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "bobyqa",
+        "first_eval": 1,
+        "last_eval": 181
+      }
+    ],
+    "decision_text": "# First optimization block\n\nMinimize the deterministic, sealed scalar black box in 30 real coordinates,\neach bounded by [-100, 100], with no other constraints. The hard budget is\n2000 calls, including initialization and repeated points. There are no prior\nobservations. Assume only the supplied determinism; smoothness and suitability\nof a local quadratic model are hypotheses to assess, not known properties.\n\nUse Py-BOBYQA 1.5.0 through a campaign-local queue adapter, starting at the\nbox midpoint x = 0. Select npt = 61 (2d+1 interpolation points),\nscaling_within_bounds = True, rhobeg = 0.1 (20 original coordinate units),\nrhoend = 1e-8 (2e-6 original units), objfun_has_noise = False,\nseek_global_minimum = False, maxfun = 2000, do_logging = False,\nprint_progress = False. Set user_params['restarts.use_restarts'] = False\nso a solver stop returns for an explicit decision. Other trust-region,\ngeometry and stopping settings inherit Py-BOBYQA 1.5.0 defaults. The initial\nradius samples meaningful distances while fitting inside the box. The 61-point\nmodel balances coordinate curvature information against 30-dimensional cost;\na full quadratic initialization would require 496 points. Determinism supports\nusing each evaluation directly without replication. A local model can exploit\nstructure efficiently, but there is no claim of global convergence.\n\nMaximum additional objective calls: 181. Pause at cumulative evaluation 181.\nThis permits a complete 61-point initialization and up to 120 subsequent calls\nto observe trust-region progress without assuming the model will be useful.\nPause earlier if the solver terminates or reports a numerical failure. Any\nevaluator error or nonfinite objective stops the campaign without retry.\n\nAt the checkpoint inspect improvement from the initial value, the sequence of\n30-call minima, where the best point lies relative to the bounds, and whether\nrecent proposals still improve. Check the actual used/remaining counters and\nsolver termination status. A plateau alone will not establish that the method\nis unsuitable. No later method or allocation is committed here.\n"
+  },
+  {
+    "block": 2,
+    "method": "bobyqa",
+    "first_eval": 182,
+    "last_eval": 421,
+    "calls": 240,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "bobyqa",
+        "first_eval": 182,
+        "last_eval": 421
+      }
+    ],
+    "decision_text": "## Decision after evaluation 181\n**Budget:** 181 used / 2000 total; 1819 remaining.\n**Evidence:** The first objective was 1126.0394097190206; the best is\n799.6726069430474 at evaluation 181, a reduction of 326.3668027759732.\nRunning minima at evaluations 90, 120, 150 and 180 were 953.8429114901046,\n880.7697390595787, 833.0373534060759 and 800.0517845004377. The best point\nhas maximum absolute coordinate 22.838, far from the bounds. The solver\nhas not terminated. Determinism removes measurement-noise ambiguity, but\nthese observations do not establish global quality or smoothness everywhere.\n**Decision:** Continue BOBYQA, preserving its interpolation set, trust radius,\nand all solver state in the live thread, with the same harness and observations.\n**Hyperparameters:** Unchanged from roadmap_initial.md (Py-BOBYQA 1.5.0,\n61 interpolation points, initial scaled radius 0.1, final radius 1e-8,\nrestarts disabled). Internal radius and model adaptation continue normally.\n**Reason:** Consistent improvement across successive windows justifies\nletting the learned local model continue. There is no observed boundary issue\nor numerical failure motivating a parameter change or restart.\n**Next step limit:** 240 additional objective calls; pause at cumulative 421.\n**Why this length:** Initialization is complete. Eight 30-call windows allow\nmore model refinement and a meaningful progress trend without committing\na large fraction of the remaining 1819 calls.\n**Review:** Inspect best-value reduction and its distribution across windows,\nstep distances, boundary proximity and any solver termination. Pause sooner\non solver termination or numerical failure; evaluator errors stop without retry.\n\n"
+  },
+  {
+    "block": 3,
+    "method": "multiscale_probe",
+    "first_eval": 422,
+    "last_eval": 485,
+    "calls": 64,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "multiscale_probe",
+        "first_eval": 422,
+        "last_eval": 485
+      }
+    ],
+    "decision_text": "## Decision after evaluation 421\n**Budget:** 421 used / 2000 total; 1579 remaining.\n**Evidence:** The 240-call continuation improved 799.6726069430474 to\n785.5502036392214. There were 123 improving calls, but the running minima\nat 301, 361 and 421 were 785.572911757416, 785.5514049416073 and\n785.5502036392214. Recent proposal distances shrank from about 0.036 to\n0.002-0.004 original units. The best point remains interior (maximum absolute\ncoordinate 23.659). This is evidence of local settling, not proof of global\noptimality or of a poor local method.\n**Decision:** Switch temporarily to a multiscale directional exploration block\ncentered on the observed incumbent. Keep the BOBYQA thread and model paused;\nretain all observations and the same harness.\n**Hyperparameters:** Campaign-local multiscale_probe, NumPy 2.4.6 default_rng\nseed 271828. QR-orthonormalize eight Gaussian directions in 30 dimensions;\nevaluate both signs at Euclidean radii 2, 10, 40 and 100 in original units.\nUse the incumbent fixed at evaluation 421. If needed, shorten a ray to 99%\nof its feasible distance to respect bounds. No synthetic values are evaluated\nor recorded; differences use the previously measured incumbent. No inherited\noptimizer defaults apply.\n**Reason:** Continued tiny local steps have sharply diminishing returns.\nControlled multiscale moves can reveal basin scale and possible improvements\nat modest cost, supplying evidence for subsequent scale and method choices.\n**Next step limit:** 64 additional objective calls; pause at cumulative 485.\n**Why this length:** Eight orthogonal directions, two signs and four radii\nprovide matched directional comparisons for exactly 64 calls (4.1% of the\nremaining budget). This is a sparse diagnostic, not a global coverage claim.\n**Review:** Compare actual objective changes, directional asymmetry and best\nvalues at each radius. Check whether any larger move improves the incumbent.\nStop immediately without retry on an evaluator error or nonfinite objective.\n\n"
+  },
+  {
+    "block": 4,
+    "method": "bobyqa_restart",
+    "first_eval": 486,
+    "last_eval": 786,
+    "calls": 301,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "bobyqa_restart",
+        "first_eval": 486,
+        "last_eval": 786
+      }
+    ],
+    "decision_text": "## Decision after evaluation 485\n**Budget:** 485 used / 2000 total; 1515 remaining.\n**Evidence:** None of 64 multiscale probes improved the incumbent\n785.5502036392214. Radius-2 values ranged 788.5429374597297 to\n790.4865540262789 with nearly symmetric opposite-direction changes.\nMinimum/median values were 853.5146790958247/862.5555658755201 at radius 10,\n1025.7571862798213/1094.5544272704105 at radius 40, and\n1048.681947895287/1105.6032635391273 at radius 100. Large-displacement\ncosts are not simply a continuation of the small-radius quadratic trend.\nThese sparse directions support local stability but do not rule out better\nbasins elsewhere. The best radius-100 point is evaluation 477.\n**Decision:** Restart BOBYQA at the best observed radius-100 point, evaluation\n477. Keep the original BOBYQA state parked and retain all observations and\nthe single harness. Build a fresh interpolation model and trust-region state\nfor the new region; no attempt is made to transplant an invalid local model.\n**Hyperparameters:** Same Py-BOBYQA 1.5.0 settings as the initial roadmap:\nnpt=61, scaling_within_bounds=True, rhobeg=0.1 (20 original units),\nrhoend=1e-8, no internal restarts, maxfun=2000 and deterministic mode.\nThe previous radius worked for finding a local basin, and the distant probes\nshow ample room for a fresh search. Initialization changes to the selected\nobserved point. Its repeat evaluation counts normally.\n**Reason:** Further polishing has small observed benefit. A distant local\nstart can test another attraction region; its immediate objective need not\nbeat a polished incumbent. The best outer start has lower value than the\noriginal center (1048.68 versus 1126.04), but its eventual quality is unknown.\n**Next step limit:** 301 additional objective calls; pause at cumulative 786.\n**Why this length:** 61 initialization points plus up to 240 model-driven calls\nallow assessment of a new local trajectory. The first local run made most\nof its improvement within this many calls, though this restart may differ.\n**Review:** Compare the new region's best value and improvement trend with\nthe incumbent, and measure distance between the resulting points. Pause\nsooner on solver termination or numerical failure; evaluator errors stop\nwithout retry. No later restart or method is committed.\n\n"
+  },
+  {
+    "block": 5,
+    "method": "bobyqa_restart",
+    "first_eval": 787,
+    "last_eval": 1027,
+    "calls": 241,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "bobyqa_restart",
+        "first_eval": 787,
+        "last_eval": 1027
+      }
+    ],
+    "decision_text": "## Decision after evaluation 786\n**Budget:** 786 used / 2000 total; 1214 remaining.\n**Evidence:** The restart reduced 1048.681947895287 to 747.7553690766579,\nimproving the previous campaign best by 37.7948345625635. Its best point is\n107.6695400989791 units from the first local solution. Recent minima were\n748.4543776140281 at 695, 748.0419400163807 at 725, and\n747.8076337033334 at 755, so refinement continues with diminishing gain.\nThe best unrefined radius-40 point, evaluation 463, has measured value\n1025.7571862798213, distance 40 from the first local solution and\n117.07836684673589 from the current incumbent. Different attained local\nvalues support further exploration, though candidate value does not guarantee\nits eventual local minimum.\n**Decision:** Restart BOBYQA at evaluation 463. Preserve both prior solver\nstates and the campaign incumbent; reset only the new solver's local model\nand trust region. Keep the same harness and all observations.\n**Hyperparameters:** Unchanged Py-BOBYQA 1.5.0 configuration from the initial\nroadmap and decision 485, including 61 interpolation points and initial\nradius 20 original units. The two previous trajectories both made substantial\nprogress with this setting, so there is no observed need to change it.\n**Reason:** A second local region improved substantially, while its late\nrefinement was small. The lowest-valued unrefined medium/large probe offers\nan evidence-based new start and is separated from both refined regions.\nIt may still return to an existing basin; distances alone cannot rule that out.\n**Next step limit:** 241 additional objective calls; pause at cumulative 1027.\n**Why this length:** Allow the 61-point initialization and 180 model-driven\ncalls. The preceding restart had revealed its quality by about 240 calls;\nits last 90 calls improved by less than 0.70. Review the new trajectory earlier\ninstead of automatically repeating the 301-call allocation.\n**Review:** Compare this region's best with 747.7553690766579, its improvement\nrate and distance from prior local solutions. Pause on solver termination or\nnumerical failure; evaluator errors stop without retry.\n\n"
+  },
+  {
+    "block": 6,
+    "method": "bobyqa_restart",
+    "first_eval": 1028,
+    "last_eval": 1238,
+    "calls": 211,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "bobyqa_restart",
+        "first_eval": 1028,
+        "last_eval": 1238
+      }
+    ],
+    "decision_text": "## Decision after evaluation 1027\n**Budget:** 1027 used / 2000 total; 973 remaining.\n**Evidence:** The third local search reduced its start 1025.7571862798213\nto 782.0109392644467 at evaluation 1026, still 34.2555701877888 above the\nincumbent 747.7553690766579. Its last 30-call window improved by about 1.01,\nafter preceding window reductions of 11.78 and 4.71. Its best is 47.5994\nunits from the first solution and 118.3894 from the incumbent. Thus the\nbest initial probe value did not yield the best refined result; starting\nvalue is only a heuristic. Unused outer probe evaluation 484 has value\n1061.9275206066086 and is 144.8743 units from the incumbent.\n**Decision:** Park the third solver and restart BOBYQA at evaluation 484,\nthe best unused radius-100 probe. Retain all three prior states, all observations\nand the incumbent under the same harness. Initialize a fresh local model.\n**Hyperparameters:** Retain the Py-BOBYQA 1.5.0 settings in the initial roadmap\n(npt=61, scaled rhobeg=0.1, rhoend=1e-8, deterministic mode, restarts disabled).\nAll starts have produced large local reductions with those settings; the\ncurrent issue is basin quality, not an observed modeling failure.\n**Reason:** The current trajectory is well behind and slowing. An already\nmeasured distant start tests a distinct region without another screening block.\nThere is no guarantee that a new region beats the incumbent.\n**Next step limit:** 211 additional objective calls; pause at cumulative 1238.\n**Why this length:** 61 initialization plus 150 subsequent calls tests a basin\nat lower cost as the remaining budget shrinks. Previous trajectories already\nshowed their approximate competitive position after about 210 calls. Continued\nrefinement remains a fresh decision based on the actual result.\n**Review:** Assess region minimum, remaining gap to 747.7553690766579,\nrecent improvements, and distance to prior solutions. Pause sooner on solver\ntermination or numerical failure; evaluator errors stop without retry.\n\n"
+  },
+  {
+    "block": 7,
+    "method": "bobyqa_restart",
+    "first_eval": 1239,
+    "last_eval": 1328,
+    "calls": 90,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "bobyqa_restart",
+        "first_eval": 1239,
+        "last_eval": 1328
+      }
+    ],
+    "decision_text": "## Decision after evaluation 1238\n**Budget:** 1238 used / 2000 total; 762 remaining.\n**Evidence:** The fourth local search improved its start 1061.9275206066086\nto 778.6281058091176. Its last window minima were 811.3414744146863,\n790.7108016754443 and 779.8327511144257, followed by another improvement\nto 778.6281058091176 on the final call. The latest 31 calls gained 12.0827,\nso this search is still descending appreciably even though it trails the\nincumbent 747.7553690766579 by 30.8727. Its solution is 144.8895 units\nfrom the incumbent; it is not merely reproducing the same location.\n**Decision:** Continue the fourth BOBYQA solver with its model, trust-region\nstate and pending proposal intact. Preserve all campaign observations.\n**Hyperparameters:** Unchanged configuration from the initial roadmap and\ndecision 1027, Py-BOBYQA 1.5.0. Keep the learned model and ordinary internal\nradius adaptation; no restart or explicit radius reset is justified during\nsubstantial descent.\n**Reason:** A 211-call checkpoint intentionally occurred before convergence.\nThe recent improvement rate supports another bounded continuation; treating\na still-moving trajectory as a failed basin would be premature.\n**Next step limit:** 90 additional objective calls; pause at cumulative 1328.\n**Why this length:** Three 30-call windows distinguish continued descent\nfrom local settling at a modest cost relative to 762 remaining calls. There\nis no new model initialization to pay for.\n**Review:** Compare gain with the 30.8727 gap to the incumbent and inspect\nwhether window improvements decay. Pause sooner on solver termination or\nnumerical failure; evaluator errors stop without retry.\n\n"
+  },
+  {
+    "block": 8,
+    "method": "sobol_global",
+    "first_eval": 1329,
+    "last_eval": 1360,
+    "calls": 32,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "sobol_global",
+        "first_eval": 1329,
+        "last_eval": 1360
+      }
+    ],
+    "decision_text": "## Decision after evaluation 1328\n**Budget:** 1328 used / 2000 total; 672 remaining.\n**Evidence:** The 90-call continuation improved the fourth region from\n778.6281058091176 to 772.6916198433446. Its last three window minima were\n774.3024232781464, 772.9119430143703 and 772.6916198433446. Improvement\nhas slowed to 0.2203 in the last 30 calls while the gap to the incumbent\n747.7553690766579 remains 24.9363. The explored local starts have all been\nat the center or on radius-40/100 probes about the first solution; much of\nthe allowed box has not been sampled. The different local values demonstrate\nthat a local stationary point does not establish global optimality.\n**Decision:** Switch to one broad scrambled Sobol exploration block over\nthe full bounds. Park the fourth BOBYQA solver and preserve every prior\nsolver, the incumbent, observations, and the same harness.\n**Hyperparameters:** scipy.stats.qmc.Sobol in SciPy 1.17.1, d=30,\nscramble=True, bits=30, seed=20261022, optimization=None; random_base2(m=5)\nproduces 32 points. Affinely map the unit cube to the supplied [-100,100]\nbounds. No objective-dependent surrogate or synthetic observations are used.\n**Reason:** Refining the current inferior basin offers small observed return.\nA low-cost full-box sample adds geographic diversity beyond the earlier\northogonal rays and measures objective levels in much more distant regions.\nIt cannot establish global coverage in 30 dimensions.\n**Next step limit:** 32 additional objective calls; pause at cumulative 1360.\n**Why this length:** A power-of-two Sobol block preserves its balance; 32 calls\ncost less than 5% of the remaining budget and are sufficient to inspect an\ninitial distribution of values and candidate regions. No later block is\ncommitted before seeing those measurements.\n**Review:** Compare the best and quantiles with unrefined previous starts,\ninspect distances and boundary proximity, and check whether any new point\nimproves the campaign incumbent. Evaluator errors stop without retry.\n\n"
+  },
+  {
+    "block": 9,
+    "method": "bobyqa_restart",
+    "first_eval": 1361,
+    "last_eval": 1571,
+    "calls": 211,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "bobyqa_restart",
+        "first_eval": 1361,
+        "last_eval": 1571
+      }
+    ],
+    "decision_text": "## Decision after evaluation 1360\n**Budget:** 1360 used / 2000 total; 640 remaining.\n**Evidence:** The 32 full-box Sobol measurements ranged from\n1155.9095326033366 to 1923.494463719897, with median 1553.2345652608901.\nNone improved 747.7553690766579. The best Sobol point, evaluation 1349,\nhas norm 285.3840, distance 270.5192 from the incumbent, and minimum bound\ngap 0.07577. These values are higher than the earlier radius-40/100 probe\nvalues; this sparse sample suggests a cost to very large excursions but\ndoes not rule out good distant minima. Prior radius-100 local optimization\nsuccessfully found a better region, whereas the last two starts did not.\n**Decision:** Restart BOBYQA at the midpoint between the incumbent (evaluation\n786) and best Sobol point (evaluation 1349). Its distance from the incumbent\nis 135.2596; its objective has not been observed and will be evaluated normally.\nThis uses a new, moderately distant direction while avoiding the nearly-boundary\nSobol start. Preserve all previous solvers, observations and the single harness;\ninitialize a new interpolation model and trust region.\n**Hyperparameters:** Py-BOBYQA 1.5.0, same configuration as the initial roadmap\nexcept rhobeg=0.075 in scaled coordinates (15 original units). The midpoint\nhas at least 16.5223 units of boundary margin because the incumbent's minimum\nmargin is 33.0447, so this radius fits without shifting the starting point.\nKeep npt=61, rhoend=1e-8, deterministic mode and disabled automatic restarts.\nThis modest radius reduction accommodates the new geometry; it is not a claim\nthat the previous radius was generally inferior.\n**Reason:** The measured full-box points are costly, but the best supplies an\nunexplored direction. A midpoint balances regional diversity with the earlier\nsuccess of moderate-distance starts. Its basin quality remains unknown.\n**Next step limit:** 211 additional objective calls; pause at cumulative 1571.\n**Why this length:** Initialize 61 points and permit 150 subsequent evaluations,\nas in the preceding early basin assessment. With 640 calls left, inspect this\nnew region before allocating a longer refinement; prior trajectories differ\nin how quickly they settle.\n**Review:** Inspect actual initial value, attained minimum, improvement trend,\nand competitiveness with the incumbent. Pause sooner on solver termination\nor numerical failure; evaluator errors stop without retry.\n\n"
+  },
+  {
+    "block": 10,
+    "method": "bobyqa_restart",
+    "first_eval": 1572,
+    "last_eval": 1661,
+    "calls": 90,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "bobyqa_restart",
+        "first_eval": 1572,
+        "last_eval": 1661
+      }
+    ],
+    "decision_text": "## Decision after evaluation 1571\n**Budget:** 1571 used / 2000 total; 429 remaining.\n**Evidence:** The midpoint's measured initial value was 1048.3785481184373.\nThe new local search attained 705.1400095792432 at evaluation 1570, improving\nthe previous incumbent by 42.6153594974147. Window minima at 1510, 1540 and\n1570 were 740.3428391055317, 713.8043060326975 and 705.1400095792432.\nThe best point is 143.0401 units from the former incumbent. The midpoint's\nactual minimum bound margin was 34.3132, exceeding the conservative bound\nused when selecting radius 15. The latest 30-call gain of 8.6643 shows active\ndescent; there is no evidence yet that this best region is locally settled.\n**Decision:** Continue the fifth BOBYQA solver unchanged, preserving its full\ninterpolation and trust-region state, all observations and the same harness.\n**Hyperparameters:** Retain the configuration in decision 1360 (Py-BOBYQA\n1.5.0, npt=61, initial scaled rhobeg=0.075, rhoend=1e-8 and no automatic\nrestarts). The radius is now internally adapted; do not reset it.\n**Reason:** This is both the best observed region and a still-improving\ntrajectory. Continuing an already learned model is supported more directly\nthan paying for another new model at this checkpoint.\n**Next step limit:** 90 additional objective calls; pause at cumulative 1661.\n**Why this length:** Three 30-call windows allow the current descent to develop\nand reveal whether the 8.6643 recent gain tapers. With only 429 calls left,\nreassess before committing a larger fraction to small refinements.\n**Review:** Inspect new best and per-window gain, proposal distances and any\nsolver stopping condition. Pause sooner on solver termination or numerical\nfailure; evaluator errors stop without retry.\n\n"
+  },
+  {
+    "block": 11,
+    "method": "bobyqa_restart",
+    "first_eval": 1662,
+    "last_eval": 1872,
+    "calls": 211,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "bobyqa_restart",
+        "first_eval": 1662,
+        "last_eval": 1872
+      }
+    ],
+    "decision_text": "## Decision after evaluation 1661\n**Budget:** 1661 used / 2000 total; 339 remaining.\n**Evidence:** Continuing the fifth region improved 705.1400095792432 to\n701.0456700265452 at evaluation 1659. Window minima were 702.0518460350642,\n701.2746461837196 and 701.0456700265452; corresponding gains were about\n3.0882, 0.7772 and 0.2290. Sampled recent proposal distances decreased from\n0.309 to 0.133 original units. The local search is settling. The first midpoint\nstart improved the prior incumbent by 46.7097 after refinement, whereas the\nraw distant Sobol endpoint remains costly (1155.9095).\n**Decision:** Park the fifth solver and restart BOBYQA at the midpoint between\nthe current incumbent (evaluation 1659) and that same best Sobol endpoint\n(evaluation 1349). This new start is 67.69625061 units from the incumbent\nand has minimum bound margin 17.05081728. Its objective is unknown and\nwill be evaluated normally. Preserve all prior solver states, the incumbent,\nall observations and the same harness; reset the new local model only.\n**Hyperparameters:** Retain Py-BOBYQA 1.5.0 configuration from decision 1360:\nnpt=61, scaling_within_bounds=True, rhobeg=0.075 (15 original units),\nrhoend=1e-8, deterministic mode, no internal restarts. The new midpoint has\nsufficient boundary margin for that radius, and the preceding run supports\nits practical effectiveness without proving it optimal.\n**Reason:** Small local refinements now offer limited observed gain. The\nsuccessful preceding midpoint supplies evidence for another moderately\ndistant start in this direction. This is a new basin test, not an assumption\nof monotonic improvement along the segment or of a good Sobol endpoint.\n**Next step limit:** 211 additional objective calls; pause at cumulative 1872.\n**Why this length:** The 61-point model initialization plus 150 subsequent\ncalls is enough to reveal the early trajectory, as in the previous successful\nrestart. The remaining 339 calls do not justify an unreviewed long search.\n**Review:** Compare the new region's value and descent rate with 701.0456700265452,\ncheck its displacement, and reconsider based on actual remaining budget.\nPause sooner on solver termination or numerical failure; evaluator errors\nstop without retry.\n\n"
+  },
+  {
+    "block": 12,
+    "method": "bobyqa_polish",
+    "first_eval": 1873,
+    "last_eval": 1962,
+    "calls": 90,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "bobyqa_polish",
+        "first_eval": 1873,
+        "last_eval": 1962
+      }
+    ],
+    "decision_text": "## Decision after evaluation 1872\n**Budget:** 1872 used / 2000 total; 128 remaining.\n**Evidence:** The sixth start reduced 1061.957710058823 to 743.1370584758236,\nbut remains 42.0913884492784 above the incumbent 701.0456700265452.\nIts last window minima were 749.8348825488799, 745.3056800676532 and\n743.1433360667174, followed by 743.1370584758236. The solution lies\n76.4992 units from the incumbent. The new region therefore did not extend\nthe previous midpoint success. The fifth solver was paused while still\nimproving, with a 0.2290 gain in its last 30 calls and proposal distances\naround 0.13-0.31 units.\n**Decision:** Park the sixth solver and resume the fifth BOBYQA solver, which\nproduced the incumbent, using exactly its preserved interpolation model,\ntrust-region state and pending proposal. No new initialization evaluations\nare needed. Retain all observations and the single harness.\n**Hyperparameters:** Unchanged from decision 1360 and its continuation at\n1571, Py-BOBYQA 1.5.0. No radius reset; resume its adapted radius. Automatic\nrestarts remain disabled.\n**Reason:** The latest region is far behind and slowing. With 128 calls left,\nanother 61-point initialization would leave few local-search calls, whereas\nthe best region has a learned model and demonstrated remaining refinement.\n**Next step limit:** 90 additional objective calls; pause at cumulative 1962.\n**Why this length:** Three 30-call windows can quantify the remaining local\ngain and assess numerical settling while preserving a checkpoint before\nspending all remaining evaluations. No later block is committed here.\n**Review:** Inspect best-value gain and proposal distances; check for solver\ntermination. Pause sooner on termination or numerical failure; evaluator\nerrors stop without retry.\n\n"
+  },
+  {
+    "block": 13,
+    "method": "bobyqa_polish",
+    "first_eval": 1963,
+    "last_eval": 2000,
+    "calls": 38,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "bobyqa_polish",
+        "first_eval": 1963,
+        "last_eval": 2000
+      }
+    ],
+    "decision_text": "## Decision after evaluation 1962\n**Budget:** 1962 used / 2000 total; 38 remaining.\n**Evidence:** Resuming the best region improved 701.0456700265452 to\n700.9812830402875 at evaluation 1962. The last three window minima were\n700.9951175822307, 700.9826641493887 and 700.9812830402875. Thus gains\nare small and decreasing but remain positive for this deterministic objective.\nSampled recent proposal distances are about 0.008-0.027 original units.\nThe solver has not terminated or reported a numerical failure.\n**Decision:** Continue the same fifth BOBYQA solver and its adapted state,\nwith label bobyqa_polish. Preserve all observations and the single harness.\n**Hyperparameters:** Unchanged from decision 1872, referencing the Py-BOBYQA\n1.5.0 configuration in decision 1360. No restart or radius reset.\n**Reason:** There is observed remaining local improvement. A new 61-point\nmodel cannot be initialized within 38 calls; the incumbent's live model can\nuse all of them for refinement. Other explored regions remain worse.\n**Next step limit:** 38 additional objective calls; pause at cumulative 2000,\nor sooner if the solver terminates. This is exactly the remaining hard budget.\n**Why this length:** The remaining amount is shorter than the preceding\n90-call refinement and only slightly longer than one observed 30-call window.\nSpending it on the already converging best model is supported by the last\npositive gain; this is a deliberate final refinement, not an automatic\nallocation of a large unexplored budget.\n**Review:** Inspect final best value, actual evaluation count and any early\nsolver stop. Stop on evaluator error without retry. At the checkpoint record\nthe stop decision, save through the harness, and verify the four artifacts.\n\n"
+  }
+]
