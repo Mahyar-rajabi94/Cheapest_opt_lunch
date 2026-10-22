@@ -1,8 +1,14 @@
 """Animated regret-vs-evaluation GIF replicating the exact visual style of
-a reference "mean incumbent regret" chart: transparent background, bold
+a reference "mean incumbent regret" chart: white background, bold
 headline, a live "Evaluation N / Budget" counter, a dashed vertical
 cursor at the current evaluation, thick step-style lines with a leading
 dot, and a top-right legend.
+
+Frames are rendered and assembled into the GIF by hand (not via
+matplotlib's Animation.save/PillowWriter) so the background can be
+snapped to exact white before palette quantization -- left to Pillow's
+default adaptive palette, a solid white background can come out as
+something like (252, 252, 251) instead of pure white.
 
 Usage
 -----
@@ -19,27 +25,8 @@ import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from matplotlib.animation import FuncAnimation, PillowWriter
 import numpy as np
-from io import BytesIO
 from PIL import Image
-
-
-def _grab_frame_fixed(self, **savefig_kwargs):
-    """matplotlib 3.10.0's PillowWriter.grab_frame appends a transparent
-    frame to a nonexistent self._frame (typo for self._frames), raising
-    AttributeError and silently dropping every transparent frame. Fixed
-    here so transparent-background GIFs actually work."""
-    buf = BytesIO()
-    self.fig.savefig(buf, **{**savefig_kwargs, "format": "rgba", "dpi": self.dpi})
-    im = Image.frombuffer("RGBA", self.frame_size, buf.getbuffer(), "raw", "RGBA", 0, 1)
-    if im.getextrema()[3][0] < 255:
-        self._frames.append(im)
-    else:
-        self._frames.append(im.convert("RGB"))
-
-
-PillowWriter.grab_frame = _grab_frame_fixed
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
@@ -138,11 +125,27 @@ def main():
         counter_text.set_text(f"Evaluation {budget_now} / {budget}")
         return agent_line, agent_dot, cursor_line, counter_text, *base_lines, *base_dots
 
-    anim = FuncAnimation(fig, update, frames=frames, blit=False)
+    # Render frames ourselves (instead of anim.save) so we can snap
+    # near-white background pixels to exact (255, 255, 255) before GIF
+    # palette quantization -- otherwise Pillow's adaptive palette can
+    # round the background to something like (252, 252, 251).
+    fig.canvas.draw()
+    images = []
+    for budget_now in frames:
+        update(budget_now)
+        fig.canvas.draw()
+        buf = np.asarray(fig.canvas.buffer_rgba())
+        rgb = buf[:, :, :3]
+        near_white = (rgb >= 250).all(axis=2)
+        rgb = rgb.copy()
+        rgb[near_white] = 255
+        images.append(Image.fromarray(rgb, "RGB"))
+
     outdir = ROOT.parent / "slide_figures" / "dionysus"
     outdir.mkdir(parents=True, exist_ok=True)
     out_path = outdir / f"{task}_mean_incumbent_regret.gif"
-    anim.save(out_path, writer=PillowWriter(fps=10))
+    images[0].save(out_path, save_all=True, append_images=images[1:],
+                    duration=100, loop=0, optimize=False)
     plt.close(fig)
     print(f"Wrote {out_path}")
 
