@@ -96,7 +96,21 @@ def main():
     if frame_budgets[-1] != n_frames_total:
         frame_budgets.append(n_frames_total)
 
-    fig, ax = plt.subplots(figsize=(7, 5.2), facecolor="white")
+    unique_methods = []
+    for _, m in method_segments:
+        if m not in unique_methods:
+            unique_methods.append(m)
+    n_methods = len(unique_methods)
+
+    fig = plt.figure(figsize=(10.5, 5.2), facecolor="white")
+    gs = fig.add_gridspec(1, 2, width_ratios=[1.9, 1.2], wspace=0.06)
+    ax = fig.add_subplot(gs[0])
+    side_ax = fig.add_subplot(gs[1])
+    side_ax.set_facecolor("white")
+    side_ax.axis("off")
+    side_ax.set_xlim(0, 1)
+    side_ax.set_ylim(0, 1)
+
     ax.set_facecolor("white")
     ax.set_yscale("log")
     ax.set_xlim(0, n_frames_total + n_frames_total * 0.02)
@@ -117,26 +131,21 @@ def main():
     (base_dot,) = ax.plot([], [], "o", color=BASELINE_COLOR, markersize=7)
     (agent_dot,) = ax.plot([], [], "o", color=AGENT_COLOR, markersize=8)
 
-    # Box listing every method the agent used (up to the cutoff); whichever
-    # one is active at the current budget is highlighted.
-    unique_methods = []
-    for _, m in method_segments:
-        if m not in unique_methods:
-            unique_methods.append(m)
-    n_methods = len(unique_methods)
-    line_h = 0.065
-    top = 0.97
-    box_pad = 0.025
-    box_x0, box_x1 = 0.46, 0.99
-    box_y0 = top - n_methods * line_h - box_pad
-    box_y1 = top + box_pad
-    ax.add_patch(plt.Rectangle((box_x0, box_y0), box_x1 - box_x0, box_y1 - box_y0,
-                                transform=ax.transAxes, facecolor="white", edgecolor="#cccccc",
-                                linewidth=1.2, zorder=5))
-    method_texts = []
+    # Side panel, outside the plot area: one individually-boxed label per
+    # method the agent used (up to the cutoff); whichever one is active at
+    # the current budget is highlighted.
+    gap = 0.05
+    box_h = (1.0 - gap * (n_methods + 1)) / n_methods
+    method_boxes, method_texts = [], []
     for i, m in enumerate(unique_methods):
-        t = ax.text(box_x1 - 0.02, top - i * line_h, friendly_method_name(m), transform=ax.transAxes,
-                    ha="right", va="top", fontsize=9.5, color="#999999", fontweight="normal", zorder=6)
+        y0 = 1.0 - gap * (i + 1) - box_h * (i + 1)
+        box = plt.Rectangle((0.04, y0), 0.92, box_h, transform=side_ax.transAxes,
+                             facecolor="white", edgecolor="#cccccc", linewidth=1.4, zorder=5)
+        side_ax.add_patch(box)
+        t = side_ax.text(0.5, y0 + box_h / 2, friendly_method_name(m), transform=side_ax.transAxes,
+                          ha="center", va="center", fontsize=13, color="#999999", fontweight="normal",
+                          wrap=True, zorder=6)
+        method_boxes.append(box)
         method_texts.append(t)
 
     def active_method_index(budget):
@@ -156,14 +165,20 @@ def main():
         if b_mask.any():
             base_dot.set_data([base_x[b_mask][-1]], [base_y[b_mask][-1]])
         active_idx = active_method_index(budget)
-        for i, t in enumerate(method_texts):
+        for i, (box, t) in enumerate(zip(method_boxes, method_texts)):
             if i == active_idx:
                 t.set_color(AGENT_COLOR)
                 t.set_fontweight("bold")
+                box.set_edgecolor(AGENT_COLOR)
+                box.set_facecolor("#fbe9ee")
+                box.set_linewidth(2.2)
             else:
                 t.set_color("#999999")
                 t.set_fontweight("normal")
-        return base_line, agent_line, base_dot, agent_dot, *method_texts
+                box.set_edgecolor("#cccccc")
+                box.set_facecolor("white")
+                box.set_linewidth(1.4)
+        return base_line, agent_line, base_dot, agent_dot, *method_texts, *method_boxes
 
     anim = FuncAnimation(fig, update, frames=frame_budgets, blit=False)
     outdir = Path(args.outdir)
