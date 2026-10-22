@@ -175,10 +175,10 @@ def plot_task(task: str, out_path: Path, agent_traces_dir: Path | None = None,
         curve = agent_regret_curve(agent_traces_dir / task / "trace.csv", f_opt)
         if curve is not None:
             x, y = curve
-            ax.plot(x, y, color=AGENT_LINE_COLOR, linewidth=LINEWIDTH + 0.4, label="Astra max agent (1 run)")
+            ax.plot(x, y, color=AGENT_LINE_COLOR, linewidth=LINEWIDTH + 0.4, label="Cheapest lunch")
 
     ax.set_yscale("log")
-    ax.set_xlabel("Evaluation", fontsize=13)
+    ax.set_xlabel("Budget", fontsize=13)
     ax.set_ylabel("Regret", fontsize=13)
     ax.tick_params(labelsize=11)
     for spine in ("top", "right"):
@@ -187,11 +187,21 @@ def plot_task(task: str, out_path: Path, agent_traces_dir: Path | None = None,
     ax.spines["bottom"].set_color("#888888")
     ax.grid(False)
 
-    handles, labels = ax.get_legend_handles_labels()
-    fig.legend(handles, labels, loc="lower center", ncol=min(len(labels), 3), frameon=False,
-               fontsize=10.5, bbox_to_anchor=(0.5, -0.12))
-    fig.tight_layout(rect=[0, 0.1, 1, 1])
+    fig.tight_layout()
     out_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out_path, dpi=200, bbox_inches="tight", facecolor="white")
+    plt.close(fig)
+    print(f"Wrote {out_path}")
+
+
+def write_legend(labels_colors: list[tuple[str, str]], out_path: Path, linewidth: float = LINEWIDTH + 0.4):
+    """A standalone legend image: one entry per row, vertically stacked,
+    tightly spaced ('back to back'), no plot axes."""
+    fig = plt.figure(figsize=(3.2, 0.42 * len(labels_colors) + 0.1), facecolor="white")
+    handles = [plt.Line2D([0], [0], color=color, linewidth=linewidth) for _, color in labels_colors]
+    labels = [label for label, _ in labels_colors]
+    legend = fig.legend(handles, labels, loc="center", frameon=False, fontsize=12,
+                         labelspacing=0.3, handlelength=1.8, handletextpad=0.6, borderpad=0, borderaxespad=0)
     fig.savefig(out_path, dpi=200, bbox_inches="tight", facecolor="white")
     plt.close(fig)
     print(f"Wrote {out_path}")
@@ -222,6 +232,14 @@ def main():
     for task in tasks:
         out_path = outdir / f"{task}.png" if args.flat else outdir / task / "regret_vs_eval.png"
         plot_task(task, out_path, agent_traces_dir, optimizers, display)
+
+    if tasks:
+        opt_keys = optimizers or OPTIMIZERS
+        disp = display or DISPLAY
+        labels_colors = [(disp[k], COLORS[k]) for k in opt_keys]
+        if agent_traces_dir is not None:
+            labels_colors.append(("Cheapest lunch", AGENT_LINE_COLOR))
+        write_legend(labels_colors, outdir / "legend.png")
 
 
 if __name__ == "__main__":
