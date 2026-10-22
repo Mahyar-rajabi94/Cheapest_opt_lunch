@@ -13,6 +13,7 @@ from src.tasks.coco_mixint import COCOMixintTask
 from src.tasks.coco_noisy import COCONoisyTask
 from src.tasks.nevergrad_noisy import NevergradNoisyTask
 from src.tasks.opv import OPVTask
+from src.tasks.opv_pool import OPVPoolTask
 from src.tasks.pymoo_g import PymooGTask
 from src.tasks.yahpo import YAHPOTask
 
@@ -73,4 +74,7 @@ TASKS = {
     "yahpo_xgboost": lambda: YAHPOTask("rbv2_xgboost"),
     # OPV device PCE from a random-forest emulator of 526 devices; 11 dims, 6 linear constraints, piecewise constant.
     "opv_pce": lambda: OPVTask(),
+    # The same 526 OPV devices as a fixed pool: each point maps to the nearest untested device, whose measured PCE
+    # is looked up; at most 526 evaluations.
+    "opv_pool": lambda: OPVPoolTask(),
 }

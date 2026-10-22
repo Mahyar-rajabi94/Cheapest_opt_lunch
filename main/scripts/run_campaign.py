@@ -13,6 +13,9 @@ Noisy tasks add y_true (the noise-free value, never shown to the
 optimizer) after y, and y_best_so_far is then the y_true of the point with
 the lowest *observed* y so far, i.e. what "return the best observed point"
 would deliver; meta.json gains task_noisy.
+Pool tasks add candidate_id (the candidate the proposed x0..x{dim-1} was
+mapped to) after y; meta.json gains task_n_candidates, and the budget may
+not exceed it.
 meta.json records the campaign-level configuration and provenance.
 
 No optimizer hyperparameters are exposed here by design: each optimizer
@@ -46,6 +49,7 @@ from src.optimizers.differential_evolution import DifferentialEvolution
 from src.optimizers.gp_bo import GPBO
 from src.optimizers.lbfgsb import LBFGSB
 from src.optimizers.nelder_mead import NelderMead
+from src.optimizers.pool_random import PoolRandomSearch
 from src.optimizers.random_search import RandomSearch
 from src.optimizers.sobol_search import SobolSearch
 from src.optimizers.turbo import TuRBO
@@ -63,6 +67,7 @@ OPTIMIZERS = {
     "bobyqa": BOBYQA,
     "nelder_mead": NelderMead,
     "lbfgsb": LBFGSB,
+    "pool_random": PoolRandomSearch,  # pool tasks only (pool_only)
 }
 
 # scipy's Sobol sampler warns whenever the *cumulative* number of points
@@ -102,8 +107,16 @@ def run_campaign(
     meta.json records this with `stopped_early` and `stop_reason`.
     """
     task = TASKS[task_name]()
+    if task.pool and budget > task.n_candidates:
+        raise ValueError(f"{task.name} has {task.n_candidates} candidates; budget {budget} exceeds that.")
     task.reseed(seed)
-    optimizer = OPTIMIZERS[optimizer_name](bounds=task.bounds, seed=seed)
+    optimizer_cls = OPTIMIZERS[optimizer_name]
+    if getattr(optimizer_cls, "pool_only", False):
+        if not task.pool:
+            raise ValueError(f"{optimizer_name} runs only on pool tasks.")
+        optimizer = optimizer_cls(bounds=task.bounds, seed=seed, candidates=task.candidates)
+    else:
+        optimizer = optimizer_cls(bounds=task.bounds, seed=seed)
 
     campaign_dir = Path(outdir) / task.name / optimizer_name / f"seed_{seed}"
     campaign_dir.mkdir(parents=True, exist_ok=True)
@@ -140,6 +153,8 @@ def run_campaign(
         for d in range(task.dim):
             row[f"x{d}"] = x[d]
         row["y"] = y
+        if task.pool:
+            row["candidate_id"] = task.last_candidate
         if task.noisy:
             row["y_true"] = ev.y_true
         if constrained:
@@ -170,6 +185,7 @@ def run_campaign(
         "task_f_opt": task.f_opt,
         **({"task_n_constraints": task.n_constraints} if constrained else {}),
         **({"task_noisy": True} if task.noisy else {}),
+        **({"task_n_candidates": task.n_candidates} if task.pool else {}),
         "optimizer_name": optimizer_name,
         "optimizer_class": f"{type(optimizer).__module__}.{type(optimizer).__name__}",
         "seed": seed,

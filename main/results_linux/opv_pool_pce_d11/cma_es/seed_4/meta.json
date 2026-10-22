@@ -1,0 +1,19 @@
+{
+  "task_name": "opv_pool_pce_d11",
+  "task_dim": 11,
+  "task_direction": "min",
+  "task_f_opt": -15.707252,
+  "task_n_candidates": 526,
+  "optimizer_name": "cma_es",
+  "optimizer_class": "src.optimizers.cma_es.CMAES",
+  "seed": 4,
+  "requested_budget": 100,
+  "evaluations_used": 100,
+  "stopped_early": false,
+  "stop_reason": null,
+  "start_time_utc": "2026-10-22T17:28:03.131171+00:00",
+  "end_time_utc": "2026-10-22T17:28:03.144109+00:00",
+  "total_wall_seconds": 0.012951461976626888,
+  "numpy_version": "2.5.4",
+  "scipy_version": "1.18.1"
+}
