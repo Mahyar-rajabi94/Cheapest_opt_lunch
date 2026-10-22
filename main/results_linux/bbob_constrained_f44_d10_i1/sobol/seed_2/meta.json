@@ -1,0 +1,19 @@
+{
+  "task_name": "bbob_constrained_f44_d10_i1",
+  "task_dim": 10,
+  "task_direction": "min",
+  "task_f_opt": -2838.8,
+  "task_n_constraints": 3,
+  "optimizer_name": "sobol",
+  "optimizer_class": "src.optimizers.sobol_search.SobolSearch",
+  "seed": 2,
+  "requested_budget": 2000,
+  "evaluations_used": 2000,
+  "stopped_early": false,
+  "stop_reason": null,
+  "start_time_utc": "2026-10-21T18:31:35.929960+00:00",
+  "end_time_utc": "2026-10-21T18:31:35.988431+00:00",
+  "total_wall_seconds": 0.05850338493473828,
+  "numpy_version": "2.4.6",
+  "scipy_version": "1.17.1"
+}

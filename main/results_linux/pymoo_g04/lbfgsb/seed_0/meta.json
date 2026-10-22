@@ -1,0 +1,19 @@
+{
+  "task_name": "pymoo_g04",
+  "task_dim": 5,
+  "task_direction": "min",
+  "task_f_opt": -30665.538671783317,
+  "task_n_constraints": 6,
+  "optimizer_name": "lbfgsb",
+  "optimizer_class": "src.optimizers.lbfgsb.LBFGSB",
+  "seed": 0,
+  "requested_budget": 2000,
+  "evaluations_used": 300,
+  "stopped_early": true,
+  "stop_reason": "L-BFGS-B has already converged (or stopped) and will not propose further points. Final result:   message: ABNORMAL: \n  success: False\n   status: 2\n      fun: -28074.988830137452\n        x: [ 7.800e+01  3.300e+01  3.876e+01  2.700e+01  2.700e+01]\n      nit: 2\n      jac: [ 5.986e+01  0.000e+00  4.153e+02  0.000e+00  6.518e+01]\n     nfev: 300\n     njev: 50\n hess_inv: <5x5 LbfgsInvHessProduct with dtype=float64>",
+  "start_time_utc": "2026-10-21T18:31:35.367812+00:00",
+  "end_time_utc": "2026-10-21T18:31:35.403770+00:00",
+  "total_wall_seconds": 0.03597214398905635,
+  "numpy_version": "2.4.6",
+  "scipy_version": "1.17.1"
+}

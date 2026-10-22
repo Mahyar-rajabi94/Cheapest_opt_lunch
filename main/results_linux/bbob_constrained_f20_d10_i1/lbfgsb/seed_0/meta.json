@@ -1,0 +1,19 @@
+{
+  "task_name": "bbob_constrained_f20_d10_i1",
+  "task_dim": 10,
+  "task_direction": "min",
+  "task_f_opt": 1072.3569958546307,
+  "task_n_constraints": 3,
+  "optimizer_name": "lbfgsb",
+  "optimizer_class": "src.optimizers.lbfgsb.LBFGSB",
+  "seed": 0,
+  "requested_budget": 2000,
+  "evaluations_used": 814,
+  "stopped_early": true,
+  "stop_reason": "L-BFGS-B has already converged (or stopped) and will not propose further points. Final result:   message: ABNORMAL: \n  success: False\n   status: 2\n      fun: 1335.9864717821395\n        x: [-2.582e+00  1.614e+00 -9.921e-02 -3.445e-01  1.087e+00\n            -2.986e-01  9.707e-01  9.786e-01 -1.534e+00  1.091e+00]\n      nit: 6\n      jac: [ 1.825e+02 -3.783e+02  2.648e+02  6.726e+01 -2.186e+01\n            -7.837e+01 -6.763e+01  2.310e+01  2.741e+01 -4.361e+02]\n     nfev: 814\n     njev: 74\n hess_inv: <10x10 LbfgsInvHessProduct with dtype=float64>",
+  "start_time_utc": "2026-10-21T18:31:37.010709+00:00",
+  "end_time_utc": "2026-10-21T18:31:37.056768+00:00",
+  "total_wall_seconds": 0.04607871198095381,
+  "numpy_version": "2.4.6",
+  "scipy_version": "1.17.1"
+}

@@ -6,6 +6,13 @@ Writes two files per campaign:
 
 trace.csv has one row per evaluation (eval_idx, batch_idx, optimizer,
 x0..x{dim-1}, y, y_best_so_far, eval_seconds, cumulative_seconds).
+Constrained tasks add merit, violation and feasible after y, and
+y_best_so_far is then the best *feasible* y so far (blank until the first
+feasible point).
+Noisy tasks add y_true (the noise-free value, never shown to the
+optimizer) after y, and y_best_so_far is then the y_true of the point with
+the lowest *observed* y so far, i.e. what "return the best observed point"
+would deliver; meta.json gains task_noisy.
 meta.json records the campaign-level configuration and provenance.
 
 No optimizer hyperparameters are exposed here by design: each optimizer
@@ -42,20 +49,10 @@ from src.optimizers.nelder_mead import NelderMead
 from src.optimizers.random_search import RandomSearch
 from src.optimizers.sobol_search import SobolSearch
 from src.optimizers.turbo import TuRBO
-from src.tasks.bent_cigar import BentCigarTask
-from src.tasks.rastrigin import RastriginTask
-from src.tasks.rosenbrock import RosenbrockTask
-from src.tasks.sphere import SphereTask
+from src.tasks.registry import TASKS
 
-# Registries: add a new task or optimizer here; nothing else in this file
-# needs to change.
-TASKS = {
-    "rosenbrock10": lambda: RosenbrockTask(dim=10, instance=1, rotated=False),
-    "rastrigin10": lambda: RastriginTask(dim=10, instance=1),
-    "bent_cigar10": lambda: BentCigarTask(dim=10, instance=1),
-    "sphere10": lambda: SphereTask(dim=10, instance=1),
-}
-
+# Optimizer registry: add a new optimizer here; nothing else in this file
+# needs to change. Tasks are registered in src/tasks/registry.py.
 OPTIMIZERS = {
     "random_search": RandomSearch,
     "sobol": SobolSearch,
@@ -73,6 +70,14 @@ OPTIMIZERS = {
 # triggers this on most calls; it is harmless, just noisy, so it is
 # silenced here rather than in src/optimizers/sobol_search.py.
 warnings.filterwarnings("ignore", message=".*balance properties.*")
+
+
+def _merit(ev) -> float:
+    """Scalar fed to the optimizers: y if feasible, else a large penalty that
+    ranks every infeasible point above every feasible one, by violation first."""
+    if ev.feasible:
+        return ev.y
+    return 1e12 + 1e6 * ev.violation + float(np.tanh(ev.y))
 
 
 def run_campaign(
@@ -97,13 +102,16 @@ def run_campaign(
     meta.json records this with `stopped_early` and `stop_reason`.
     """
     task = TASKS[task_name]()
+    task.reseed(seed)
     optimizer = OPTIMIZERS[optimizer_name](bounds=task.bounds, seed=seed)
 
     campaign_dir = Path(outdir) / task.name / optimizer_name / f"seed_{seed}"
     campaign_dir.mkdir(parents=True, exist_ok=True)
 
+    constrained = task.n_constraints > 0
     rows = []
     best_so_far = None
+    best_observed = None
     cumulative_seconds = 0.0
     start_wall = time.perf_counter()
     start_time_utc = datetime.now(timezone.utc).isoformat()
@@ -118,17 +126,26 @@ def run_campaign(
             stop_reason = str(e)
             break
         x = X[0]
-        y, elapsed = task.evaluate(x)
-        optimizer.tell(X, [y])
+        ev = task.evaluate(x)
+        y, elapsed = ev.y, ev.elapsed
+        merit = _merit(ev)
+        optimizer.tell(X, [merit])
 
         cumulative_seconds += elapsed
-        if best_so_far is None or y < best_so_far:
-            best_so_far = y
+        if ev.feasible and (best_observed is None or y < best_observed):
+            best_observed = y
+            best_so_far = y if ev.y_true is None else ev.y_true
 
         row = {"eval_idx": i + 1, "batch_idx": i, "optimizer": optimizer_name}
         for d in range(task.dim):
             row[f"x{d}"] = x[d]
         row["y"] = y
+        if task.noisy:
+            row["y_true"] = ev.y_true
+        if constrained:
+            row["merit"] = merit
+            row["violation"] = ev.violation
+            row["feasible"] = ev.feasible
         row["y_best_so_far"] = best_so_far
         row["eval_seconds"] = elapsed
         row["cumulative_seconds"] = cumulative_seconds
@@ -151,6 +168,8 @@ def run_campaign(
         "task_dim": task.dim,
         "task_direction": task.direction,
         "task_f_opt": task.f_opt,
+        **({"task_n_constraints": task.n_constraints} if constrained else {}),
+        **({"task_noisy": True} if task.noisy else {}),
         "optimizer_name": optimizer_name,
         "optimizer_class": f"{type(optimizer).__module__}.{type(optimizer).__name__}",
         "seed": seed,

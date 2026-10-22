@@ -1,0 +1,18 @@
+{
+  "task_name": "cec2017_f5_d30",
+  "task_dim": 30,
+  "task_direction": "min",
+  "task_f_opt": 500.0,
+  "optimizer_name": "de",
+  "optimizer_class": "src.optimizers.differential_evolution.DifferentialEvolution",
+  "seed": 2,
+  "requested_budget": 2000,
+  "evaluations_used": 2000,
+  "stopped_early": false,
+  "stop_reason": null,
+  "start_time_utc": "2026-10-21T17:59:30.774208+00:00",
+  "end_time_utc": "2026-10-21T17:59:30.856546+00:00",
+  "total_wall_seconds": 0.08234725892543793,
+  "numpy_version": "2.4.6",
+  "scipy_version": "1.17.1"
+}

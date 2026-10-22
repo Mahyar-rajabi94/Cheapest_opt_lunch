@@ -81,7 +81,10 @@ class CMAES:
             "verbose": -9,  # suppress pycma's default per-generation printing
         }
         if seed is not None:
-            opts["seed"] = seed
+            # pycma treats seed 0 as "seed from the clock", so seed 0 would
+            # never reproduce. Map it to the largest valid numpy seed, which
+            # no sweep reaches; every other seed is passed through unchanged.
+            opts["seed"] = seed if seed != 0 else 2**32 - 1
 
         self._es = cma.CMAEvolutionStrategy(x0, sigma0, opts)
 
