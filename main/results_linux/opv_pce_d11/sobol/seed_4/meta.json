@@ -1,0 +1,19 @@
+{
+  "task_name": "opv_pce_d11",
+  "task_dim": 11,
+  "task_direction": "min",
+  "task_f_opt": -12.955165987276994,
+  "task_n_constraints": 6,
+  "optimizer_name": "sobol",
+  "optimizer_class": "src.optimizers.sobol_search.SobolSearch",
+  "seed": 4,
+  "requested_budget": 2000,
+  "evaluations_used": 2000,
+  "stopped_early": false,
+  "stop_reason": null,
+  "start_time_utc": "2026-10-22T06:48:47.503330+00:00",
+  "end_time_utc": "2026-10-22T06:48:48.900280+00:00",
+  "total_wall_seconds": 1.3969738029991277,
+  "numpy_version": "2.5.4",
+  "scipy_version": "1.18.1"
+}
