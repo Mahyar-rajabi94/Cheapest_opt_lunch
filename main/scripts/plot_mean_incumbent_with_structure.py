@@ -33,15 +33,49 @@ GRIDLINE = "#eceef1"
 CURSOR_GRAY = "#b8bfc8"
 AXIS_GRAY = "#4a5160"
 
+# Standard CPK coloring, matching a typical ball-and-stick renderer.
 ELEMENT_COLOR = {
-    "C": "#4d4d4d", "O": "#e03131", "N": "#3b5bdb", "H": "#dee2e6",
-    "S": "#f2c94c", "Cl": "#2f9e44", "F": "#74c69d", "Br": "#8a3b12",
-    "P": "#e8820c", "I": "#9c36b5",
+    "C": "#909090", "O": "#e0201e", "N": "#2050e0", "H": "#f5f5f5",
+    "S": "#e8c93e", "Cl": "#2fb52f", "F": "#90e050", "Br": "#a13c13",
+    "P": "#e89a2e", "I": "#8a2be2",
 }
+# Ball-and-stick radii (not van der Waals/space-filling), in model units.
 ELEMENT_RADIUS = {
-    "C": 90, "O": 80, "N": 80, "H": 35, "S": 110, "Cl": 100,
-    "F": 60, "Br": 120, "P": 110, "I": 130,
+    "C": 0.40, "O": 0.37, "N": 0.38, "H": 0.24, "S": 0.46, "Cl": 0.46,
+    "F": 0.32, "Br": 0.52, "P": 0.46, "I": 0.58,
 }
+BOND_RADIUS = 0.11
+BOND_COLOR = "#c7c7c7"
+
+
+def _sphere_mesh(center, radius, n=16):
+    u = np.linspace(0, 2 * np.pi, n)
+    v = np.linspace(0, np.pi, n)
+    x = radius * np.outer(np.cos(u), np.sin(v)) + center[0]
+    y = radius * np.outer(np.sin(u), np.sin(v)) + center[1]
+    z = radius * np.outer(np.ones_like(u), np.cos(v)) + center[2]
+    return x, y, z
+
+
+def _cylinder_mesh(p0, p1, radius, n=10):
+    p0, p1 = np.asarray(p0), np.asarray(p1)
+    axis = p1 - p0
+    length = np.linalg.norm(axis)
+    if length < 1e-6:
+        axis = np.array([0.0, 0.0, 1.0])
+        length = 1e-6
+    axis = axis / length
+    not_axis = np.array([1.0, 0.0, 0.0]) if abs(axis[0]) < 0.9 else np.array([0.0, 1.0, 0.0])
+    perp1 = np.cross(axis, not_axis)
+    perp1 /= np.linalg.norm(perp1)
+    perp2 = np.cross(axis, perp1)
+    theta = np.linspace(0, 2 * np.pi, n)
+    t = np.linspace(0, 1, 2)
+    theta_grid, t_grid = np.meshgrid(theta, t)
+    circle = (radius * np.cos(theta_grid))[..., None] * perp1 + (radius * np.sin(theta_grid))[..., None] * perp2
+    centerline = p0 + t_grid[..., None] * (p1 - p0)
+    pts = centerline + circle
+    return pts[..., 0], pts[..., 1], pts[..., 2]
 
 
 def load_rows(path: Path):
@@ -87,19 +121,38 @@ def molecule_3d_coords(smiles: str):
 def draw_molecule_3d(ax3d, smiles: str):
     ax3d.cla()
     ax3d.set_axis_off()
+    ax3d.set_facecolor("black")
+
     coords, elements, bonds = molecule_3d_coords(smiles)
+
+    # Each bond as two half-cylinders, colored like the nearer atom (the
+    # usual ball-and-stick convention), with real shaded cylinder geometry.
     for i, j in bonds:
-        ax3d.plot(*zip(coords[i], coords[j]), color="#9aa2af", linewidth=1.4, zorder=1)
-    colors = [ELEMENT_COLOR.get(e, "#c2255c") for e in elements]
-    sizes = [ELEMENT_RADIUS.get(e, 70) for e in elements]
-    ax3d.scatter(coords[:, 0], coords[:, 1], coords[:, 2], c=colors, s=sizes,
-                 edgecolors="white", linewidths=0.4, zorder=2, depthshade=True)
-    span = np.abs(coords).max() * 1.15
+        mid = (coords[i] + coords[j]) / 2
+        for end, other in ((i, mid), (j, mid)):
+            color = ELEMENT_COLOR.get(elements[end], BOND_COLOR)
+            x, y, z = _cylinder_mesh(coords[end], other, BOND_RADIUS)
+            ax3d.plot_surface(x, y, z, color=color, shade=True, antialiased=True,
+                               linewidth=0, zorder=1)
+
+    # Each atom as a shaded sphere (not a flat scatter dot).
+    for pos, el in zip(coords, elements):
+        radius = ELEMENT_RADIUS.get(el, 0.4)
+        x, y, z = _sphere_mesh(pos, radius)
+        ax3d.plot_surface(x, y, z, color=ELEMENT_COLOR.get(el, "#c2255c"),
+                           shade=True, antialiased=True, linewidth=0, zorder=2)
+
+    span = (np.abs(coords).max() + 0.6) * 1.05
     ax3d.set_xlim(-span, span)
     ax3d.set_ylim(-span, span)
     ax3d.set_zlim(-span, span)
-    ax3d.view_init(elev=18, azim=35)
+    ax3d.view_init(elev=15, azim=35)
     ax3d.set_box_aspect((1, 1, 1))
+    for axis in (ax3d.xaxis, ax3d.yaxis, ax3d.zaxis):
+        axis.pane.set_facecolor("black")
+        axis.pane.set_alpha(1.0)
+        axis.line.set_color("black")
+    ax3d.grid(False)
 
 
 def main():
