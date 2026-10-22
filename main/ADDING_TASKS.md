@@ -6,17 +6,14 @@ This file names task identities. Keep it in `main/`; never copy it into a sandbo
 
 ## Overview
 
-A task exists in two forms:
+A task is implemented once in `src/tasks/` and registered in `src/tasks/registry.py`.
+The baseline runner calls it directly. The isolated agent runner keeps it private
+and exposes `src/agent_harness/harness.py`, a generic transport client. There are
+no numbered agent harnesses or per-task copies of the objective.
 
-| | Standard task | Blind harness |
-| --- | --- | --- |
-| File | entry in `src/tasks/registry.py` | `src/agent_harness/task_<NNN>.py` |
-| Used by | `scripts/run_campaign.py` (fixed-optimizer baselines) | LLM agent in a sandbox |
-| Knows `f_opt` | Yes (offline regret only) | No |
-| Budget | Capped by the campaign loop | Enforced in code (`BudgetExhausted`) |
-| `evaluate(x)` returns | `Evaluation(y, g, elapsed)` | `y` |
-
-The blind harness must not import from `src/tasks/`, so a sandbox can ship without that folder. Shared code lives in `src/tasks/base.py` (`Task`) and `src/agent_harness/harness.py` (`BlackBoxHarness`); a new task adds only its objective.
+The native runner currently supports continuous deterministic BBOB tasks only.
+Other task families remain available for baselines; extending the isolated runner
+requires a public variable/constraint contract and matching evaluator validation.
 
 ## 1. Register the Task
 
@@ -70,30 +67,30 @@ Outputs land in `results_linux/<task.name>/<optimizer>/seed_<n>/` (`trace.csv`, 
 
 Figures (needs `matplotlib`): `../.venv/bin/python scripts/make_comparison_plots.py [--task <task.name>]` writes `plot1_counterfactual_bar.png`, `plot2_regret_vs_eval.png` and, once an agent run exists, `plot3_agent_method_timeline.png` into `results_linux/<task.name>/`. Add the task's sandbox results folder to `AGENT_RUNS` in that script. Commit results and figures.
 
-## 4. Blind Agent Task
+## 4. Isolated Agent Run
 
-1. **Harness:** copy `src/agent_harness/task_001.py` to `task_<NNN>.py`. Change only the objective construction (inline it; do not import from `src/tasks/`), the default `outdir` (`results/agent_task_<NNN>`), `task_id`, and the docstring's brief reference. Budget enforcement and logging come from `BlackBoxHarness`. Never expose `f_opt` or the function name.
-2. **Sandbox:** from `main/`, run
+For a supported continuous deterministic BBOB task, run from the repository root:
 
-   ```bash
-   ../.venv/bin/python scripts/make_sandbox.py --task-id <NNN> --budget 2000 --outdir ../task_<NNN>_sandbox_<agent>
-   ```
+```bash
+.venv/bin/python main/scripts/run_agent.py --task <key> --budget 100 --check-only
+.venv/bin/python main/scripts/run_agent.py --task <key> --budget 100
+```
 
-   It renders the brief from `agent_briefs/blind_brief_template.md` (dim and bounds from the harness; uniform box, deterministic), copies `requirements.txt`, `src/optimizers/`, and the harness, and creates an empty `results/`. No `src/tasks/`, no other harnesses.
-3. **Leak check:** `make_sandbox.py` searches every sandbox file for registered task names and `f_opt`, and deletes the sandbox on a hit. Also check by hand for anything the template could not know about (e.g. a new function's name not yet in the registry).
-4. **Brief changes:** if the task needs a property the template does not state (noise, non-uniform bounds, integer or categorical coordinates: for `mixint_*` list which coordinates are integer, for `yahpo_*` which coordinates are categorical and which are conditional and inert), edit the rendered brief in the sandbox; describe only properties the agent may know.
-5. **Run:** start a brand-new agent session with the sandbox as its working directory (never one that has seen `main/`). First message only:
+Follow the root [README](../README.md) for the separate optimizer environment,
+isolation boundary, outputs and plotting command. The runner copies the canonical
+root AGENTS.md and generic client into a fresh workspace. It gives the agent only
+dimension, bounds, direction, noise status and budget. Objective construction and
+scoring remain outside that workspace. Do not add a `task_<NNN>.py` or a new prompt.
 
-   > Read `agent_briefs/task_<NNN>.md` and carry out everything it describes.
-
-6. **Score:** from `main/`, rerun `scripts/make_comparison_plots.py --task <task.name>` to compare the agent trace against `f_opt` and the step 3 baselines.
+For constrained, noisy, mixed-integer, categorical or conditional tasks, first
+implement and test the public domain/constraint/observation contract. Do not pass
+them through a continuous scalar interface or silently discard constraints.
 
 ## Checklist
 
-- [ ] `TASKS` entry in `src/tasks/registry.py` (new `Task` subclass only for a non-BBOB family)
-- [ ] Smoke run passes
-- [ ] Row in `TASKS.md`: what the task tests, baseline winners, and any gap
-- [ ] Baselines: `run_sweep.py` (budget 2000, expensive methods 100, seeds 0–9, on Linux into `results_linux/`)
-- [ ] Harness `task_<NNN>.py` (objective only), no `f_opt`
-- [ ] Sandbox built with `make_sandbox.py`; leak check passed
-- [ ] Agent run in a fresh session; scored from `main/`
+- [ ] Register the task and record its domain and constraints accurately.
+- [ ] Smoke-test baseline evaluation and update TASKS.md.
+- [ ] Run matched-budget baselines into a fresh output directory.
+- [ ] For supported tasks, pass the native runner's zero-evaluation isolation check.
+- [ ] Run a fresh isolated agent campaign with the canonical prompt.
+- [ ] Score and plot outside the agent workspace; preserve source and runtime provenance.
