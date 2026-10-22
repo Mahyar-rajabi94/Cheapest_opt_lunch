@@ -1,0 +1,19 @@
+{
+  "task_dim": 15,
+  "task_direction": "min",
+  "requested_budget": 2000,
+  "evaluations_used": 2000,
+  "stopped_early": false,
+  "start_time_utc": "2026-10-22T15:54:45.696764+00:00",
+  "end_time_utc": "2026-10-22T15:54:48.883537+00:00",
+  "total_wall_seconds": 3.1809710999950767,
+  "numpy_version": "2.3.1",
+  "policy": "scripted",
+  "seed": 2,
+  "rounds": 18,
+  "round_size": 100,
+  "policy_use_probes": true,
+  "landscape_guess": "multi_basin",
+  "task_name": "robot_cell_layout_d15",
+  "task_f_opt": 86.19207602521666
+}
