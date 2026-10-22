@@ -1,0 +1,18 @@
+{
+  "task_name": "nonnewtonian_blend_d7",
+  "task_dim": 7,
+  "task_direction": "min",
+  "task_f_opt": 0.0672555867363419,
+  "optimizer_name": "turbo",
+  "optimizer_class": "src.optimizers.turbo.TuRBO",
+  "seed": 1,
+  "requested_budget": 100,
+  "evaluations_used": 100,
+  "stopped_early": false,
+  "stop_reason": null,
+  "start_time_utc": "2026-10-22T15:31:48.471665+00:00",
+  "end_time_utc": "2026-10-22T15:32:12.495311+00:00",
+  "total_wall_seconds": 24.024753099991358,
+  "numpy_version": "2.3.1",
+  "scipy_version": "1.16.1"
+}

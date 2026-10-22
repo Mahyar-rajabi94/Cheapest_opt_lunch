@@ -1,0 +1,18 @@
+{
+  "task_name": "nonnewtonian_blend_d7",
+  "task_dim": 7,
+  "task_direction": "min",
+  "task_f_opt": 0.0672555867363419,
+  "optimizer_name": "lbfgsb",
+  "optimizer_class": "src.optimizers.lbfgsb.LBFGSB",
+  "seed": 0,
+  "requested_budget": 2000,
+  "evaluations_used": 696,
+  "stopped_early": true,
+  "stop_reason": "L-BFGS-B has already converged (or stopped) and will not propose further points. Final result:   message: CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH\n  success: True\n   status: 0\n      fun: 0.12910175643049432\n        x: [ 0.000e+00  1.047e+00  0.000e+00  0.000e+00  0.000e+00\n             5.484e+00  3.037e+02]\n      nit: 46\n      jac: [ 1.500e-02  2.896e-04  1.000e-02  7.500e-03  6.802e-04\n             0.000e+00  3.333e-05]\n     nfev: 696\n     njev: 87\n hess_inv: <7x7 LbfgsInvHessProduct with dtype=float64>",
+  "start_time_utc": "2026-10-22T15:32:53.379411+00:00",
+  "end_time_utc": "2026-10-22T15:32:53.581660+00:00",
+  "total_wall_seconds": 0.1930358000099659,
+  "numpy_version": "2.3.1",
+  "scipy_version": "1.16.1"
+}

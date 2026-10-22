@@ -1,0 +1,18 @@
+{
+  "task_name": "nonnewtonian_blend_d7",
+  "task_dim": 7,
+  "task_direction": "min",
+  "task_f_opt": 0.0672555867363419,
+  "optimizer_name": "de",
+  "optimizer_class": "src.optimizers.differential_evolution.DifferentialEvolution",
+  "seed": 0,
+  "requested_budget": 2000,
+  "evaluations_used": 2000,
+  "stopped_early": false,
+  "stop_reason": null,
+  "start_time_utc": "2026-10-22T15:32:51.603373+00:00",
+  "end_time_utc": "2026-10-22T15:32:52.022080+00:00",
+  "total_wall_seconds": 0.41894059999322053,
+  "numpy_version": "2.3.1",
+  "scipy_version": "1.16.1"
+}

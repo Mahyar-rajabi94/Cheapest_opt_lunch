@@ -1,0 +1,18 @@
+{
+  "task_name": "robot_cell_layout_d15",
+  "task_dim": 15,
+  "task_direction": "min",
+  "task_f_opt": 86.19207602521666,
+  "optimizer_name": "sobol",
+  "optimizer_class": "src.optimizers.sobol_search.SobolSearch",
+  "seed": 0,
+  "requested_budget": 2000,
+  "evaluations_used": 2000,
+  "stopped_early": false,
+  "stop_reason": null,
+  "start_time_utc": "2026-10-22T15:52:39.231793+00:00",
+  "end_time_utc": "2026-10-22T15:52:43.347826+00:00",
+  "total_wall_seconds": 4.123230299999705,
+  "numpy_version": "2.3.1",
+  "scipy_version": "1.16.1"
+}

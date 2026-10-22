@@ -1,0 +1,150 @@
+{
+  "carbopol": {
+    "c0_pct": 0.2,
+    "eta0_cP": 10491.211891411753,
+    "a": 3.950882825373992,
+    "eta_source": "log-log fit of reference viscosities (true_mu_cP)",
+    "reference_points": [
+      [
+        0.2,
+        10580.0
+      ],
+      [
+        0.3,
+        49810.0
+      ],
+      [
+        0.35,
+        100800.0
+      ],
+      [
+        0.4,
+        159700.0
+      ]
+    ],
+    "flow_index_points": [
+      [
+        0.35,
+        0.4755722187027469
+      ]
+    ],
+    "n0": null,
+    "b": null,
+    "n_source": "assumed 0.45 (Herschel-Bulkley); only one valid AutoVisco fit, n = 0.48"
+  },
+  "sepineo": {
+    "c0_pct": 1.0,
+    "eta0_cP": 2294.1862343225703,
+    "a": 4.582922917275,
+    "eta_source": "log-log fit of reference viscosities (true_mu_cP)",
+    "reference_points": [
+      [
+        1.0,
+        2148.0
+      ],
+      [
+        1.5,
+        17240.0
+      ],
+      [
+        2.0,
+        50110.0
+      ]
+    ],
+    "flow_index_points": [
+      [
+        1.0,
+        0.3794463469830601
+      ],
+      [
+        1.0,
+        0.36696650921458807
+      ],
+      [
+        1.0,
+        0.303659250054369
+      ],
+      [
+        1.5,
+        0.3144993935039194
+      ],
+      [
+        1.5,
+        0.28165040554151866
+      ],
+      [
+        2.0,
+        0.2690545657656468
+      ],
+      [
+        2.0,
+        0.38314620648284914
+      ]
+    ],
+    "n0": 0.3428163380833875,
+    "b": -0.046099834346728874,
+    "n_source": "linear fit of n vs ln c, valid power-law fits only"
+  },
+  "solagum": {
+    "c0_pct": 1.0,
+    "eta0_cP": 522.0000000000002,
+    "a": 2.1784223268145175,
+    "eta_source": "anchored at the 1% reference viscosity; exponent from AutoVisco apparent-viscosity ratios",
+    "reference_points": [
+      [
+        1.0,
+        522.0
+      ]
+    ],
+    "flow_index_points": [
+      [
+        1.0,
+        0.4481935788235164
+      ],
+      [
+        2.0,
+        0.4204201952586285
+      ],
+      [
+        2.5,
+        0.26708446878179437
+      ]
+    ],
+    "n0": 0.4644975295003895,
+    "b": -0.16017663287634598,
+    "n_source": "linear fit of n vs ln c, valid power-law fits only"
+  },
+  "peg600k": {
+    "c0_pct": 5.0,
+    "eta0_cP": 2261.2298466046336,
+    "a": 4.508705687761889,
+    "eta_source": "log-log fit of reference viscosities (true_mu_cP)",
+    "reference_points": [
+      [
+        5.0,
+        3254.0
+      ],
+      [
+        6.5,
+        4109.0
+      ],
+      [
+        10.0,
+        64250.0
+      ]
+    ],
+    "flow_index_points": [
+      [
+        10.0,
+        0.5961624687100031
+      ],
+      [
+        6.5,
+        0.5050633183654353
+      ]
+    ],
+    "n0": 0.4495802416673884,
+    "b": 0.2114734520368405,
+    "n_source": "linear fit of n vs ln c, valid power-law fits only"
+  }
+}

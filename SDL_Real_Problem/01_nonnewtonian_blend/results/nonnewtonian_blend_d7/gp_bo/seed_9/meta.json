@@ -1,0 +1,18 @@
+{
+  "task_name": "nonnewtonian_blend_d7",
+  "task_dim": 7,
+  "task_direction": "min",
+  "task_f_opt": 0.0672555867363419,
+  "optimizer_name": "gp_bo",
+  "optimizer_class": "src.optimizers.gp_bo.GPBO",
+  "seed": 9,
+  "requested_budget": 100,
+  "evaluations_used": 100,
+  "stopped_early": false,
+  "stop_reason": null,
+  "start_time_utc": "2026-10-22T15:30:35.037734+00:00",
+  "end_time_utc": "2026-10-22T15:32:11.288179+00:00",
+  "total_wall_seconds": 96.2505436000065,
+  "numpy_version": "2.3.1",
+  "scipy_version": "1.16.1"
+}

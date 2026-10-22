@@ -1,0 +1,56 @@
+{
+  "data": "PEPV pump-viscometer blends of 1 kcP and 10 kcP silicone oils (real)",
+  "G_fitted": 0.6607763503531063,
+  "mean_abs_error_pct_ideal": 9.817907614020447,
+  "mean_abs_error_pct_grunberg_nissan": 2.217540467288461,
+  "points": [
+    {
+      "frac_1kcP": 1.0,
+      "measured_kcP": 1.111,
+      "ideal_kcP": 1.111,
+      "GN_kcP": 1.111
+    },
+    {
+      "frac_1kcP": 0.9,
+      "measured_kcP": 1.447,
+      "ideal_kcP": 1.4044733698707568,
+      "GN_kcP": 1.4905307705007245
+    },
+    {
+      "frac_1kcP": 0.6,
+      "measured_kcP": 3.426,
+      "ideal_kcP": 2.8373431258990776,
+      "GN_kcP": 3.32494927827451
+    },
+    {
+      "frac_1kcP": 0.4,
+      "measured_kcP": 5.414,
+      "ideal_kcP": 4.534305309275314,
+      "GN_kcP": 5.313539637816609
+    },
+    {
+      "frac_1kcP": 0.25,
+      "measured_kcP": 7.045,
+      "ideal_kcP": 6.444807267617892,
+      "GN_kcP": 7.294862238796454
+    },
+    {
+      "frac_1kcP": 0.2,
+      "measured_kcP": 7.97,
+      "ideal_kcP": 7.246189031581232,
+      "GN_kcP": 8.05424994748288
+    },
+    {
+      "frac_1kcP": 0.1,
+      "measured_kcP": 9.636,
+      "ideal_kcP": 9.160287603875258,
+      "GN_kcP": 9.721573105703577
+    },
+    {
+      "frac_1kcP": 0.0,
+      "measured_kcP": 11.58,
+      "ideal_kcP": 11.58,
+      "GN_kcP": 11.58
+    }
+  ]
+}

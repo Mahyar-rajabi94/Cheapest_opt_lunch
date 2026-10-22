@@ -1,0 +1,19 @@
+{
+  "task_dim": 26,
+  "task_direction": "min",
+  "requested_budget": 2000,
+  "evaluations_used": 2000,
+  "stopped_early": false,
+  "start_time_utc": "2026-10-22T15:54:30.043056+00:00",
+  "end_time_utc": "2026-10-22T15:54:30.284198+00:00",
+  "total_wall_seconds": 0.24170939999748953,
+  "numpy_version": "2.3.1",
+  "policy": "scripted",
+  "seed": 0,
+  "rounds": 12,
+  "round_size": 130,
+  "policy_use_probes": true,
+  "landscape_guess": "multi_basin",
+  "task_name": "viscometer_calibration_d26",
+  "task_f_opt": 1.6539855489183335
+}

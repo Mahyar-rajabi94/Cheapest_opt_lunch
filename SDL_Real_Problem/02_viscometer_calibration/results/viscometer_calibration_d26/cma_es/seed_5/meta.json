@@ -1,0 +1,18 @@
+{
+  "task_name": "viscometer_calibration_d26",
+  "task_dim": 26,
+  "task_direction": "min",
+  "task_f_opt": 1.6539855489183335,
+  "optimizer_name": "cma_es",
+  "optimizer_class": "src.optimizers.cma_es.CMAES",
+  "seed": 5,
+  "requested_budget": 2000,
+  "evaluations_used": 2000,
+  "stopped_early": false,
+  "stop_reason": null,
+  "start_time_utc": "2026-10-22T15:27:07.245793+00:00",
+  "end_time_utc": "2026-10-22T15:27:07.696983+00:00",
+  "total_wall_seconds": 0.45434500000556,
+  "numpy_version": "2.3.1",
+  "scipy_version": "1.16.1"
+}

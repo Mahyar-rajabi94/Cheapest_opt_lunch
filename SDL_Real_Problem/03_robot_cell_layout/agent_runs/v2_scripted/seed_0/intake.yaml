@@ -1,0 +1,56 @@
+dim: 15
+bounds:
+- - -0.31600000596046446
+  - 0.35661333775520326
+- - -0.7
+  - 0.26505001163482667
+- - -3.141592653589793
+  - 3.141592653589793
+- - -0.08007500648498533
+  - 0.12068833827972414
+- - -0.9599499928951263
+  - 0.01804999232292176
+- - 0.3490658503988659
+  - 1.2217
+- - -0.5235987755982988
+  - 0.5235987755982988
+- - -0.5235987755982988
+  - 0.5235987755982988
+- - 0.0
+  - 6.283185307179586
+- - 0.0
+  - 1.0
+- - 0.0
+  - 1.0
+- - 0.0
+  - 1.0
+- - 0.0
+  - 1.0
+- - 0.0
+  - 1.0
+- - 0.0
+  - 1.0
+budget_evals: 2000
+variable_types:
+- continuous
+- continuous
+- continuous
+- continuous
+- continuous
+- continuous
+- continuous
+- continuous
+- continuous
+- continuous
+- continuous
+- continuous
+- continuous
+- continuous
+- continuous
+eval_cost: cheap
+noise: deterministic
+gradients_available: false
+batch_size: 1
+constraints: none
+prior_knowledge: ''
+warm_start_points: []

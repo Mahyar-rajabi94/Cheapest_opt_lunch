@@ -1,0 +1,18 @@
+{
+  "task_name": "viscometer_calibration_d26",
+  "task_dim": 26,
+  "task_direction": "min",
+  "task_f_opt": 1.6539855489183335,
+  "optimizer_name": "gp_bo",
+  "optimizer_class": "src.optimizers.gp_bo.GPBO",
+  "seed": 8,
+  "requested_budget": 100,
+  "evaluations_used": 100,
+  "stopped_early": false,
+  "stop_reason": null,
+  "start_time_utc": "2026-10-22T15:23:29.767346+00:00",
+  "end_time_utc": "2026-10-22T15:25:43.021274+00:00",
+  "total_wall_seconds": 133.25364409999747,
+  "numpy_version": "2.3.1",
+  "scipy_version": "1.16.1"
+}
