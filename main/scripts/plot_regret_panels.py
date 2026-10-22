@@ -49,6 +49,7 @@ COLORS = {
     "bobyqa": "#1fab54", "nelder_mead": "#6a3fd6", "lbfgsb": "#5c4033",
 }
 LINEWIDTH = 2.6
+BUDGET = 2000
 
 # Friendly titles, from the astra_max report's own task names.
 FRIENDLY_TITLE = {
@@ -113,9 +114,17 @@ def mean_regret_curve(task_dir: Path, optimizer: str, f_opt: float):
         curves.append(np.maximum(y, 1e-12))
     if not curves:
         return None
-    min_len = min(len(c) for c in curves)
-    mean_curve = np.mean(np.stack([c[:min_len] for c in curves]), axis=0)
-    return np.arange(1, min_len + 1), mean_curve
+    # A method that stops before `BUDGET` (declared its own convergence, or
+    # was capped by this project's budget convention) made no further
+    # progress; carry its last incumbent forward rather than cutting the
+    # line short, so every curve is shown over the full shared x-axis.
+    full_curves = []
+    for c in curves:
+        if len(c) < BUDGET:
+            c = np.concatenate([c, np.full(BUDGET - len(c), c[-1])])
+        full_curves.append(c[:BUDGET])
+    mean_curve = np.mean(np.stack(full_curves), axis=0)
+    return np.arange(1, BUDGET + 1), mean_curve
 
 
 def agent_regret_curve(trace_path: Path, f_opt: float):
