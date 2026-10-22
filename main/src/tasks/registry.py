@@ -13,6 +13,7 @@ from src.tasks.coco_mixint import COCOMixintTask
 from src.tasks.coco_noisy import COCONoisyTask
 from src.tasks.nevergrad_noisy import NevergradNoisyTask
 from src.tasks.pymoo_g import PymooGTask
+from src.tasks.psa_v10 import PSAv10Task
 from src.tasks.yahpo import YAHPOTask
 
 TASKS = {
@@ -78,4 +79,6 @@ TASKS = {
     "yahpo_svm": lambda: YAHPOTask("rbv2_svm"),
     # YAHPO rbv2_xgboost (V05): XGBoost logloss on OpenML 40981; 14 dims, 2 categorical, 8 conditional on the booster.
     "yahpo_xgboost": lambda: YAHPOTask("rbv2_xgboost"),
+    # psa_v10: user-supplied black box over discrete materials; 8 dims, piecewise-constant.
+    "psa_v10": lambda: PSAv10Task(),
 }
