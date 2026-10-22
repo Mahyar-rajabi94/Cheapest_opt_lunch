@@ -33,17 +33,19 @@ DISPLAY = {
     "bobyqa": "BOBYQA", "nelder_mead": "Nelder-Mead", "lbfgsb": "L-BFGS-B",
 }
 # One representative optimizer per classical "family", for the reduced view.
-# GP-BO/TuRBO are excluded: in this project's convention they're capped at
-# budget 100 (not the full 2000), so they'd just be a short stub next to the
-# other three families' full-budget curves.
+# gp_bo_2000 is GP-BO rerun at the full 2000-evaluation budget (10 seeds),
+# pulled from origin/master:main/results_full -- this project's own gp_bo/
+# directory is capped at 100 evals by convention, which would just be a
+# short stub next to the other families' full-budget curves.
 FAMILY_DISPLAY = {
+    "gp_bo_2000": "Bayesian (GP-BO)",
     "lbfgsb": "Derivative-based (L-BFGS-B)",
     "cma_es": "Evolutionary (CMA-ES)",
     "random_search": "Random search",
 }
 COLORS = {
     "random_search": "#9b9b9b", "sobol": "#49b6a8", "cma_es": "#e0393e",
-    "de": "#f2a93b", "turbo": "#e87ba4", "gp_bo": "#2a6fdb",
+    "de": "#f2a93b", "turbo": "#e87ba4", "gp_bo": "#2a6fdb", "gp_bo_2000": "#2a6fdb",
     "bobyqa": "#1fab54", "nelder_mead": "#6a3fd6", "lbfgsb": "#5c4033",
 }
 LINEWIDTH = 2.6
