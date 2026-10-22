@@ -26,6 +26,9 @@ REPO = MAIN.parent
 # MCP server name per agent CLI; Claude Code reserves "workspace".
 SERVER = {'codex': 'workspace', 'claude': 'isolated'}
 TOOLS = ['run_command', 'write_stdin']
+# Pool-only optimizers need a pool task's candidates, which agents never get,
+# and their docstrings describe pool tasks.
+POOL_ONLY_FILES = ['pool_random.py']
 
 
 def write_json(path, data):
@@ -127,7 +130,7 @@ def prepare(args, task, runtime):
         (workspace / name).write_text('')
     shutil.copyfile(MAIN / 'src/agent_harness/harness.py', workspace / 'src/agent_harness/harness.py')
     shutil.copytree(MAIN / 'src/optimizers', workspace / 'src/optimizers',
-                    ignore=shutil.ignore_patterns('__pycache__'))
+                    ignore=shutil.ignore_patterns('__pycache__', *POOL_ONLY_FILES))
     # A read-only venv view removes installation aliases (e.g. uv's versionless
     # symlink) without granting access to their parent directories on macOS.
     venv = workspace / '.venv'
@@ -142,7 +145,7 @@ def prepare(args, task, runtime):
     # Scripts in work/ can import the public src package without modifying it.
     (workspace / 'work/src').symlink_to('../src', target_is_directory=True)
     bounds = [[float(v) for v in pair] for pair in task.bounds]
-    kind = 'noisy' if task.noisy else 'deterministic'
+    kind = 'noisy' if task.noisy else 'noise-free' if task.pool else 'deterministic'
     if task.n_constraints:
         constraints = (f'There are {task.n_constraints} black-box inequality constraints: a point is '
                        'feasible iff every constraint value is <= 0 (tolerance 1e-10). Infeasible points '
@@ -152,7 +155,12 @@ def prepare(args, task, runtime):
         constraints, returns = 'There are no additional constraints.', 'y = h.evaluate(x)'
     noise = (' Each evaluation returns a noisy observation of the objective; the campaign is '
              'scored by the noise-free value at the point with the lowest observed y.'
-             if task.noisy else '')
+             if task.noisy else
+             # A pool task maps each point to an untested candidate, so a repeat differs.
+             ' The objective is not repeatable: the value returned for x depends on which '
+             'points were already evaluated, so evaluating the same x again generally '
+             'returns a different value.'
+             if task.pool else '')
     public = f'''# Public evaluation interface
 
 Minimize a {kind} scalar black-box objective over {task.dim} real-valued
@@ -366,6 +374,8 @@ def main(argv=None):
     if args.task not in TASKS:
         parser.error('Unknown task. See main/src/tasks/registry.py.')
     task = TASKS[args.task]()
+    if task.pool and args.budget > task.n_candidates:
+        parser.error(f'A pool task allows at most {task.n_candidates} evaluations.')
     task.reseed(args.seed)
     runtime = runtime_info(args.agent_python)
     root, workspace, private, policy = prepare(args, task, runtime)

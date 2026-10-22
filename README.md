@@ -186,7 +186,7 @@ agent's workspace, using the private optimum from baseline metadata.
 - `main/src/blind_runner/`: native execution, private evaluator and orchestration.
 - `main/scripts/`: agent runner, baseline runner and plotting entry points.
 - `archive_results/`: preserved historical agent artifacts; old source is in Git history.
-- `task_005_baseline/`, `poly_results/`: polymer data/model utilities and existing figures.
+- `task_005_baseline/`, `task_006_baseline/`, `poly_results/`: polymer data/model utilities and existing figures.
 - `runs/`: ignored generated workspaces, logs and new results.
 
 The numbered local harnesses, copied sandbox implementations and old planning
