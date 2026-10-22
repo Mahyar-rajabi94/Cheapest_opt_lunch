@@ -64,6 +64,7 @@ AGENT_RUNS = {
     "bent_cigar_d10_i1": {"Agent": "task_003_sandbox/results/agent_task_003"},
     "sphere_d10_i1": {"Agent": "task_004_sandbox/results/agent_task_004"},
     "opv_pce_d11": {"Claude agent": "task_005_sandbox/results/agent_task_005"},
+    "opv_pool_pce_d11": {"Claude agent": "task_006_sandbox/results/agent_task_006"},
 }
 
 # Validated default categorical palette, fixed order (see module docstring).
@@ -107,6 +108,7 @@ plt.rcParams.update(
 baseline_style = {
     "random_search":   dict(color=AQUA,    linestyle="-"),
     "sobol":           dict(color=AQUA,    linestyle="--"),
+    "pool_random":     dict(color=AQUA,    linestyle=":"),  # pool tasks only
     "cma_es":          dict(color=YELLOW,  linestyle="-"),
     "de":              dict(color=YELLOW,  linestyle="--"),
     "turbo":           dict(color=MAGENTA, linestyle="-"),
@@ -118,6 +120,7 @@ baseline_style = {
 baseline_display_names = {
     "random_search": "Random search",
     "sobol": "Sobol",
+    "pool_random": "Random pick from pool",
     "cma_es": "CMA-ES",
     "de": "Differential evolution",
     "turbo": "TuRBO",
