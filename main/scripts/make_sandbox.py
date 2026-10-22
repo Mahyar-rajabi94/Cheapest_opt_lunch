@@ -4,11 +4,13 @@ Creates <outdir> (default: task_<NNN>_sandbox at the repo root) containing only:
     agent_briefs/task_<NNN>.md     rendered from agent_briefs/blind_brief_template.md
     requirements.txt
     src/__init__.py
-    src/optimizers/                copy of src/optimizers/
-    src/agent_harness/             __init__.py, harness.py, task_<NNN>.py
+    src/optimizers/                copy of src/optimizers/, without pool-only optimizers
+    src/agent_harness/             __init__.py, harness.py, task_<NNN>.py and the
+                                   files in its SANDBOX_ASSETS
     results/                       empty
 
-then leak-checks every file for registered task names and `f_opt`. Only the
+then leak-checks every file (binary files too) for registered task names and
+`f_opt`. Only the
 objective construction in task_<NNN>.py may identify the function (by id).
 A sandbox that fails the check is deleted.
 
@@ -32,6 +34,10 @@ MAIN = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(MAIN))
 
 from src.tasks.registry import TASKS
+
+# Pool-only optimizers need a pool task's candidates, which no blind harness
+# exposes, and their docstrings describe pool tasks.
+POOL_ONLY_FILES = ("pool_random.py",)
 
 
 def render_brief(task_id: str, budget: int) -> str:
@@ -60,7 +66,7 @@ def leaks(sandbox: Path) -> list[str]:
     found = []
     for path in sorted(sandbox.rglob("*")):
         if path.is_file():
-            for match in set(pattern.findall(path.read_text())):
+            for match in set(pattern.findall(path.read_bytes().decode("latin-1"))):
                 found.append(f"{path.relative_to(sandbox)}: {match}")
     return found
 
@@ -77,11 +83,15 @@ def make_sandbox(task_id: str, budget: int, outdir: Path) -> None:
     shutil.copytree(
         MAIN / "src" / "optimizers",
         outdir / "src" / "optimizers",
-        ignore=shutil.ignore_patterns("__pycache__"),
+        ignore=shutil.ignore_patterns("__pycache__", *POOL_ONLY_FILES),
     )
     (outdir / "src" / "agent_harness").mkdir()
     for name in ("__init__.py", "harness.py", f"task_{task_id}.py"):
         shutil.copy(MAIN / "src" / "agent_harness" / name, outdir / "src" / "agent_harness")
+    module = importlib.import_module(f"src.agent_harness.task_{task_id}")
+    for asset in getattr(module, "SANDBOX_ASSETS", ()):
+        (outdir / "src" / "agent_harness" / asset).parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy(MAIN / "src" / "agent_harness" / asset, outdir / "src" / "agent_harness" / asset)
     (outdir / "results").mkdir()
 
     found = leaks(outdir)
