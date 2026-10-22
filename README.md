@@ -87,6 +87,103 @@ feasible iff every `g <= 0`. Noisy tasks set `noisy` and are reseeded with `--se
 (default 0); the agent sees only observations, and the private journal keeps the
 noise-free values. See [TASKS.md](main/TASKS.md) and [ADDING_TASKS.md](main/ADDING_TASKS.md).
 
+## Optional literature access (Valency)
+
+Add `--literature valency` to give either agent optional literature tools throughout
+its campaign. The default is `--literature none`: the original tool configuration
+and prompt remain in use, and the MCP SDK is not required. Enabling literature
+appends capability guidance; it does not change `AGENTS.md`, force a search at any
+checkpoint, or change the evaluator, optimizers, block protocol, or objective budget.
+
+Install the optional dependency in the **private runner** environment:
+
+```bash
+.venv/bin/python -m pip install -r main/requirements-literature.txt
+```
+
+Get a bearer token from [Valency Settings](https://app.valency.io/settings), as
+described in the [Direct API guide](https://docs.valency.io/guides/api/). Save it in
+a private file outside the repository and optimizer environment, readable only by
+you (for example `~/.config/valency/token`, mode `0600`). Never commit the token.
+Alternatively, supply `VALENCY_API_TOKEN` in the launcher's environment. Token
+values are not included in MCP configuration, command arguments, or run manifests,
+and are not inherited by agent commands. This integration uses a bearer token;
+the interactive OAuth setup for personal CLI sessions is separate.
+
+First verify isolation and the authenticated Valency connection:
+
+```bash
+.venv/bin/python main/scripts/run_agent.py \
+  --task step_ellipsoid10 --budget 100 \
+  --literature valency --valency-token-file ~/.config/valency/token --check-only
+```
+
+This uses zero objective evaluations and makes no model call. It discovers tools
+and makes one authenticated `list_sources` call. Remove `--check-only` to run the
+campaign. Add `--agent claude` to use the same literature interface with Claude.
+Every enabled run performs this setup check before inference; an invalid token or
+unavailable connection fails setup explicitly. Retrieval failures after setup
+return tool errors, allowing optimization to continue.
+
+The optional controls are `--literature-max-calls 50` and
+`--literature-timeout 30` (defaults shown). The allowance counts uncached remote
+tool attempts, including failed attempts, separately from objective evaluations.
+The setup source-list call is additional. Identical successful queries reuse this
+run's evidence; reading another page costs no remote call. Search results are
+frozen within a run by that cache. Protocol handshakes/tool discovery are additional
+requests; the allowance is not a guarantee of Valency's billing or quota accounting.
+
+```text
+Agent reasoning
+  ├─ workspace/isolated MCP → native sandbox → optimizer + public evaluator interface
+  │                           (agent commands have no network)
+  └─ valency MCP → trusted retrieval gateway → https://mcp.valency.io/
+                   (selected tools, private credentials, evidence journal)
+```
+
+The gateway is outside the command sandbox, like the trusted executor. It gives
+the agent a restricted literature interface, not a network-enabled shell. It uses
+a fixed endpoint, rejects redirects, and does not fetch URLs found in results.
+It exposes only the available subset of `semantic_search_papers`, `search_by_title`,
+`search_by_abstract`, `get_paper_by_id`, `get_paper_versions`, `find_similar_papers`,
+`get_citing_papers`, and `list_sources`. Feedback, exports, remote prompts, and
+arbitrary browsing are not exposed. The actual argument schemas come from Valency
+at setup, rather than guessed or hardcoded parameter names.
+
+The [endpoint reference](https://docs.valency.io/reference/endpoints/) documents
+paper records, search, and citation discovery, but does not guarantee full text.
+The gateway returns the content Valency actually supplies without adding a model
+summary. Long results are paged through `read_literature_result`. The agent is
+instructed to distinguish retrieved text from inference, cite literature that
+influences a decision in its existing decision log, and retain the prohibition
+on identifying the hidden objective or searching for benchmark-specific solutions.
+That last rule is an agent instruction, not a guarantee that a search result
+cannot incidentally mention a benchmark.
+
+`private/literature/` contains the credential-free configuration, discovered tool
+schemas and SDK version, connection-check outcome, request/cache/error/page events,
+and exact successful MCP results in `responses/`. These are supervisor artifacts;
+the four public campaign output files are unchanged. The integrity audit permits
+only the discovered literature tools when enabled and retains evaluator checks.
+For enabled runs, `only_allowed_tools` is the tool-policy verdict;
+`only_workspace_execution_tools` may be false when literature was used.
+
+To assess usefulness, compare enabled and disabled runs across matched tasks and
+seeds with equal objective budgets, and report optimization quality alongside
+retrieval calls, wall time, and model-token costs. Tool availability can change an
+LLM's decisions even when the optimizer implementation is unchanged.
+
+Offline checks (no Valency account required):
+
+```bash
+.venv/bin/python -m unittest discover -s main/tests -p 'test_*literature.py' -v
+.venv/bin/python -m unittest discover -s main/tests -p test_valency.py -v
+```
+
+These exercise real MCP stdio framing and mocked Streamable HTTP, including
+credential isolation, restricted tools, caching, paging, call limits, failures,
+and both CLI configurations. A live Valency paper query still requires a token.
+
 ## What the agent can access
 
 ```text
@@ -106,6 +203,8 @@ or siblings. Network access, browser/app tools, memories, personal configuration
 and permission escalation are disabled for the campaign. The only execution tools
 are the trusted `workspace.run_command` and `workspace.write_stdin` MCP tools,
 which enforce the native sandbox on every command.
+With `--literature valency`, the separate retrieval tools described above are also
+available; the command sandbox's network restrictions stay in place.
 
 The CLI retains the credentials needed for model inference; those credentials
 are not exposed to agent commands. The agent sees bounds, dimension, direction,

@@ -50,6 +50,7 @@ if sys.platform == 'darwin':
     checks.append('supervisor process inaccessible')
 assert not (root/'objective.py').exists() and not (root/'src/tasks').exists()
 assert not (root/'.git').exists()
+assert 'VALENCY_API_TOKEN' not in os.environ, 'Literature credential exposed to agent commands'
 assert importlib.util.find_spec('ioh') is None, 'Use an optimizer-only runtime without ioh'
 assert importlib.util.find_spec('cocoex') is None, 'Use an optimizer-only runtime without cocoex'
 checks.append('objective sources and backends absent')

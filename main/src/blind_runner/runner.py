@@ -248,18 +248,44 @@ On an evaluator error, stop and report; do not retry an unknown evaluation.
                          for p in workspace.rglob('*') if p.is_file() and not p.is_symlink()},
     }
     write_json(private / 'manifest.json', manifest)
+    if getattr(args, 'literature', 'none') == 'valency':
+        from . import valency
+        directory = private / 'literature'
+        directory.mkdir(mode=0o700)
+        config = {'max_calls': args.literature_max_calls, 'timeout_seconds': args.literature_timeout,
+                  'token_file': str(args.valency_token_file) if args.valency_token_file else None}
+        write_json(directory / 'config.json', config)
+        manifest['literature'] = {'provider': 'valency', 'endpoint': valency.URL,
+                                 'allowed_tools': valency.TOOLS, **config}
+        write_json(private / 'manifest.json', manifest)
     return root, workspace, private, policy
 
 
 def instructions(args, workspace):
-    return ((workspace / 'AGENTS.md').read_text() +
+    text = ((workspace / 'AGENTS.md').read_text() +
             f'\nAll campaign execution and file access use the {SERVER[args.agent]} MCP tools. '
             'Read PUBLIC_EVALUATOR.md. Put scripts in work/; use .venv/bin/python. '
             'Use write_stdin to keep optimizer processes alive between blocks.\n')
+    if getattr(args, 'literature', 'none') == 'valency':
+        from .valency import INSTRUCTIONS
+        text += INSTRUCTIONS
+    return text
 
 
 def executor_args(private):
     return ['-B', str(Path(__file__).with_name('execution.py')), str(private / 'execution.json')]
+
+
+def literature_command(private):
+    return [sys.executable, '-B', str(Path(__file__).with_name('valency.py')),
+            str(private / 'literature/config.json')]
+
+
+def literature_tools(private):
+    """Use the actual discovered subset, never every tool a remote server offers."""
+    from .valency import PAGE_TOOL, REMOTE_TOOLS
+    snapshot = json.loads((private / 'literature/tools.json').read_text())
+    return [t['name'] for t in snapshot['tools'] if t['name'] in REMOTE_TOOLS] + [PAGE_TOOL]
 
 
 def codex_command(args, workspace, private, policy):
@@ -271,6 +297,14 @@ def codex_command(args, workspace, private, policy):
             'enabled': True, 'required': True, 'startup_timeout_sec': 30, 'tool_timeout_sec': 45,
             'enabled_tools': TOOLS, 'default_tools_approval_mode': 'approve'}},
     })
+    if getattr(args, 'literature', 'none') == 'valency':
+        command = literature_command(private)
+        config['mcp_servers']['valency'] = {
+            'command': command[0], 'args': command[1:], 'enabled': True, 'required': True,
+            'startup_timeout_sec': 30, 'tool_timeout_sec': args.literature_timeout + 15,
+            'enabled_tools': literature_tools(private), 'default_tools_approval_mode': 'approve',
+            'env_vars': ['VALENCY_API_TOKEN'],
+        }
     for feature in ['shell_tool', 'unified_exec', 'view_image', 'apps', 'plugins', 'remote_plugin',
                     'memories', 'hooks', 'shell_snapshot', 'browser_use', 'browser_use_external',
                     'computer_use', 'in_app_browser', 'multi_agent', 'multi_agent_v2',
@@ -289,11 +323,17 @@ def claude_command(args, workspace, private):
     # tools are the sandboxed MCP executor's, and anything else is denied unprompted.
     config = {'mcpServers': {SERVER['claude']: {'type': 'stdio', 'command': sys.executable,
                                                 'args': executor_args(private)}}}
+    allowed = [f"mcp__{SERVER['claude']}__{t}" for t in TOOLS]
+    if getattr(args, 'literature', 'none') == 'valency':
+        literature = literature_command(private)
+        config['mcpServers']['valency'] = {'type': 'stdio', 'command': literature[0],
+                                           'args': literature[1:]}
+        allowed += ['mcp__valency__' + t for t in literature_tools(private)]
     write_json(private / 'claude_mcp.json', config)
     command = [str(args.claude), '-p', '--output-format', 'stream-json', '--verbose',
                '--model', args.model, '--effort', args.effort, '--tools', '',
                '--strict-mcp-config', '--mcp-config', str(private / 'claude_mcp.json'),
-               '--allowedTools', ','.join(f"mcp__{SERVER['claude']}__{t}" for t in TOOLS),
+               '--allowedTools', ','.join(allowed),
                '--permission-mode', 'dontAsk', '--setting-sources', '', '--disable-slash-commands',
                '--no-session-persistence', '--system-prompt', instructions(args, workspace)]
     # The ceiling keeps the enclosing repository's git status out of the CLI's context.
@@ -339,7 +379,7 @@ def events_of(private):
     return [json.loads(line) for line in path.read_text().splitlines() if line.strip()] if path.exists() else []
 
 
-def audit(evaluator, workspace, private, agent):
+def audit(evaluator, workspace, private, agent, literature='none'):
     expected = evaluator.artifacts('run')
     matches = all((workspace / 'results/agent_run' / name).read_bytes() == content.encode()
                   for name, content in expected.items())
@@ -357,14 +397,20 @@ def audit(evaluator, workspace, private, agent):
                 if block.get('type') in ('tool_use', 'server_tool_use'):
                     _, server, tool = (block.get('name', '').split('__', 2) + ['', ''])[:3]
                     tools.append((server, tool) if block['type'] == 'tool_use' else ('unexpected', block['name']))
+    allowed_literature = set(literature_tools(private)) if literature == 'valency' else set()
+    allowed = {(SERVER[agent], t) for t in TOOLS} | {('valency', t) for t in allowed_literature}
+    tools_valid = all(pair in allowed for pair in tools)
     report = {
         **evaluator.status('run'), 'unknown_evaluations': unknown,
         'artifacts_match_journal': matches,
         'only_workspace_execution_tools': all(s == SERVER[agent] and t in TOOLS for s, t in tools),
         'tool_calls': len(tools),
     }
+    if literature == 'valency':
+        report.update({'only_allowed_tools': tools_valid,
+                       'literature_tool_calls': sum(s == 'valency' for s, _ in tools)})
     write_json(private / 'integrity_audit.json', report)
-    if not matches or unknown or not report['only_workspace_execution_tools']:
+    if not matches or unknown or not tools_valid:
         raise RuntimeError('Integrity audit failed; see ' + str(private / 'integrity_audit.json'))
     return report
 
@@ -383,8 +429,31 @@ def main(argv=None):
                         help='Codex CLI; also the per-command sandbox for both agents')
     parser.add_argument('--claude', type=Path, default=shutil.which('claude'))
     parser.add_argument('--runs-dir', type=Path, default=REPO / 'runs')
+    parser.add_argument('--literature', choices=['none', 'valency'], default='none',
+                        help='Optional literature MCP tools; agent command networking remains disabled')
+    parser.add_argument('--valency-token-file', type=Path,
+                        help='Private bearer-token file; otherwise use VALENCY_API_TOKEN')
+    parser.add_argument('--literature-max-calls', type=int, default=50,
+                        help='Maximum uncached remote retrieval attempts per run (default: 50)')
+    parser.add_argument('--literature-timeout', type=int, default=30,
+                        help='Seconds per retrieval attempt, including connection setup (default: 30)')
     parser.add_argument('--check-only', action='store_true', help='Validate isolation with zero evaluations and no model call')
     args = parser.parse_args(argv)
+    if args.literature_max_calls < 1 or args.literature_timeout < 1:
+        parser.error('Literature call limit and timeout must be positive.')
+    if args.valency_token_file and args.literature != 'valency':
+        parser.error('--valency-token-file requires --literature valency.')
+    if args.literature == 'valency':
+        from .valency import token
+        if args.valency_token_file:
+            args.valency_token_file = args.valency_token_file.expanduser().resolve()
+        try:
+            import mcp
+            token({'token_file': args.valency_token_file})
+        except ImportError:
+            parser.error('Install main/requirements-literature.txt in the private runner environment.')
+        except (OSError, ValueError):
+            parser.error('Set VALENCY_API_TOKEN or provide a readable --valency-token-file containing a bearer token.')
     if sys.platform not in ('darwin', 'linux'):
         parser.error('The native executor currently supports macOS and Linux only.')
     if args.budget < 1 or args.seed < 0 or args.codex is None:
@@ -420,8 +489,17 @@ def main(argv=None):
                      Path(inspect.getfile(type(task))), private / 'evaluations.sqlite',
                      Path.home() / '.codex/auth.json', Path.home() / '.claude.json', Path(__file__)]
         forbidden.extend(getattr(task, 'private_data_paths', ()))
+        if args.literature == 'valency':
+            forbidden.append(private / 'literature/config.json')
+            if args.valency_token_file:
+                forbidden.append(args.valency_token_file)
         report = check(policy, forbidden, private)
         print(f"Isolation passed: {len(report['checks'])} checks, 0/{args.budget} evaluations.", flush=True)
+        if args.literature == 'valency':
+            # Fail setup clearly before inference; outages after setup are ordinary
+            # tool errors, so the agent can continue its optimization campaign.
+            subprocess.run([*literature_command(private), '--check'], check=True,
+                           timeout=args.literature_timeout + 15)
         if not args.check_only:
             exit_code = launch(args, workspace, private, policy)
     finally:
@@ -429,7 +507,7 @@ def main(argv=None):
         # The private journal remains recoverable on failure. Do not overwrite
         # public artifacts before comparing them with that journal.
         if sys.exc_info()[0] is None:
-            report = audit(evaluator, workspace, private, args.agent)
+            report = audit(evaluator, workspace, private, args.agent, args.literature)
             (private / 'scored_trace.csv').write_text(evaluator.scored_trace('run'))
         evaluator.db.close()
     print(f"Finished: {report['evaluations_used']}/{args.budget} evaluations. Results: {workspace / 'results/agent_run'}")
