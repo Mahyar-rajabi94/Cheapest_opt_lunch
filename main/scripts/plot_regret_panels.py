@@ -44,10 +44,11 @@ FAMILY_DISPLAY = {
     "random_search": "Random search",
 }
 COLORS = {
-    "random_search": "#9b9b9b", "sobol": "#49b6a8", "cma_es": "#e0393e",
-    "de": "#f2a93b", "turbo": "#e87ba4", "gp_bo": "#2a6fdb", "gp_bo_2000": "#2a6fdb",
-    "bobyqa": "#1fab54", "nelder_mead": "#6a3fd6", "lbfgsb": "#5c4033",
+    "random_search": "#a9a9a9", "sobol": "#49b6a8", "cma_es": "#3eacf1",
+    "de": "#f2a93b", "turbo": "#e87ba4", "gp_bo": "#2761b4", "gp_bo_2000": "#2761b4",
+    "bobyqa": "#1fab54", "nelder_mead": "#6a3fd6", "lbfgsb": "#87d3e1",
 }
+AGENT_LINE_COLOR = "#ec6786"
 LINEWIDTH = 2.6
 BUDGET = 2000
 
@@ -166,7 +167,7 @@ def plot_task(task: str, out_path: Path, agent_traces_dir: Path | None = None,
         curve = agent_regret_curve(agent_traces_dir / task / "trace.csv", f_opt)
         if curve is not None:
             x, y = curve
-            ax.plot(x, y, color="#111111", linewidth=LINEWIDTH + 0.4, label="Astra max agent (1 run)")
+            ax.plot(x, y, color=AGENT_LINE_COLOR, linewidth=LINEWIDTH + 0.4, label="Astra max agent (1 run)")
 
     ax.set_yscale("log")
     ax.set_title(FRIENDLY_TITLE.get(task, task), fontsize=18, pad=14)
