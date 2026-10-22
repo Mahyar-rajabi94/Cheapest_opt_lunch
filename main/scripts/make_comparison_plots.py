@@ -64,7 +64,10 @@ AGENT_RUNS = {
     "bent_cigar_d10_i1": {"Agent": "task_003_sandbox/results/agent_task_003"},
     "sphere_d10_i1": {"Agent": "task_004_sandbox/results/agent_task_004"},
     "opv_pce_d11": {"Claude agent": "task_005_sandbox/results/agent_task_005"},
-    "opv_pool_pce_d11": {"Claude agent": "task_006_sandbox/results/agent_task_006"},
+    "opv_pool_pce_d11": {
+        "Claude agent": "task_006_sandbox/results/agent_task_006",
+        "Claude agent, run 2": "task_006_sandbox_run2/results/agent_task_006",
+    },
 }
 
 # Validated default categorical palette, fixed order (see module docstring).

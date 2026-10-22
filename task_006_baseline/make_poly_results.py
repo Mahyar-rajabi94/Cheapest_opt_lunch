@@ -7,8 +7,10 @@ Run from task_006_baseline with the project venv:
     ../.venv/bin/python make_poly_results.py
 
 Writes poly_results/task_006_opv_pool_pce_d11/:
-    baselines/      the 10 fixed optimizers only (budget 100)
-    agent_claude/   the Claude agent run (task_006_sandbox) against them
+    baselines/               the 10 fixed optimizers only (budget 100)
+    agent_claude/            the first Claude agent run (task_006_sandbox) against them
+    agent_claude_run2/       the second, independent run (task_006_sandbox_run2) against them
+    agent_claude_both_runs/  both runs against them
 
 Regret is the best PCE in the pool minus the best PCE found, in percentage
 points. Unlike the shared plots it is drawn on a linear axis: many runs reach
@@ -16,6 +18,7 @@ exactly 0 (they found the best device), which a log axis cannot show.
 """
 import sys
 import textwrap
+from collections import Counter
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -32,7 +35,8 @@ F_OPT = plots.json.loads(next(RESULTS.glob("*/seed_*/meta.json")).read_text())["
 FOUND_TOL = 1e-9  # regret at or below this: the best device was found
 
 # Agent labels that name a baseline method without containing its key.
-METHOD_ALIASES = {"st_trbo_local": "turbo", "st_gp_pi_final": "gp_bo"}
+METHOD_ALIASES = {"st_trbo_local": "turbo", "st_gp_pi_final": "gp_bo",  # run 1
+                  "trbo_local": "turbo", "trbo_pm_local": "turbo", "gp_dnn_eiobs": "gp_bo"}  # run 2
 
 
 def canonical(label):
@@ -54,9 +58,9 @@ def style_axes(ax):
     ax.set_axisbelow(True)
 
 
-def final_regret_bar(path, baselines, agents):
+def final_regret_bar(path, baselines, agents, title):
     """Final regret per run, linear axis, with how many seeds found the best device.
-    With an agent, only the baselines it used are shown, each run alone."""
+    With agents, only the baselines they used are shown, each run alone."""
     used = {canonical(label) for a in agents.values() for label, _, _ in a["phases"]}
     names = sorted((n for n in baselines if n in used or not agents), key=lambda n: baselines[n]["regret"][-1])
 
@@ -89,8 +93,6 @@ def final_regret_bar(path, baselines, agents):
     style_axes(ax)
     ax.spines["left"].set_visible(False)
     ax.tick_params(axis="y", length=0)
-    title = ("the Claude agent vs. each method it used, run alone" if agents
-             else "final regret of every baseline")
     ax.set_title(f"{NAME}: {title}", fontsize=12, color=plots.TEXT_PRIMARY, pad=14, loc="left")
     fig.text(0.0, -0.01, f"Regret 0: the run found the best device in the pool ({-F_OPT:.2f}% PCE).",
              fontsize=8, color=plots.TEXT_MUTED)
@@ -99,8 +101,8 @@ def final_regret_bar(path, baselines, agents):
     plt.close(fig)
 
 
-def regret_vs_eval(path, baselines, agents):
-    """Mean regret over seeds by evaluation, linear axis; the agent on top, dots at its phase switches."""
+def regret_vs_eval(path, baselines, agents, subject):
+    """Mean regret over seeds by evaluation, linear axis; the agents on top, dots at their phase switches."""
     fig, ax = plt.subplots(figsize=(11, 6.5), dpi=150)
     for name, b in baselines.items():
         ax.plot(b["x"], b["regret"], linewidth=1.6, alpha=0.9, label=plots.baseline_display_names[name], zorder=2,
@@ -118,7 +120,6 @@ def regret_vs_eval(path, baselines, agents):
     ax.set_ylabel("Regret (PCE percentage points below the best device)", fontsize=10)
     ax.grid(True, which="major", axis="both", color=plots.GRIDLINE, linewidth=1.0, zorder=0)
     style_axes(ax)
-    subject = "the Claude agent against every baseline" if agents else "every baseline"
     ax.set_title(f"{NAME}: regret vs. evaluation, {subject}", fontsize=12, color=plots.TEXT_PRIMARY, pad=14,
                  loc="left")
     ax.legend(frameon=False, loc="center left", bbox_to_anchor=(1.01, 0.5), fontsize=9.5,
@@ -126,17 +127,18 @@ def regret_vs_eval(path, baselines, agents):
               title_fontsize=8.5)
     note = "Baselines: mean over seeds. Regret 0: the best device in the pool was found."
     if agents:
-        note = "Dots mark the agent's phase switches. " + note
+        note = ("Dots mark each run's phase switches. " if len(agents) > 1
+                else "Dots mark the agent's phase switches. ") + note
     fig.text(0.0, -0.03, note, fontsize=8, color=plots.TEXT_MUTED)
     fig.tight_layout()
     fig.savefig(path, bbox_inches="tight")
     plt.close(fig)
 
 
-def plot_timeline(path, agent):
+def plot_timeline(path, agent, run=""):
     """Which method the agent ran, by evaluation: one row per method label (in
     order of first use), plan changes as ticks in their own row, and the
-    evaluation of the best point marked."""
+    evaluation of the best point marked. `run` (e.g. " in run 2") goes in the title."""
     order = list(dict.fromkeys(label for label, _, _ in agent["phases"]))  # first use on top
     row = {label: len(order) - i for i, label in enumerate(order)}
     change_y = len(order) + 1
@@ -174,14 +176,15 @@ def plot_timeline(path, agent):
         ax.spines[spine].set_visible(False)
     ax.spines["bottom"].set_color(plots.AXIS)
     ax.tick_params(axis="y", length=0)
-    ax.set_title(f"{NAME}: methods the Claude agent ran, by evaluation", fontsize=12,
+    ax.set_title(f"{NAME}: methods the Claude agent ran{run}, by evaluation", fontsize=12,
                  color=plots.TEXT_PRIMARY, pad=10, loc="left")
     caption = (
         "One row per method label the agent used, in order of first use. Colored rows are standard "
         "methods, in the same colors as the regret plot ("
         + ", ".join(plots.baseline_display_names[c] for c in standard) + "); gray rows are the "
         "agent's own routines. Ticks: the plan changes logged in changelog.md, at evaluations "
-        + ", ".join(f"{e:,}" for e in agent["deviations"]) + "."
+        + ", ".join(f"{e:,}" + (f" ({n} entries)" if n > 1 else "")
+                    for e, n in Counter(agent["deviations"]).items()) + "."
     )
     fig.text(0.0, -0.01, textwrap.fill(caption, 175), fontsize=8, color=plots.TEXT_MUTED, va="top")
     fig.tight_layout()
@@ -190,15 +193,36 @@ def plot_timeline(path, agent):
 
 
 baselines, agents = plots.load_task(RESULTS)
-if list(agents) != ["Claude agent"]:
-    raise SystemExit(f"Expected one Claude agent run for opv_pool_pce_d11, found {list(agents)}.")
+if list(agents) != ["Claude agent", "Claude agent, run 2"]:
+    raise SystemExit(f"Expected two Claude agent runs for opv_pool_pce_d11, found {list(agents)}.")
+run1, run2 = agents.values()  # blue and orange in every plot
 
-for sub in ("baselines", "agent_claude"):
+for sub in ("baselines", "agent_claude", "agent_claude_run2", "agent_claude_both_runs"):
     (OUT / sub).mkdir(parents=True, exist_ok=True)
-final_regret_bar(OUT / "baselines" / f"{NAME}_baselines_final_regret.png", baselines, {})
-regret_vs_eval(OUT / "baselines" / f"{NAME}_baselines_regret_vs_eval.png", baselines, {})
-final_regret_bar(OUT / "agent_claude" / f"{NAME}_agent_claude_vs_methods_used_final_regret.png", baselines, agents)
-regret_vs_eval(OUT / "agent_claude" / f"{NAME}_agent_claude_vs_baselines_regret_vs_eval.png", baselines, agents)
-plot_timeline(OUT / "agent_claude" / f"{NAME}_agent_claude_method_timeline.png", agents["Claude agent"])
+final_regret_bar(OUT / "baselines" / f"{NAME}_baselines_final_regret.png", baselines, {},
+                 "final regret of every baseline")
+regret_vs_eval(OUT / "baselines" / f"{NAME}_baselines_regret_vs_eval.png", baselines, {}, "every baseline")
+
+one = {"Claude agent": run1}
+final_regret_bar(OUT / "agent_claude" / f"{NAME}_agent_claude_vs_methods_used_final_regret.png", baselines, one,
+                 "the Claude agent vs. each method it used, run alone")
+regret_vs_eval(OUT / "agent_claude" / f"{NAME}_agent_claude_vs_baselines_regret_vs_eval.png", baselines, one,
+               "the Claude agent against every baseline")
+plot_timeline(OUT / "agent_claude" / f"{NAME}_agent_claude_method_timeline.png", run1)
+
+two = {"Claude agent, run 2": run2}
+sub = OUT / "agent_claude_run2"
+final_regret_bar(sub / f"{NAME}_agent_claude_run2_vs_methods_used_final_regret.png", baselines, two,
+                 "Claude agent run 2 vs. each method it used, run alone")
+regret_vs_eval(sub / f"{NAME}_agent_claude_run2_vs_baselines_regret_vs_eval.png", baselines, two,
+               "Claude agent run 2 against every baseline")
+plot_timeline(sub / f"{NAME}_agent_claude_run2_method_timeline.png", run2, " in run 2")
+
+both = {"Claude agent, run 1": run1, "Claude agent, run 2": run2}
+sub = OUT / "agent_claude_both_runs"
+final_regret_bar(sub / f"{NAME}_agent_claude_both_runs_vs_methods_used_final_regret.png", baselines, both,
+                 "both Claude agent runs vs. each method they used, run alone")
+regret_vs_eval(sub / f"{NAME}_agent_claude_both_runs_vs_baselines_regret_vs_eval.png", baselines, both,
+               "both Claude agent runs against every baseline")
 for path in sorted(OUT.rglob("*.png")):
     print(path.relative_to(ROOT))
