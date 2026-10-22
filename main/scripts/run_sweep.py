@@ -33,10 +33,9 @@ from scripts.run_campaign import OPTIMIZERS, TASKS, run_campaign
 # Optimizers not listed here go after these.
 SLOWEST_FIRST = ["gp_bo", "bobyqa", "turbo"]
 
-# Expensive methods run at a small budget: GP-BO and TuRBO condition an
-# exact GP every step or batch (hyperparameters refit every 50 evaluations),
-# and the threaded Py-BOBYQA wrapper slows superlinearly with evaluations.
-BUDGET_CAPS = {"gp_bo": 100, "turbo": 100, "bobyqa": 100}
+# Empty: every optimizer runs the full budget. results_linux/ predates this
+# and has gp_bo, turbo and bobyqa capped at 100 (GP-BO then refit every step).
+BUDGET_CAPS = {}
 
 
 def _init_worker():
