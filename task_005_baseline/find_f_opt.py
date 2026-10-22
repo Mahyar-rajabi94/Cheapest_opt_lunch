@@ -1,7 +1,7 @@
 """Search the OPV emulator for its best feasible PCE: the best-known f_opt of
-OPVTask (src/tasks/opv.py). Run from main/tasks/polymer with the project venv:
+OPVTask (main/src/tasks/opv.py). Run from task_005_baseline with the project venv:
 
-    ../../../.venv/bin/python find_f_opt.py
+    ../.venv/bin/python find_f_opt.py
 
 Three searches in the task's unit box, all under the six required constraints:
   1. 2^20 scrambled Sobol points.
@@ -20,7 +20,7 @@ import cma
 import numpy as np
 from scipy.stats import qmc
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "main"))
 from src.tasks.base import FEASIBILITY_TOL  # noqa: E402
 from src.tasks.opv import OPVTask  # noqa: E402
 

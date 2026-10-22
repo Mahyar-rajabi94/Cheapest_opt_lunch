@@ -1,9 +1,9 @@
-"""Write the asset of the blind harness src/agent_harness/task_005.py:
-src/agent_harness/assets/task_005.npz, OPVTask's forest and decoding as bare
-arrays (no input names, no training info), so a sandbox needs neither
-src/tasks/ nor this folder. Run from main/tasks/polymer with the project venv:
+"""Write the asset of the blind harness main/src/agent_harness/task_005.py:
+main/src/agent_harness/assets/task_005.npz, OPVTask's forest and decoding as
+bare arrays (no input names, no training info), so a sandbox needs neither
+src/tasks/ nor this folder. Run from task_005_baseline with the project venv:
 
-    ../../../.venv/bin/python export_blind_asset.py
+    ../.venv/bin/python export_blind_asset.py
 
 Then checks that the harness returns exactly OPVTask's objective.
 """
@@ -13,7 +13,7 @@ from pathlib import Path
 
 import numpy as np
 
-MAIN = Path(__file__).resolve().parents[2]
+MAIN = Path(__file__).resolve().parents[1] / "main"
 sys.path.insert(0, str(MAIN))
 from src.tasks.opv import OPVTask  # noqa: E402
 

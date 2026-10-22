@@ -2,11 +2,11 @@
 efficiency (PCE) predicted by a random-forest emulator of 526 literature
 devices (Seifrid et al., J. Mater. Chem. A, 2024).
 
-Needs only numpy. It reads two files from `main/tasks/polymer/`:
-search_space.json (bounds, interlayer levels and linear constraints, written
-by preprocess.py) and opv_emulator_rf.npz (the forest's trees as flat
-arrays, written by train_emulator.py). Predictions match scikit-learn's
-RandomForestRegressor.predict, which train_emulator.py checks.
+Needs only numpy. It reads two files from `task_005_baseline/` at the
+repository root: search_space.json (bounds, interlayer levels and linear
+constraints, written by preprocess.py) and opv_emulator_rf.npz (the forest's
+trees as flat arrays, written by train_emulator.py). Predictions match
+scikit-learn's RandomForestRegressor.predict, which train_emulator.py checks.
 """
 
 from __future__ import annotations
@@ -18,12 +18,12 @@ import numpy as np
 
 from src.tasks.base import Task
 
-DATA_ROOT = Path(__file__).resolve().parents[2] / "tasks" / "polymer"
+DATA_ROOT = Path(__file__).resolve().parents[3] / "task_005_baseline"
 
 # Best-known -PCE (no exact optimum is known): max over 2^20 Sobol points,
 # coordinate ascent with exact line searches from the 64 best of them, and
 # 20 CMA-ES runs of 1e5 evaluations, computed 2026-10-22 by
-# tasks/polymer/find_f_opt.py. All 64 ascents and 5 of 20 CMA-ES runs reach
+# task_005_baseline/find_f_opt.py. All 64 ascents and 5 of 20 CMA-ES runs reach
 # it (Sobol best 11.717%); no constraint is active there. HTL_energy -5.2 or
 # -4.7 and ETL_energy -2.18 (mostly PFN-Br) give it.
 _F_OPT = -12.955165987276994
