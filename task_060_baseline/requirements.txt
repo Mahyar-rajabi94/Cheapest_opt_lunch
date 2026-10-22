@@ -1,0 +1,7 @@
+numpy
+scipy
+cma
+botorch
+Py-BOBYQA
+xgboost>=2.1,<3
+matplotlib
