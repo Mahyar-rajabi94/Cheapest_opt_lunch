@@ -33,28 +33,14 @@ Standard, no-tuning defaults:
   value for that case (0.1) instead of a hand-picked one.
 - Final trust-region radius (`rhoend`) is left at the library's own
   default (1e-8). The maximum number of function evaluations (`maxfun`)
-  is set to an effectively unreachable value (10**9), since its own
-  default (min(100*(dim+1), 1000)) would otherwise cut the search off
-  early -- this project's external budget (how many times `ask`/`tell`
-  are called) is what controls how long the search runs, exactly as for
-  every other optimizer here.
-
-KNOWN LIMITATION (investigated, not fixed): driven through this
-thread+queue wrapper, BOBYQA reliably works up to a few hundred
-evaluations (tested cleanly to budget=500) but becomes impractically slow
-somewhere in the next few hundred (observed stalling between roughly 400
-and 2000, depending on exact settings). This was tracked down to a
-thread-scheduling interaction specific to this library, not the objective
-function or any of rhoend/scaling_within_bounds/BLAS-thread settings:
-driven synchronously (no thread), the same solver with the same settings
-runs to completion in seconds; the same code through this wrapper shows
-high *system* (not *user*) CPU time and visibly slows down a few dozen
-evaluations in, and this reproduces even with a trivial pure-numpy
-objective with no other part of this project involved. A real fix would
-likely mean running the solver in a separate process instead of a thread
-(no shared GIL/scheduler), which is a larger change than this module
-currently makes. Until then, treat budget=500 as this optimizer's tested
-practical ceiling here, not an arbitrary choice.
+  is 20,000, since the library's own default (min(100*(dim+1), 1000))
+  would otherwise cut the search off early -- this project's external
+  budget (how many times `ask`/`tell` are called) is what controls how
+  long the search runs, exactly as for every other optimizer here.
+  Not larger: Py-BOBYQA allocates Python lists of length maxfun, so the
+  former 10**9 cost ~8 GB per solver (paging made runs past ~500
+  evaluations impractically slow, and an idle solver thread keeps that
+  memory for the life of the process). Traces are identical to 10**9.
 
 By convention, this optimizer MINIMIZES the objective (matching the rest
 of this package).
@@ -124,7 +110,7 @@ class BOBYQA:
                 self.x0,
                 bounds=(lower, upper),
                 scaling_within_bounds=True,
-                maxfun=10**9,
+                maxfun=20_000,
                 do_logging=False,
             )
             self.result = res

@@ -1,0 +1,18 @@
+{
+  "task_name": "bent_cigar_d10_i1",
+  "task_dim": 10,
+  "task_direction": "min",
+  "task_f_opt": -621.11,
+  "optimizer_name": "gp_bo",
+  "optimizer_class": "src.optimizers.gp_bo.GPBO",
+  "seed": 1,
+  "requested_budget": 2000,
+  "evaluations_used": 2000,
+  "stopped_early": false,
+  "stop_reason": null,
+  "start_time_utc": "2026-10-22T03:22:07.140214+00:00",
+  "end_time_utc": "2026-10-22T05:09:06.546883+00:00",
+  "total_wall_seconds": 6419.40671076905,
+  "numpy_version": "2.4.6",
+  "scipy_version": "1.17.1"
+}

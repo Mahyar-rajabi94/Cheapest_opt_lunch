@@ -1,0 +1,18 @@
+{
+  "task_name": "step_ellipsoid_d10_i1",
+  "task_dim": 10,
+  "task_direction": "min",
+  "task_f_opt": 92.94,
+  "optimizer_name": "turbo",
+  "optimizer_class": "src.optimizers.turbo.TuRBO",
+  "seed": 4,
+  "requested_budget": 2000,
+  "evaluations_used": 2000,
+  "stopped_early": false,
+  "stop_reason": null,
+  "start_time_utc": "2026-10-22T04:38:58.600164+00:00",
+  "end_time_utc": "2026-10-22T04:39:34.958215+00:00",
+  "total_wall_seconds": 36.35807916102931,
+  "numpy_version": "2.4.6",
+  "scipy_version": "1.17.1"
+}

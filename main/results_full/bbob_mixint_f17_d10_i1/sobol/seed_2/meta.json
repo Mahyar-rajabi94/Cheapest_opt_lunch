@@ -1,0 +1,18 @@
+{
+  "task_name": "bbob_mixint_f17_d10_i1",
+  "task_dim": 10,
+  "task_direction": "min",
+  "task_f_opt": -169.4,
+  "optimizer_name": "sobol",
+  "optimizer_class": "src.optimizers.sobol_search.SobolSearch",
+  "seed": 2,
+  "requested_budget": 2000,
+  "evaluations_used": 2000,
+  "stopped_early": false,
+  "stop_reason": null,
+  "start_time_utc": "2026-10-22T04:47:30.366752+00:00",
+  "end_time_utc": "2026-10-22T04:47:30.419365+00:00",
+  "total_wall_seconds": 0.052637903951108456,
+  "numpy_version": "2.4.6",
+  "scipy_version": "1.17.1"
+}

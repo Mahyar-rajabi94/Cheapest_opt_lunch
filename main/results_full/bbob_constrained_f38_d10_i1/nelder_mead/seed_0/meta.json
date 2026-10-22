@@ -1,0 +1,19 @@
+{
+  "task_name": "bbob_constrained_f38_d10_i1",
+  "task_dim": 10,
+  "task_direction": "min",
+  "task_f_opt": 1827.1519738294742,
+  "task_n_constraints": 3,
+  "optimizer_name": "nelder_mead",
+  "optimizer_class": "src.optimizers.nelder_mead.NelderMead",
+  "seed": 0,
+  "requested_budget": 2000,
+  "evaluations_used": 2000,
+  "stopped_early": false,
+  "stop_reason": null,
+  "start_time_utc": "2026-10-22T04:49:53.179568+00:00",
+  "end_time_utc": "2026-10-22T04:49:53.248250+00:00",
+  "total_wall_seconds": 0.06870749685913324,
+  "numpy_version": "2.4.6",
+  "scipy_version": "1.17.1"
+}

@@ -1,0 +1,19 @@
+{
+  "task_name": "nevergrad_noisy_rosenbrock_d20_n0.1",
+  "task_dim": 20,
+  "task_direction": "min",
+  "task_f_opt": 0.0,
+  "task_noisy": true,
+  "optimizer_name": "gp_bo",
+  "optimizer_class": "src.optimizers.gp_bo.GPBO",
+  "seed": 3,
+  "requested_budget": 2000,
+  "evaluations_used": 2000,
+  "stopped_early": false,
+  "stop_reason": null,
+  "start_time_utc": "2026-10-22T11:33:25.264894+00:00",
+  "end_time_utc": "2026-10-22T13:58:10.168674+00:00",
+  "total_wall_seconds": 8684.903815937927,
+  "numpy_version": "2.4.6",
+  "scipy_version": "1.17.1"
+}

@@ -33,6 +33,14 @@ TASKS = {
     "sharp_ridge10": lambda: BBOBTask("sharp_ridge", 13, dim=10),
     # f16: rugged, highly multimodal, repetitive.
     "weierstrass10": lambda: BBOBTask("weierstrass", 16, dim=10),
+    # f3: separable Rastrigin; rewards coordinate-wise search over rotation-invariant methods.
+    # Prefix "sep_rastrigin" keeps its folder apart from f15's "rastrigin_d10_i1".
+    "sep_rastrigin10": lambda: BBOBTask("sep_rastrigin", 3, dim=10),
+    # f20: Schwefel x*sin(x); deceptive, best region near the box boundary.
+    "schwefel10": lambda: BBOBTask("schwefel", 20, dim=10),
+    # f21/f22: Gallagher 101 / 21 random Gaussian peaks; weak global structure.
+    "gallagher101_10": lambda: BBOBTask("gallagher101", 21, dim=10),
+    "gallagher21_10": lambda: BBOBTask("gallagher21", 22, dim=10),
     # CEC-2017 F6 (D04/D05): expanded Schaffer F6; multimodal, nonseparable, 30 and 50 dims.
     # Box [-5, 5], not CEC's [-100, 100], where no method beats random search.
     "schaffer30": lambda: CEC2017Task(6, dim=30, half_width=5.0),

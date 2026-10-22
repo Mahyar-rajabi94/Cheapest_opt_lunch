@@ -1,0 +1,1 @@
+agent-v2 2999ce8 + src/tasks from full-benchmark b8b707f + scratch patch: ask() raises OptimizerExhausted after solver returned (lbfgsb/bobyqa/nelder_mead), applied 2026-10-22 07:40 after 939 runs

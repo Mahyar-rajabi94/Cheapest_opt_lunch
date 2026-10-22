@@ -1,0 +1,19 @@
+{
+  "task_name": "bbob_noisy_f112_d5_i1",
+  "task_dim": 5,
+  "task_direction": "min",
+  "task_f_opt": 149.1500000101,
+  "task_noisy": true,
+  "optimizer_name": "gp_bo",
+  "optimizer_class": "src.optimizers.gp_bo.GPBO",
+  "seed": 0,
+  "requested_budget": 2000,
+  "evaluations_used": 2000,
+  "stopped_early": false,
+  "stop_reason": null,
+  "start_time_utc": "2026-10-22T03:22:07.354716+00:00",
+  "end_time_utc": "2026-10-22T04:32:05.798575+00:00",
+  "total_wall_seconds": 4198.4439159662,
+  "numpy_version": "2.4.6",
+  "scipy_version": "1.17.1"
+}

@@ -1,0 +1,53 @@
+dim: 14
+bounds:
+- - 0.0
+  - 1.0
+- - 0.0
+  - 1.0
+- - 0.0
+  - 1.0
+- - 0.0
+  - 1.0
+- - 0.0
+  - 1.0
+- - 0.0
+  - 1.0
+- - 0.0
+  - 1.0
+- - 0.0
+  - 1.0
+- - 0.0
+  - 1.0
+- - 0.0
+  - 1.0
+- - 0.0
+  - 1.0
+- - 0.0
+  - 1.0
+- - 0.0
+  - 1.0
+- - 0.0
+  - 1.0
+budget_evals: 2000
+variable_types:
+- continuous
+- continuous
+- continuous
+- continuous
+- continuous
+- continuous
+- continuous
+- continuous
+- continuous
+- continuous
+- continuous
+- continuous
+- continuous
+- continuous
+eval_cost: cheap
+noise: deterministic
+gradients_available: false
+batch_size: 1
+constraints: none
+prior_knowledge: ''
+warm_start_points: []
