@@ -23,6 +23,9 @@ from .preflight import check
 
 MAIN = Path(__file__).resolve().parents[2]
 REPO = MAIN.parent
+# MCP server name per agent CLI; Claude Code reserves "workspace".
+SERVER = {'codex': 'workspace', 'claude': 'isolated'}
+TOOLS = ['run_command', 'write_stdin']
 
 
 def write_json(path, data):
@@ -195,10 +198,13 @@ On an evaluator error, stop and report; do not retry an unknown evaluation.
               'workspace': str(workspace), 'permissions': permissions(workspace, roots)}
     write_json(private / 'execution.json', policy)
     manifest = {
-        'task': args.task, 'budget': args.budget, 'seed': args.seed, 'model': args.model, 'reasoning_effort': args.effort,
+        'task': args.task, 'budget': args.budget, 'seed': args.seed, 'agent': args.agent,
+        'model': args.model, 'reasoning_effort': args.effort,
         'source_commit': subprocess.check_output(['git', '-C', str(REPO), 'rev-parse', 'HEAD'], text=True).strip(),
         'source_status': subprocess.check_output(['git', '-C', str(REPO), 'status', '--short'], text=True),
         'codex_version': subprocess.check_output([str(args.codex), '--version'], text=True).strip(),
+        **({'claude_version': subprocess.check_output([str(args.claude), '--version'], text=True).strip()}
+           if args.agent == 'claude' else {}),
         'agent_runtime': runtime,
         'source_sha256': {str(p.relative_to(REPO)): hashlib.sha256(p.read_bytes()).hexdigest()
                           for folder in ['src/blind_runner', 'src/tasks']
@@ -210,18 +216,25 @@ On an evaluator error, stop and report; do not retry an unknown evaluation.
     return root, workspace, private, policy
 
 
-def launch(args, workspace, private, policy):
+def instructions(args, workspace):
+    return ((workspace / 'AGENTS.md').read_text() +
+            f'\nAll campaign execution and file access use the {SERVER[args.agent]} MCP tools. '
+            'Read PUBLIC_EVALUATOR.md. Put scripts in work/; use .venv/bin/python. '
+            'Use write_stdin to keep optimizer processes alive between blocks.\n')
+
+
+def executor_args(private):
+    return ['-B', str(Path(__file__).with_name('execution.py')), str(private / 'execution.json')]
+
+
+def codex_command(args, workspace, private, policy):
     config = dict(policy['permissions'])
     config.update({
-        'developer_instructions': (workspace / 'AGENTS.md').read_text() +
-            '\nAll campaign execution and file access use the workspace MCP tools. '
-            'Read PUBLIC_EVALUATOR.md. Put scripts in work/; use .venv/bin/python. '
-            'Use write_stdin to keep optimizer processes alive between blocks.\n',
+        'developer_instructions': instructions(args, workspace),
         'model_reasoning_effort': args.effort,
-        'mcp_servers': {'workspace': {'command': sys.executable,
-            'args': ['-B', str(Path(__file__).with_name('execution.py')), str(private / 'execution.json')],
+        'mcp_servers': {'workspace': {'command': sys.executable, 'args': executor_args(private),
             'enabled': True, 'required': True, 'startup_timeout_sec': 30, 'tool_timeout_sec': 45,
-            'enabled_tools': ['run_command', 'write_stdin'], 'default_tools_approval_mode': 'approve'}},
+            'enabled_tools': TOOLS, 'default_tools_approval_mode': 'approve'}},
     })
     for feature in ['shell_tool', 'unified_exec', 'view_image', 'apps', 'plugins', 'remote_plugin',
                     'memories', 'hooks', 'shell_snapshot', 'browser_use', 'browser_use_external',
@@ -230,18 +243,45 @@ def launch(args, workspace, private, policy):
         config['features.' + feature] = False
     config['features.code_mode_host'] = True
     write_json(private / 'effective_overrides.json', config)
+    return [str(args.codex), '--no-daemon', 'exec', '--ignore-user-config', '--ignore-rules',
+            '--ephemeral', '--skip-git-repo-check', '--json', '--color', 'never',
+            '-m', args.model, '-C', str(workspace), *overrides(config),
+            '-o', str(private / 'agent_final.txt'), '-'], os.environ
+
+
+def claude_command(args, workspace, private):
+    # No built-in tools, settings, memory, CLAUDE.md, skills or connectors: the only
+    # tools are the sandboxed MCP executor's, and anything else is denied unprompted.
+    config = {'mcpServers': {SERVER['claude']: {'type': 'stdio', 'command': sys.executable,
+                                                'args': executor_args(private)}}}
+    write_json(private / 'claude_mcp.json', config)
+    command = [str(args.claude), '-p', '--output-format', 'stream-json', '--verbose',
+               '--model', args.model, '--effort', args.effort, '--tools', '',
+               '--strict-mcp-config', '--mcp-config', str(private / 'claude_mcp.json'),
+               '--allowedTools', ','.join(f"mcp__{SERVER['claude']}__{t}" for t in TOOLS),
+               '--permission-mode', 'dontAsk', '--setting-sources', '', '--disable-slash-commands',
+               '--no-session-persistence', '--system-prompt', instructions(args, workspace)]
+    # The ceiling keeps the enclosing repository's git status out of the CLI's context.
+    env = {**os.environ, 'ENABLE_CLAUDEAI_MCP_SERVERS': 'false', 'CLAUDE_CODE_DISABLE_AUTO_MEMORY': '1',
+           'GIT_CEILING_DIRECTORIES': str(workspace.parent)}
+    write_json(private / 'effective_overrides.json', {'command': command[1:], 'mcp': config})
+    return command, env
+
+
+def launch(args, workspace, private, policy):
+    if args.agent == 'codex':
+        command, env = codex_command(args, workspace, private, policy)
+    else:
+        command, env = claude_command(args, workspace, private)
     prompt = ('Carry out the fully authorized optimization campaign in PUBLIC_EVALUATOR.md, following '
               'AGENTS.md. Choose and execute only one bounded block at a time, then review your '
               'observations and decide again. You choose relevant hyperparameters and block lengths. '
               'Work autonomously without asking for confirmation between blocks. Use the available '
               'budget thoughtfully and finish with the four required campaign files and a brief summary.')
     (private / 'initial_prompt.txt').write_text(prompt)
-    command = [str(args.codex), '--no-daemon', 'exec', '--ignore-user-config', '--ignore-rules',
-               '--ephemeral', '--skip-git-repo-check', '--json', '--color', 'never',
-               '-m', args.model, '-C', str(workspace), *overrides(config),
-               '-o', str(private / 'agent_final.txt'), '-']
     with (private / 'cli_events.jsonl').open('w') as events, (private / 'cli_stderr.log').open('w') as errors:
-        process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=events, stderr=errors, text=True)
+        process = subprocess.Popen(command, cwd=workspace, env=env, stdin=subprocess.PIPE,
+                                   stdout=events, stderr=errors, text=True)
         try:
             process.communicate(prompt)
         except BaseException:
@@ -253,30 +293,39 @@ def launch(args, workspace, private, policy):
                 process.wait()
             raise
     write_json(private / 'cli_exit.json', {'returncode': process.returncode})
+    if args.agent == 'claude':
+        results = [e for e in events_of(private) if e.get('type') == 'result']
+        (private / 'agent_final.txt').write_text((results[-1].get('result') or '') if results else '')
     return process.returncode
 
 
-def audit(evaluator, workspace, private):
+def events_of(private):
+    path = private / 'cli_events.jsonl'
+    return [json.loads(line) for line in path.read_text().splitlines() if line.strip()] if path.exists() else []
+
+
+def audit(evaluator, workspace, private, agent):
     expected = evaluator.artifacts('run')
     matches = all((workspace / 'results/agent_run' / name).read_bytes() == content.encode()
                   for name, content in expected.items())
     unknown = evaluator.db.execute('SELECT COUNT(*) FROM evaluations WHERE y IS NULL').fetchone()[0]
-    events = private / 'cli_events.jsonl'
     tools = []
-    if events.exists():
-        for line in events.read_text().splitlines():
-            event = json.loads(line)
-            if event.get('type') != 'item.completed':
-                continue
-            item = event.get('item', {})
-            if item.get('type') == 'mcp_tool_call':
-                tools.append((item.get('server'), item.get('tool')))
-            elif item.get('type') in ('command_execution', 'file_change', 'web_search'):
-                tools.append(('unexpected', item['type']))
+    for event in events_of(private):
+        # Codex reports completed items; Claude reports tool_use blocks named mcp__<server>__<tool>.
+        item = event.get('item', {}) if event.get('type') == 'item.completed' else {}
+        if item.get('type') == 'mcp_tool_call':
+            tools.append((item.get('server'), item.get('tool')))
+        elif item.get('type') in ('command_execution', 'file_change', 'web_search'):
+            tools.append(('unexpected', item['type']))
+        elif event.get('type') == 'assistant':
+            for block in event.get('message', {}).get('content', []):
+                if block.get('type') in ('tool_use', 'server_tool_use'):
+                    _, server, tool = (block.get('name', '').split('__', 2) + ['', ''])[:3]
+                    tools.append((server, tool) if block['type'] == 'tool_use' else ('unexpected', block['name']))
     report = {
         **evaluator.status('run'), 'unknown_evaluations': unknown,
         'artifacts_match_journal': matches,
-        'only_workspace_execution_tools': all(s == 'workspace' and t in ('run_command', 'write_stdin') for s, t in tools),
+        'only_workspace_execution_tools': all(s == SERVER[agent] and t in TOOLS for s, t in tools),
         'tool_calls': len(tools),
     }
     write_json(private / 'integrity_audit.json', report)
@@ -290,20 +339,31 @@ def main(argv=None):
     parser.add_argument('--task', required=True, help='A key of main/src/tasks/registry.py, e.g. step_ellipsoid10')
     parser.add_argument('--budget', required=True, type=int)
     parser.add_argument('--seed', type=int, default=0, help='Observation-noise seed for noisy tasks')
-    parser.add_argument('--model', default='gpt-6-astra')
-    parser.add_argument('--effort', default='xhigh', choices=['low', 'medium', 'high', 'xhigh'])
+    parser.add_argument('--agent', default='codex', choices=['codex', 'claude'], help='CLI that drives the model')
+    parser.add_argument('--model', help='Default: gpt-6-astra (codex), claude-opus-5-5 (claude)')
+    parser.add_argument('--effort', default='xhigh', choices=['low', 'medium', 'high', 'xhigh', 'max'],
+                        help='max is Claude only')
     parser.add_argument('--agent-python', type=Path, default=REPO / '.agent-venv/bin/python')
-    parser.add_argument('--codex', type=Path, default=shutil.which('codex'))
+    parser.add_argument('--codex', type=Path, default=shutil.which('codex'),
+                        help='Codex CLI; also the per-command sandbox for both agents')
+    parser.add_argument('--claude', type=Path, default=shutil.which('claude'))
     parser.add_argument('--runs-dir', type=Path, default=REPO / 'runs')
     parser.add_argument('--check-only', action='store_true', help='Validate isolation with zero evaluations and no model call')
     args = parser.parse_args(argv)
     if sys.platform not in ('darwin', 'linux'):
         parser.error('The native executor currently supports macOS and Linux only.')
     if args.budget < 1 or args.codex is None:
-        parser.error('Use a positive budget and install/sign in to Codex CLI.')
+        parser.error('Use a positive budget and install Codex CLI (signed in, for --agent codex).')
+    if args.agent == 'claude' and args.claude is None:
+        parser.error('Install and sign in to Claude Code CLI, or pass --claude.')
+    if args.agent == 'codex' and args.effort == 'max':
+        parser.error('Codex supports efforts up to xhigh.')
+    args.model = args.model or {'codex': 'gpt-6-astra', 'claude': 'claude-opus-5-5'}[args.agent]
     # Preserve the venv executable path: resolving its symlink would bypass the venv.
     args.agent_python = args.agent_python.expanduser().absolute()
     args.codex = args.codex.expanduser().absolute()
+    if args.claude is not None:
+        args.claude = args.claude.expanduser().absolute()
     from src.tasks.registry import TASKS
     if args.task not in TASKS:
         parser.error('Unknown task. See main/src/tasks/registry.py.')
@@ -323,7 +383,7 @@ def main(argv=None):
     try:
         forbidden = [private / 'canary.txt', root / 'sibling_canary.txt', REPO / 'README.md',
                      Path(inspect.getfile(type(task))), private / 'evaluations.sqlite',
-                     Path.home() / '.codex/auth.json', Path(__file__)]
+                     Path.home() / '.codex/auth.json', Path.home() / '.claude.json', Path(__file__)]
         report = check(policy, forbidden, private)
         print(f"Isolation passed: {len(report['checks'])} checks, 0/{args.budget} evaluations.", flush=True)
         if not args.check_only:
@@ -333,7 +393,7 @@ def main(argv=None):
         # The private journal remains recoverable on failure. Do not overwrite
         # public artifacts before comparing them with that journal.
         if sys.exc_info()[0] is None:
-            report = audit(evaluator, workspace, private)
+            report = audit(evaluator, workspace, private, args.agent)
             (private / 'scored_trace.csv').write_text(evaluator.scored_trace('run'))
         evaluator.db.close()
     print(f"Finished: {report['evaluations_used']}/{args.budget} evaluations. Results: {workspace / 'results/agent_run'}")

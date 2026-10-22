@@ -6,12 +6,14 @@ and decides again. The total evaluation budget is enforced by a separate evaluat
 
 [AGENTS.md](AGENTS.md) is the canonical agent prompt used for the iterative Astra
 experiments. [CLAUDE.md](CLAUDE.md) imports it; there is only one maintained prompt.
-The automated isolated runner below uses Codex CLI.
+The automated isolated runner below drives either Codex CLI or Claude Code CLI
+(`--agent codex|claude`); both use Codex's native sandbox for every agent command.
 
 ## Install once
 
-Use Python 3.11+ and an installed, authenticated `codex` CLI. Run these commands
-from the repository root. Keep two Python environments: the agent gets optimizer
+Use Python 3.11+ and an installed `codex` CLI, authenticated for `--agent codex`.
+For `--agent claude`, also install Claude Code CLI and sign in (`claude auth login`).
+Run these commands from the repository root. Keep two Python environments: the agent gets optimizer
 libraries; only the private evaluator gets objective backends such as `ioh`.
 
 ```bash
@@ -50,6 +52,16 @@ iterations. It is supplied in the public task input and enforced privately.
 Initialization, repeated points, finite differences and line searches all count.
 The agent chooses the next block's method, settings and length; continuations also
 require a new decision. It can preserve a live optimizer process between blocks.
+
+To run Claude instead, add `--agent claude` (default model `claude-opus-5-5`,
+efforts up to `max`; `--claude` overrides the CLI path). Claude Code runs headless
+with no built-in tools, settings, memory, CLAUDE.md, skills or claude.ai connectors:
+its only tools are the same sandboxed `run_command`/`write_stdin` MCP executor.
+
+```bash
+.venv/bin/python main/scripts/run_agent.py \
+  --task step_ellipsoid10 --budget 100 --agent claude --effort xhigh
+```
 
 For the other two recent experiments, use `--task sharp_ridge10` or
 `--task weierstrass10`. Every invocation creates a new opaque `runs/run-<id>/`;
@@ -115,7 +127,7 @@ runs/run-<id>/
     manifest.json                   source/prompt hashes, model and package versions
     isolation_checks.json           preflight results
     evaluations.sqlite              authoritative evaluations and decision snapshots
-    cli_events.jsonl                CLI tool calls and messages
+    cli_events.jsonl                CLI tool calls and messages (Codex or Claude stream-json)
     agent_final.txt                 final agent response
     integrity_audit.json            journal/artifact consistency checks
     scoring.json                   task identity and optimum, for offline analysis
