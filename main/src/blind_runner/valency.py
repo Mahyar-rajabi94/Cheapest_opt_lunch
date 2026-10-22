@@ -32,9 +32,19 @@ PAGE_CHARS = 24000
 INSTRUCTIONS = '''
 Optional literature access is available through the valency MCP tools throughout
 the campaign, including before the first block and while considering later blocks.
-You may search for methods, assumptions, and configurable settings, inspect paper
-records, and follow related or citing papers when useful. No search is required
-at any checkpoint. You still choose one block at a time under the same protocol.
+Use this capability proactively to check method assumptions and configurable
+settings rather than relying only on familiar defaults. Before committing the
+first block, normally make one focused method-level search with a small result
+limit (for example, 3 papers), then inspect the most relevant paper records.
+At later checkpoints, a targeted search is especially useful when predictions
+are poorly calibrated, progress stalls, competing methods look plausible, or
+you are uncertain about a setting such as exploration strength, population size,
+noise handling, or trust-region adaptation. Turn that uncertainty into a concrete
+question, retrieve evidence, assess its applicability, and then choose the block.
+Keep searches brief and decision-relevant; reuse earlier evidence when sufficient.
+You may skip a search when it is unlikely to change the decision or the relevant
+evidence is already available. No search is required at any checkpoint and there
+is no search quota. You still choose one block at a time under the same protocol.
 Use retrieved evidence to inform hypotheses, considering its applicability to the
 stated problem, your observations, noise, and remaining objective budget. A paper
 record or abstract is not proof of a particular tuning recommendation; distinguish

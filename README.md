@@ -94,6 +94,9 @@ its campaign. The default is `--literature none`: the original tool configuratio
 and prompt remain in use, and the MCP SDK is not required. Enabling literature
 appends capability guidance; it does not change `AGENTS.md`, force a search at any
 checkpoint, or change the evaluator, optimizers, block protocol, or objective budget.
+The guidance recommends a small initial method search and targeted follow-ups
+when observations reveal uncertainty about methods or settings. The agent can
+still skip a search when it would not help; there is no compulsory search quota.
 
 Install the optional dependency in the **private runner** environment:
 
@@ -121,6 +124,9 @@ First verify isolation and the authenticated Valency connection:
 This uses zero objective evaluations and makes no model call. It discovers tools
 and makes one authenticated `list_sources` call. Remove `--check-only` to run the
 campaign. Add `--agent claude` to use the same literature interface with Claude.
+For Codex, add `--fast` to request the Fast service tier for a supported model.
+This preserves the model and reasoning effort and uses account limits at a higher
+rate; the requested tier is recorded in the run manifest and effective overrides.
 Every enabled run performs this setup check before inference; an invalid token or
 unavailable connection fails setup explicitly. Retrieval failures after setup
 return tool errors, allowing optimization to continue.

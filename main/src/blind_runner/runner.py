@@ -248,6 +248,9 @@ On an evaluator error, stop and report; do not retry an unknown evaluation.
                          for p in workspace.rglob('*') if p.is_file() and not p.is_symlink()},
     }
     write_json(private / 'manifest.json', manifest)
+    if getattr(args, 'fast', False):
+        manifest['service_tier'] = 'fast'
+        write_json(private / 'manifest.json', manifest)
     if getattr(args, 'literature', 'none') == 'valency':
         from . import valency
         directory = private / 'literature'
@@ -297,6 +300,9 @@ def codex_command(args, workspace, private, policy):
             'enabled': True, 'required': True, 'startup_timeout_sec': 30, 'tool_timeout_sec': 45,
             'enabled_tools': TOOLS, 'default_tools_approval_mode': 'approve'}},
     })
+    if getattr(args, 'fast', False):
+        config['service_tier'] = 'fast'
+        config['features.fast_mode'] = True
     if getattr(args, 'literature', 'none') == 'valency':
         command = literature_command(private)
         config['mcp_servers']['valency'] = {
@@ -424,6 +430,8 @@ def main(argv=None):
     parser.add_argument('--model', help='Default: gpt-6-astra (codex), claude-opus-5-5 (claude)')
     parser.add_argument('--effort', default='max', choices=['low', 'medium', 'high', 'xhigh', 'max'],
                         help='Reasoning effort (default: max).')
+    parser.add_argument('--fast', action='store_true',
+                        help='Request Codex Fast service tier; preserves model and reasoning effort, increases usage.')
     parser.add_argument('--agent-python', type=Path, default=REPO / '.agent-venv/bin/python')
     parser.add_argument('--codex', type=Path, default=shutil.which('codex'),
                         help='Codex CLI; also the per-command sandbox for both agents')
@@ -439,6 +447,8 @@ def main(argv=None):
                         help='Seconds per retrieval attempt, including connection setup (default: 30)')
     parser.add_argument('--check-only', action='store_true', help='Validate isolation with zero evaluations and no model call')
     args = parser.parse_args(argv)
+    if args.fast and args.agent != 'codex':
+        parser.error('--fast is supported only by the Codex launcher.')
     if args.literature_max_calls < 1 or args.literature_timeout < 1:
         parser.error('Literature call limit and timeout must be positive.')
     if args.valency_token_file and args.literature != 'valency':

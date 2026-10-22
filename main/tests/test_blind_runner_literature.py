@@ -42,6 +42,7 @@ class RunnerLiteratureTests(unittest.TestCase):
         self.assertEqual(set(config['mcp_servers']), {'workspace'})
         self.assertEqual(config['mcp_servers']['workspace']['enabled_tools'], runner.TOOLS)
         self.assertFalse(config['permissions.blind.network.enabled'])
+        self.assertNotIn('service_tier', config)
         self.args.agent = 'claude'
         command, _ = runner.claude_command(self.args, self.workspace, self.private)
         self.assertEqual(command[command.index('--allowedTools') + 1],
@@ -65,6 +66,18 @@ class RunnerLiteratureTests(unittest.TestCase):
             self.assertNotIn(valency.TOKEN_ENV, environment(self.workspace, sys.executable))
         self.assertIn(valency.INSTRUCTIONS, runner.instructions(self.args, self.workspace))
         self.assertEqual((self.workspace / 'AGENTS.md').read_text(), 'Canonical optimization instructions')
+
+    def test_fast_tier_preserves_reasoning_and_sandbox(self):
+        self.args.fast = True
+        self.args.literature = 'valency'
+        command, _ = runner.codex_command(self.args, self.workspace, self.private, self.policy)
+        config = json.loads((self.private / 'effective_overrides.json').read_text())
+        self.assertEqual(config['service_tier'], 'fast')
+        self.assertTrue(config['features.fast_mode'])
+        self.assertEqual(config['model_reasoning_effort'], 'max')
+        self.assertEqual(command[command.index('-m') + 1], 'test')
+        self.assertFalse(config['permissions.blind.network.enabled'])
+        self.assertEqual(set(config['mcp_servers']), {'workspace', 'valency'})
 
     def test_audit_accepts_only_enabled_retrieval_and_preserves_evaluator_checks(self):
         class Task:
