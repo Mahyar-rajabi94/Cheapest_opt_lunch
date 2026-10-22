@@ -1,0 +1,18 @@
+{
+  "task_name": "psa_v10_d8",
+  "task_dim": 8,
+  "task_direction": "min",
+  "task_f_opt": 83.13,
+  "optimizer_name": "bobyqa",
+  "optimizer_class": "src.optimizers.bobyqa.BOBYQA",
+  "seed": 0,
+  "requested_budget": 100,
+  "evaluations_used": 100,
+  "stopped_early": false,
+  "stop_reason": null,
+  "start_time_utc": "2026-10-22T15:30:48.760025+00:00",
+  "end_time_utc": "2026-10-22T15:30:52.053816+00:00",
+  "total_wall_seconds": 3.2938389999999345,
+  "numpy_version": "2.5.4",
+  "scipy_version": "1.18.1"
+}
