@@ -1,0 +1,12 @@
+{
+  "task_id": "task_060",
+  "task_dim": 188,
+  "task_direction": "min",
+  "requested_budget": 2000,
+  "evaluations_used": 2000,
+  "stopped_early": false,
+  "start_time_utc": "2026-10-21T21:18:57.703391+00:00",
+  "end_time_utc": "2026-10-21T21:19:30.543106+00:00",
+  "total_wall_seconds": 32.83972673499375,
+  "numpy_version": "2.4.6"
+}
