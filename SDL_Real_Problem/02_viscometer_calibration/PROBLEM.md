@@ -2,6 +2,8 @@
 
 **Type:** inverse problem / instrument calibration · **Dimension:** 26 continuous · **Evaluation:** ~0.015 ms · **Data:** 100% real measurements, with certified ground truth
 
+> **Provenance.** Every input is a real measurement from the SDL5 viscometer. The objective evaluates the lab's own calibration equation on that data, and f_opt is computed by an offline search. The calibration is checked by leave-one-out on the same 23 standards; it has not been re-tested on new samples.
+
 ## 1. The scientific problem
 
 SDL5's automated viscometer is a Brookfield DV2T-RV cone-plate spindle (R = 12 mm, 3° cone) mounted on a CNC stage. A conventional cone-plate measurement needs the cone tip set precisely at the plate, which a robot cannot do reliably for every sample. Instead, the SDL **steps the spindle down in 0.02 mm increments** from above the contact point and records torque at every height. Viscosity is then recovered from how the drag grows as the gap closes.

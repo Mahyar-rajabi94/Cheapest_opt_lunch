@@ -2,6 +2,8 @@
 
 **Type:** formulation / rheology · **Dimension:** 7 continuous · **Evaluation:** ~0.1 ms · **Data:** SDL5 AutoVisco and PEPV measurements; the objective is a physics model calibrated on them
 
+> **Provenance.** Every objective value is computed by the model in §3. No recipe in this folder has been mixed or measured. The model is calibrated on real single-ingredient measurements (§4) and combined with literature-based assumptions, which are listed in §4 and `model.ASSUMED`. The target flow curve is an illustrative spec chosen for this benchmark. Treat the optimal recipe as a model prediction to test in the lab, not a result.
+
 ## 1. The scientific problem
 
 A self-driving formulation lab (SDL5) receives a product specification written as a **flow curve**: how viscous the product must be at every shear rate, from resting in a jar (0.1 s⁻¹) to being pushed through the Formulator Pen nozzle (100 s⁻¹). The lab has four thickeners on the shelf, each with a different rheological signature:

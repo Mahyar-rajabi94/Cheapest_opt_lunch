@@ -1,5 +1,7 @@
 # Problem 3: Robot cell layout for the SDL5 formulation cell
 
+> **Provenance.** The objective is a reduced kinematic model built from the `sdl_dt` digital twin's CAD/URDF geometry and UR3e kinematics. Every cycle time and clearance here is a model estimate, not a measurement on the robot. sdl_dt's own README says its arm motion has not been validated on hardware. Collisions use a conservative sphere model, and the planner simplifications are listed below. f_opt is a best-known value and is not collision-free.
+
 ## Motivation
 
 In the SDL5 formulation cell (Acceleration Consortium), a UR3e arm on the workstation deck tends a Thinky ARE-312 planetary mixer next to a FormulatorCNC_V2 that holds two balances. For every sample, the arm opens the mixer lid, takes the cup off the balance, puts it in the mixer's tilted holder and closes the lid. Where the arm and the CNC stand, how far the lid opens, and how the gripper holds the handle and the cup decide whether the cycle is possible at all, how close the arm passes to the housing and the open lid, and how long each sample waits. Making this cycle faster speeds up the whole lab, since every formulation passes through it.
