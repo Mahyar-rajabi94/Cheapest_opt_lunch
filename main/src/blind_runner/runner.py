@@ -277,7 +277,8 @@ def main(argv=None):
     parser.add_argument('--task', required=True, help='A registered deterministic continuous BBOB task, e.g. step_ellipsoid10')
     parser.add_argument('--budget', required=True, type=int)
     parser.add_argument('--model', default='gpt-6-astra')
-    parser.add_argument('--effort', default='xhigh', choices=['low', 'medium', 'high', 'xhigh'])
+    parser.add_argument('--effort', default='max', choices=['low', 'medium', 'high', 'xhigh', 'max'],
+                        help='Reasoning effort (default: max).')
     parser.add_argument('--agent-python', type=Path, default=REPO / '.agent-venv/bin/python')
     parser.add_argument('--codex', type=Path, default=shutil.which('codex'))
     parser.add_argument('--runs-dir', type=Path, default=REPO / 'runs')

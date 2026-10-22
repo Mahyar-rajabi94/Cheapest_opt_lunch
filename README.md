@@ -42,8 +42,11 @@ Then start a fresh campaign:
 ```bash
 .venv/bin/python main/scripts/run_agent.py \
   --task step_ellipsoid10 --budget 100 \
-  --model gpt-6-astra --effort xhigh
+  --model gpt-6-astra --effort max
 ```
+
+The defaults are `gpt-6-astra` and `max`, so both flags can be omitted.
+Use `--effort xhigh` to retain the reasoning setting used in earlier experiments.
 
 `--budget` is the number of **objective evaluations**, not model tokens or optimizer
 iterations. It is supplied in the public task input and enforced privately.
