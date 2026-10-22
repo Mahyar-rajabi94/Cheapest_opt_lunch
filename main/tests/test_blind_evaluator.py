@@ -130,5 +130,33 @@ class Integrity(unittest.TestCase):
             self.assertEqual(e.count('a'), 1)
             e.db.close()
 
+    def test_constraints_and_noise_stay_private_until_scoring(self):
+        class NoisyConstrainedTask(FakeTask):
+            dim = 1
+            bounds = [[-5., 5.]]
+            noisy = True
+            n_constraints = 1
+            def evaluate(self, x):
+                # Observed y is off by 100; feasible iff x <= 0.
+                return SimpleNamespace(y=x[0] ** 2 + 100., g=(x[0],), y_true=x[0] ** 2, elapsed=0.)
+        with tempfile.TemporaryDirectory() as tmp:
+            e = Evaluator({'budget': 3, 'campaigns': [{'id': 'a'}]},
+                          Path(tmp) / 'state.sqlite', lambda _: NoisyConstrainedTask())
+            def call(op, **kwargs):
+                return e.handle('a', {'request_id': uuid.uuid4().hex, 'op': op, **kwargs})
+            status = call('status')['result']
+            self.assertTrue(status['noisy'])
+            self.assertEqual(status['n_constraints'], 1)
+            call('label', name='test', documents={'roadmap_initial.md': 'First block', 'changelog.md': ''})
+            self.assertEqual(call('evaluate', x=[1.])['result'], {'y': 101., 'g': [1.]})
+            call('evaluate', x=[-2.])
+            call('evaluate', x=[-1.])
+            artifacts = e.artifacts('a')
+            self.assertEqual(json.loads(artifacts['meta.json'])['best_y'], 101.)
+            self.assertNotIn('y_true', artifacts['trace.csv'])
+            best = [row.split(',')[-1] for row in e.scored_trace('a').splitlines()[1:]]
+            self.assertEqual(best, ['', '4.0', '1.0'])
+            e.db.close()
+
 if __name__ == '__main__':
     unittest.main()

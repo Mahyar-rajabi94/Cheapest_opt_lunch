@@ -19,7 +19,7 @@ class AgentTaskHarness:
         state = self._request('status')
         if budget is not None and (type(budget) is not int or budget != state['budget']):
             raise ValueError('Budget must match the public campaign budget.')
-        for k in ['dim', 'bounds', 'direction', 'noisy', 'budget']:
+        for k in ['dim', 'bounds', 'direction', 'noisy', 'n_constraints', 'budget']:
             setattr(self, k, state[k])
 
     def _request(self, op, **kwargs):
@@ -55,7 +55,9 @@ class AgentTaskHarness:
         x = [float(v) for v in x]
         if len(x) != self.dim or any(not math.isfinite(v) or not lo <= v <= hi for v, (lo, hi) in zip(x, self.bounds)):
             raise ValueError('Expected finite coordinates within the public bounds.')
-        return self._request('evaluate', x=x)
+        result = self._request('evaluate', x=x)
+        # Constrained campaigns also return the constraint values; feasible iff all g <= 0.
+        return (result['y'], result['g']) if self.n_constraints else result
 
     @property
     def evaluations_used(self):

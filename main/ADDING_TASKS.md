@@ -11,9 +11,8 @@ The baseline runner calls it directly. The isolated agent runner keeps it privat
 and exposes `src/agent_harness/harness.py`, a generic transport client. There are
 no numbered agent harnesses or per-task copies of the objective.
 
-The native runner currently supports continuous deterministic BBOB tasks only.
-Other task families remain available for baselines; extending the isolated runner
-requires a public variable/constraint contract and matching evaluator validation.
+The native runner accepts every registered task. It exposes only the public
+contract below; a new task needs nothing runner-specific.
 
 ## 1. Register the Task
 
@@ -69,7 +68,7 @@ Figures (needs `matplotlib`): `../.venv/bin/python scripts/make_comparison_plots
 
 ## 4. Isolated Agent Run
 
-For a supported continuous deterministic BBOB task, run from the repository root:
+Run from the repository root:
 
 ```bash
 .venv/bin/python main/scripts/run_agent.py --task <key> --budget 100 --check-only
@@ -79,18 +78,21 @@ For a supported continuous deterministic BBOB task, run from the repository root
 Follow the root [README](../README.md) for the separate optimizer environment,
 isolation boundary, outputs and plotting command. The runner copies the canonical
 root AGENTS.md and generic client into a fresh workspace. It gives the agent only
-dimension, bounds, direction, noise status and budget. Objective construction and
-scoring remain outside that workspace. Do not add a `task_<NNN>.py` or a new prompt.
+dimension, bounds, direction, noise status, number of constraints and budget.
+Objective construction and scoring remain outside that workspace. Do not add a
+`task_<NNN>.py` or a new prompt.
 
-For constrained, noisy, mixed-integer, categorical or conditional tasks, first
-implement and test the public domain/constraint/observation contract. Do not pass
-them through a continuous scalar interface or silently discard constraints.
+Discrete, categorical and conditional coordinates are decoded inside `_f`, so the
+agent sees the same box as the baselines. Constrained tasks return `(y, g)` from
+`evaluate`. Noisy tasks are reseeded with `--seed`; the private journal keeps
+`y_true`, and `private/scored_trace.csv` gives `y_best_so_far` in the baseline
+convention (blank before the first feasible point).
 
 ## Checklist
 
 - [ ] Register the task and record its domain and constraints accurately.
 - [ ] Smoke-test baseline evaluation and update TASKS.md.
 - [ ] Run matched-budget baselines into a fresh output directory.
-- [ ] For supported tasks, pass the native runner's zero-evaluation isolation check.
+- [ ] Pass the native runner's zero-evaluation isolation check.
 - [ ] Run a fresh isolated agent campaign with the canonical prompt.
 - [ ] Score and plot outside the agent workspace; preserve source and runtime provenance.
