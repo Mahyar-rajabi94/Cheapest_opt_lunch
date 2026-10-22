@@ -1,0 +1,12 @@
+{
+  "status": "passed",
+  "evaluations": 100,
+  "unique_candidates": 100,
+  "private_label_replay_exact": true,
+  "trace_matches_journal": true,
+  "scored_trace_verified": true,
+  "source_and_dataset_hashes_verified": true,
+  "public_immutable_files_verified": true,
+  "prospective_decisions_verified": true,
+  "isolation_checks": 28
+}

@@ -1,5 +1,7 @@
 # Materials pool campaigns: Astra max, 100 evaluations, three seeds
 
+**Updated OPV baselines:** [10 shared-random-start runs each for BOBYQA, L-BFGS-B and Nelder–Mead, with regenerated comparison figures](../opv_random_starts_100_20261022/README.md) · [Updated OPV data ZIP](../opv_random_starts_100_20261022.zip). The report below preserves the original supplied midpoint baselines; MOF results are unchanged.
+
 Each campaign uses the current autonomous agent in a fresh isolated Codex CLI, with its own private evaluator and durable 100-call budget. Initialization is included. Seeds 0, 1, and 2 guide stochastic optimization choices; model generation itself is not deterministic.
 
 Source commit: `cbe3886f40e2eeffa002d353188d8ca57a9143cf`. Model: `gpt-6-astra`; reasoning: `max`. No optimizer hints were supplied by the supervisor. One MOF seed-1 attempt was interrupted by a model-service capacity error at 58 calls. At the user’s request it was discarded from the comparison and restarted in a completely fresh CLI with a fresh 100-call budget; none of its observations were passed to the replacement. The completed replacement is the reported seed 1.

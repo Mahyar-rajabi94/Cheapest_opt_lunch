@@ -1,0 +1,32 @@
+PASS: midpoint callback traces equal existing wrappers for all three methods.
+1/30 bobyqa seed=0: 100 calls, regret=1.27558, 0.12s
+2/30 bobyqa seed=3: 100 calls, regret=0, 0.12s
+3/30 bobyqa seed=2: 100 calls, regret=0, 0.12s
+4/30 bobyqa seed=1: 100 calls, regret=2.73546, 0.12s
+5/30 bobyqa seed=4: 100 calls, regret=2.39395, 0.12s
+6/30 bobyqa seed=6: 100 calls, regret=1.27558, 0.12s
+7/30 bobyqa seed=7: 100 calls, regret=2.39395, 0.12s
+8/30 bobyqa seed=5: 100 calls, regret=2.49717, 0.13s
+9/30 lbfgsb seed=0: 100 calls, regret=1.27558, 0.00s
+10/30 lbfgsb seed=1: 100 calls, regret=1.42062, 0.00s
+11/30 lbfgsb seed=2: 100 calls, regret=0, 0.00s
+12/30 lbfgsb seed=3: 100 calls, regret=0, 0.00s
+13/30 lbfgsb seed=4: 100 calls, regret=2.39395, 0.00s
+14/30 lbfgsb seed=5: 100 calls, regret=2.49717, 0.00s
+15/30 lbfgsb seed=6: 100 calls, regret=1.27558, 0.00s
+16/30 lbfgsb seed=7: 100 calls, regret=2.39395, 0.00s
+17/30 lbfgsb seed=8: 100 calls, regret=2.52912, 0.00s
+18/30 lbfgsb seed=9: 100 calls, regret=2.88651, 0.00s
+19/30 nelder_mead seed=0: 100 calls, regret=1.27558, 0.00s
+20/30 nelder_mead seed=1: 100 calls, regret=2.73546, 0.00s
+21/30 nelder_mead seed=2: 100 calls, regret=0, 0.00s
+22/30 nelder_mead seed=3: 100 calls, regret=0, 0.00s
+23/30 nelder_mead seed=4: 100 calls, regret=2.39395, 0.00s
+24/30 nelder_mead seed=5: 100 calls, regret=2.49717, 0.00s
+25/30 nelder_mead seed=6: 100 calls, regret=1.27558, 0.00s
+26/30 nelder_mead seed=7: 100 calls, regret=2.39395, 0.00s
+27/30 bobyqa seed=8: 100 calls, regret=2.52912, 0.13s
+28/30 bobyqa seed=9: 100 calls, regret=2.84853, 0.13s
+29/30 nelder_mead seed=8: 100 calls, regret=2.52912, 0.00s
+30/30 nelder_mead seed=9: 100 calls, regret=2.88651, 0.00s
+Complete: 30 audited runs in 1.1s.

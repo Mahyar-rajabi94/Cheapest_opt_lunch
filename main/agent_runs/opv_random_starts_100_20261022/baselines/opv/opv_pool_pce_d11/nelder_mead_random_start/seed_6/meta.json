@@ -1,0 +1,35 @@
+{
+  "task_name": "opv_pool_pce_d11",
+  "task_dim": 11,
+  "optimizer_name": "nelder_mead_random_start",
+  "seed": 6,
+  "requested_budget": 100,
+  "evaluations_used": 100,
+  "initial_point": [
+    0.5381643514719432,
+    0.34327086981333843,
+    0.36906723979537825,
+    0.37449676558788236,
+    0.9874449901864666,
+    0.6327562726071461,
+    0.6743239305044936,
+    0.32996345538545835,
+    0.6799176611640223,
+    0.12297237488719004,
+    0.051729231983775215
+  ],
+  "initialization": "default_rng(seed).uniform(0, 1, size=11)",
+  "shared_start_across_local_methods": true,
+  "stopped_early": false,
+  "stop_reason": "budget_exhausted",
+  "source_commit": "ba05e7016ce2ac926d2babbf328a6d768385941b",
+  "runner_sha256": "d645ed53ef674e29f07ea311cd252336b0ced396bbde1f1c67e24f9ab7d0cb61",
+  "start_time_utc": "2026-10-22T21:21:48.722178+00:00",
+  "end_time_utc": "2026-10-22T21:21:48.734238+00:00",
+  "total_wall_seconds": 0.0022931670246180147,
+  "versions": {
+    "numpy": "2.4.6",
+    "scipy": "1.17.1",
+    "Py-BOBYQA": "1.5.0"
+  }
+}

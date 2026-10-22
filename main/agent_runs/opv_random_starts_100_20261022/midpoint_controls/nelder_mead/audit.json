@@ -1,0 +1,8 @@
+{
+  "status": "passed",
+  "evaluations": 100,
+  "unique_devices": 100,
+  "exact_pool_replay": true,
+  "incumbents_verified": true,
+  "regret": 2.534054000000001
+}

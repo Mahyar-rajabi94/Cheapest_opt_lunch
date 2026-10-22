@@ -1,0 +1,17 @@
+{
+  "new_baseline_protocol": "protocol.json",
+  "original_stochastic_baseline_commit": "ef1be572e038487dc37a5bd098e5d5d25fab8fb3",
+  "original_stochastic_baseline_path": "main/results_linux/opv_pool_pce_d11",
+  "agent_source_commit": "cbe3886f40e2eeffa002d353188d8ca57a9143cf",
+  "agent_campaigns_unchanged": true,
+  "reused_files_verified_byte_identical": 250,
+  "new_runs": 30,
+  "reused_stochastic_baseline_runs": 70,
+  "agent_runs": 3,
+  "comparison_budget": 100,
+  "initialization_included": true,
+  "std": "sample standard deviation, ddof=1",
+  "runtime_note": "New local baselines use macOS numpy 2.4.6, scipy 1.17.1, Py-BOBYQA 1.5.0; supplied stochastic baselines retain original Linux metadata (numpy 2.5.4, scipy 1.18.1).",
+  "midpoint_control_note": "Direct callback matches current repository wrappers exactly. Current-runtime BOBYQA midpoint trace differs from supplied Linux trace but both have zero final regret; other two midpoint traces match exactly.",
+  "reference_midpoint_included_in_averages": false
+}

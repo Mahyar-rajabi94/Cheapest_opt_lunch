@@ -13,6 +13,8 @@ The automated isolated runner below drives either Codex CLI or Claude Code CLI
 
 [OPV and MOF pool results: three seeds each, 100 evaluations, supplied baseline comparisons](main/agent_runs/materials_astra_max_100_3seeds_20261022/README.md).
 
+[Updated OPV comparison with 10 random-start runs per local optimizer](main/agent_runs/opv_random_starts_100_20261022/README.md) · [Data ZIP](main/agent_runs/opv_random_starts_100_20261022.zip).
+
 ## Install once
 
 Use Python 3.11+ and an installed `codex` CLI, authenticated for `--agent codex`.

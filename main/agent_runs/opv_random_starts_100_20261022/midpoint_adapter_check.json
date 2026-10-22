@@ -1,0 +1,14 @@
+{
+  "bobyqa": {
+    "evaluations": 100,
+    "matches_repository_wrapper_exactly": true
+  },
+  "lbfgsb": {
+    "evaluations": 100,
+    "matches_repository_wrapper_exactly": true
+  },
+  "nelder_mead": {
+    "evaluations": 100,
+    "matches_repository_wrapper_exactly": true
+  }
+}

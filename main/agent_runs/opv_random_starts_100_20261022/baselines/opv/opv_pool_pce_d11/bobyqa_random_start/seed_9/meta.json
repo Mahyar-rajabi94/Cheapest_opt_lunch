@@ -1,0 +1,35 @@
+{
+  "task_name": "opv_pool_pce_d11",
+  "task_dim": 11,
+  "optimizer_name": "bobyqa_random_start",
+  "seed": 9,
+  "requested_budget": 100,
+  "evaluations_used": 100,
+  "initial_point": [
+    0.8702492039700847,
+    0.28681720908755537,
+    0.6031481500515619,
+    0.7775340829201788,
+    0.7160746296035653,
+    0.9153801204905075,
+    0.8603936491828846,
+    0.9182376290487624,
+    0.026587734467597213,
+    0.4372480001295087,
+    0.48494432697728806
+  ],
+  "initialization": "default_rng(seed).uniform(0, 1, size=11)",
+  "shared_start_across_local_methods": true,
+  "stopped_early": false,
+  "stop_reason": "budget_exhausted",
+  "source_commit": "ba05e7016ce2ac926d2babbf328a6d768385941b",
+  "runner_sha256": "d645ed53ef674e29f07ea311cd252336b0ced396bbde1f1c67e24f9ab7d0cb61",
+  "start_time_utc": "2026-10-22T21:21:48.605067+00:00",
+  "end_time_utc": "2026-10-22T21:21:48.742373+00:00",
+  "total_wall_seconds": 0.12732562501332723,
+  "versions": {
+    "numpy": "2.4.6",
+    "scipy": "1.17.1",
+    "Py-BOBYQA": "1.5.0"
+  }
+}

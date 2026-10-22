@@ -1,0 +1,23 @@
+[
+  {
+    "method": "bobyqa",
+    "matches_supplied_midpoint_trajectory_exactly": false,
+    "new_runtime_regret": 0.0,
+    "supplied_midpoint_regret": 0.0,
+    "included_in_random_start_statistics": false
+  },
+  {
+    "method": "lbfgsb",
+    "matches_supplied_midpoint_trajectory_exactly": true,
+    "new_runtime_regret": 2.534054000000001,
+    "supplied_midpoint_regret": 2.534054000000001,
+    "included_in_random_start_statistics": false
+  },
+  {
+    "method": "nelder_mead",
+    "matches_supplied_midpoint_trajectory_exactly": true,
+    "new_runtime_regret": 2.534054000000001,
+    "supplied_midpoint_regret": 2.534054000000001,
+    "included_in_random_start_statistics": false
+  }
+]
