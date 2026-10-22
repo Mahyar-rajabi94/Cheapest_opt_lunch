@@ -1,0 +1,18 @@
+{
+  "task_name": "sphere_d10_i1",
+  "task_dim": 10,
+  "task_direction": "min",
+  "task_f_opt": 79.48,
+  "optimizer_name": "cma_es",
+  "optimizer_class": "src.optimizers.cma_es.CMAES",
+  "seed": 7,
+  "requested_budget": 2000,
+  "evaluations_used": 2000,
+  "stopped_early": false,
+  "stop_reason": null,
+  "start_time_utc": "2026-10-22T05:13:31.294642+00:00",
+  "end_time_utc": "2026-10-22T05:13:31.408295+00:00",
+  "total_wall_seconds": 0.11367429001256824,
+  "numpy_version": "2.4.6",
+  "scipy_version": "1.17.1"
+}

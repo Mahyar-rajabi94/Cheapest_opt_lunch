@@ -1,0 +1,18 @@
+{
+  "task_name": "cec2017_f6_d30_b5",
+  "task_dim": 30,
+  "task_direction": "min",
+  "task_f_opt": 600.0,
+  "optimizer_name": "gp_bo",
+  "optimizer_class": "src.optimizers.gp_bo.GPBO",
+  "seed": 6,
+  "requested_budget": 2000,
+  "evaluations_used": 2000,
+  "stopped_early": false,
+  "stop_reason": null,
+  "start_time_utc": "2026-10-22T11:33:24.630354+00:00",
+  "end_time_utc": "2026-10-22T12:33:47.609450+00:00",
+  "total_wall_seconds": 3622.9791297339834,
+  "numpy_version": "2.4.6",
+  "scipy_version": "1.17.1"
+}

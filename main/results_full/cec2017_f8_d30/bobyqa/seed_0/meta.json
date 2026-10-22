@@ -1,0 +1,18 @@
+{
+  "task_name": "cec2017_f8_d30",
+  "task_dim": 30,
+  "task_direction": "min",
+  "task_f_opt": 800.0,
+  "optimizer_name": "bobyqa",
+  "optimizer_class": "src.optimizers.bobyqa.BOBYQA",
+  "seed": 0,
+  "requested_budget": 2000,
+  "evaluations_used": 480,
+  "stopped_early": true,
+  "stop_reason": "BOBYQA's solver thread has already returned (converged, or hit a numerical stopping condition) and will not propose further points. Final result: ****** Py-BOBYQA Results ******\nSolution xmin = [ -1.9378747   -4.99377133  -7.27138823  -3.89034646  -6.20043824\n   2.82117029  -5.08704631  -1.00839788   2.96968744   7.41394282\n   0.44212644   5.85919571  -5.0756098   -0.22175662  -1.89498874\n   7.80914893  -1.56078243  -1.09099753   1.89510345  -0.34564495\n   5.43998628 -21.0525079   -2.16103959   5.87338437   4.53035722\n   8.3567017   -0.1063447    3.3158875    9.34302416   3.35553462]\nObjective value f(xmin) = 1025.967867\nNeeded 480 objective evaluations (at 480 points)\nApproximate gradient = [ 1.06976561e-06  1.02787851e-06  2.47052186e-06  1.16909815e-06\n -4.77848836e-06 -4.51145606e-06  3.08117385e-06  7.42768255e-07\n -3.82734487e-06 -2.35813151e-06 -4.91850286e-06  5.89632794e-06\n -2.88756724e-06 -1.01112620e-06  1.73905735e-06 -3.20186523e-06\n -2.08446578e-07  4.09723041e-06  5.33529477e-06  3.91786736e-06\n  5.63145212e-06  7.47137550e-06 -2.74073674e-06 -1.11539306e-05\n  1.20422309e-06 -4.23545388e-06  3.95346025e-06  5.13740902e-06\n -9.10986067e-07 -2.18486133e-06]\nNot showing approximate Hessian because it is too long; check self.hessian\nExit flag = 0\nSuccess: rho has reached rhoend\n******************************\n",
+  "start_time_utc": "2026-10-22T05:30:09.868272+00:00",
+  "end_time_utc": "2026-10-22T05:30:34.132682+00:00",
+  "total_wall_seconds": 24.26443629898131,
+  "numpy_version": "2.4.6",
+  "scipy_version": "1.17.1"
+}

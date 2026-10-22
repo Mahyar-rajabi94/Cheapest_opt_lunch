@@ -1,0 +1,18 @@
+{
+  "task_name": "weierstrass_d10_i1",
+  "task_dim": 10,
+  "task_direction": "min",
+  "task_f_opt": 71.35,
+  "optimizer_name": "nelder_mead",
+  "optimizer_class": "src.optimizers.nelder_mead.NelderMead",
+  "seed": 0,
+  "requested_budget": 2000,
+  "evaluations_used": 1138,
+  "stopped_early": true,
+  "stop_reason": "Nelder-Mead has already converged (or stopped) and will not propose further points. Final result:        message: Optimization terminated successfully.\n       success: True\n        status: 0\n           fun: 172.80927120864573\n             x: [ 7.970e-05  4.954e-04 -1.170e-04 -4.928e-06 -1.854e-04\n                  1.255e-04  8.754e-05  4.614e-05 -3.377e-04 -1.630e-04]\n           nit: 654\n          nfev: 1138\n final_simplex: (array([[ 7.970e-05,  4.954e-04, ..., -3.377e-04,\n                        -1.630e-04],\n                       [ 7.986e-05,  4.954e-04, ..., -3.378e-04,\n                        -1.629e-04],\n                       ...,\n                       [ 7.961e-05,  4.955e-04, ..., -3.375e-04,\n                        -1.628e-04],\n                       [ 7.959e-05,  4.955e-04, ..., -3.375e-04,\n                        -1.628e-04]], shape=(11, 10)), array([ 1.728e+02,  1.728e+02,  1.728e+02,  1.728e+02,\n                        1.728e+02,  1.728e+02,  1.728e+02,  1.728e+02,\n                        1.728e+02,  1.728e+02,  1.728e+02]))",
+  "start_time_utc": "2026-10-22T11:33:24.297318+00:00",
+  "end_time_utc": "2026-10-22T11:33:24.335890+00:00",
+  "total_wall_seconds": 0.03858795203268528,
+  "numpy_version": "2.4.6",
+  "scipy_version": "1.17.1"
+}

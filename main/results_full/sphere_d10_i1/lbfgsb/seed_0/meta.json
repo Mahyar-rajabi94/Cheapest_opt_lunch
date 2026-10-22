@@ -1,0 +1,18 @@
+{
+  "task_name": "sphere_d10_i1",
+  "task_dim": 10,
+  "task_direction": "min",
+  "task_f_opt": 79.48,
+  "optimizer_name": "lbfgsb",
+  "optimizer_class": "src.optimizers.lbfgsb.LBFGSB",
+  "seed": 0,
+  "requested_budget": 2000,
+  "evaluations_used": 33,
+  "stopped_early": true,
+  "stop_reason": "L-BFGS-B has already converged (or stopped) and will not propose further points. Final result:   message: CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL\n  success: True\n   status: 0\n      fun: 79.48000000000073\n        x: [ 2.528e-01 -1.157e+00 -7.240e-01  1.926e+00 -2.681e+00\n             4.392e-01 -1.168e-01  1.200e-01 -1.638e+00 -3.051e+00]\n      nit: 2\n      jac: [ 1.421e-06  1.421e-06  1.421e-06  1.421e-06  1.421e-06\n             1.421e-06  1.421e-06  1.421e-06  0.000e+00  0.000e+00]\n     nfev: 33\n     njev: 3\n hess_inv: <10x10 LbfgsInvHessProduct with dtype=float64>",
+  "start_time_utc": "2026-10-22T05:13:32.738411+00:00",
+  "end_time_utc": "2026-10-22T05:13:32.740629+00:00",
+  "total_wall_seconds": 0.0022299911361187696,
+  "numpy_version": "2.4.6",
+  "scipy_version": "1.17.1"
+}

@@ -1,0 +1,19 @@
+{
+  "task_name": "bbob_noisy_f111_d5_i1",
+  "task_dim": 5,
+  "task_direction": "min",
+  "task_f_opt": 149.1500000101,
+  "task_noisy": true,
+  "optimizer_name": "lbfgsb",
+  "optimizer_class": "src.optimizers.lbfgsb.LBFGSB",
+  "seed": 0,
+  "requested_budget": 2000,
+  "evaluations_used": 126,
+  "stopped_early": true,
+  "stop_reason": "L-BFGS-B has already converged (or stopped) and will not propose further points. Final result:   message: ABNORMAL: \n  success: False\n   status: 2\n      fun: 186.28524864033074\n        x: [ 0.000e+00  0.000e+00  0.000e+00  0.000e+00  0.000e+00]\n      nit: 0\n      jac: [-6.702e+11  2.355e+14  5.455e+13  2.048e+13  8.289e+12]\n     nfev: 126\n     njev: 21\n hess_inv: <5x5 LbfgsInvHessProduct with dtype=float64>",
+  "start_time_utc": "2026-10-22T04:03:06.775092+00:00",
+  "end_time_utc": "2026-10-22T04:03:06.791407+00:00",
+  "total_wall_seconds": 0.01635492593050003,
+  "numpy_version": "2.4.6",
+  "scipy_version": "1.17.1"
+}

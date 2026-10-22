@@ -1,0 +1,18 @@
+{
+  "task_name": "rosenbrock_d40_i1",
+  "task_dim": 40,
+  "task_direction": "min",
+  "task_f_opt": 149.15,
+  "optimizer_name": "sobol",
+  "optimizer_class": "src.optimizers.sobol_search.SobolSearch",
+  "seed": 0,
+  "requested_budget": 2000,
+  "evaluations_used": 2000,
+  "stopped_early": false,
+  "stop_reason": null,
+  "start_time_utc": "2026-10-22T07:12:20.892445+00:00",
+  "end_time_utc": "2026-10-22T07:12:20.943990+00:00",
+  "total_wall_seconds": 0.05155346100218594,
+  "numpy_version": "2.4.6",
+  "scipy_version": "1.17.1"
+}

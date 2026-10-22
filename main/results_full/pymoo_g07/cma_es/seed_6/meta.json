@@ -1,0 +1,19 @@
+{
+  "task_name": "pymoo_g07",
+  "task_dim": 10,
+  "task_direction": "min",
+  "task_f_opt": 24.306209068925877,
+  "task_n_constraints": 8,
+  "optimizer_name": "cma_es",
+  "optimizer_class": "src.optimizers.cma_es.CMAES",
+  "seed": 6,
+  "requested_budget": 2000,
+  "evaluations_used": 2000,
+  "stopped_early": false,
+  "stop_reason": null,
+  "start_time_utc": "2026-10-22T04:23:11.084572+00:00",
+  "end_time_utc": "2026-10-22T04:23:11.621733+00:00",
+  "total_wall_seconds": 0.5371954119764268,
+  "numpy_version": "2.4.6",
+  "scipy_version": "1.17.1"
+}
