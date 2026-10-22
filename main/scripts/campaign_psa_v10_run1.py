@@ -25,7 +25,7 @@ import cma  # noqa: E402
 
 MAIN = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(MAIN))
-from src.agent_harness.harness import BlackBoxHarness  # noqa: E402
+from _psa_v10_legacy_harness import BlackBoxHarness  # noqa: E402
 from src.optimizers.sobol_search import SobolSearch  # noqa: E402
 
 EVALUATOR = Path(r"C:\Users\rahim\Desktop\psa_v10_blackbox.py")

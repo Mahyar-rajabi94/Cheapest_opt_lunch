@@ -1,21 +1,18 @@
 """Comparison plots: agent runs vs. the classical baselines, per task.
 
 Produces three figures in each <results>/<task>/ (default results_linux/):
-  plot1_counterfactual_bar.png  -- final regret: the agents vs. each
-                                   single method they cascaded through
-                                   (every baseline if the task has no
-                                   agent run yet)
+  plot1_counterfactual_bar.png  -- final regret: agents vs. every standalone baseline
   plot2_regret_vs_eval.png      -- regret-vs-evaluation trajectories, all
                                    baselines (mean over seeds) plus the
                                    agents (highlighted, with markers at
-                                   each phase switch)
+                                   each decision block)
   plot3_agent_method_timeline.png -- which method each agent was running,
-                                   by evaluation, with the deviations it
-                                   logged in changelog.md (only for tasks
+                                   by evaluation, with decisions logged
+                                   in changelog.md (only for tasks
                                    with an agent run)
 
 f_opt, seeds and budgets are read from the baseline meta.json files; agent
-traces come from AGENT_RUNS.
+traces come from --agent-run or the archived AGENT_RUNS mapping.
 
 Constrained tasks: regret is undefined until the first feasible point, so
 the seed mean skips seeds without one yet, and plot 1 labels how many seeds
@@ -41,6 +38,7 @@ import csv
 import json
 import re
 import warnings
+import textwrap
 from pathlib import Path
 
 import matplotlib
@@ -57,13 +55,14 @@ SANDBOX_ROOT = MAIN_ROOT.parent
 # before its agent run exists.
 AGENT_RUNS = {
     "rosenbrock_d10_i1": {
-        "Claude agent": "task_001_sandbox_claud/results/agent_task_001",
-        "OpenAI agent": "task_001_sandbox_openai/results/agent_task_001",
+        "Claude agent": "archive_results/task_001_sandbox_claud/results/agent_task_001",
+        "OpenAI agent": "archive_results/task_001_sandbox_openai/results/agent_task_001",
     },
-    "rastrigin_d10_i1": {"Agent": "task_002_sandbox/results/agent_task_002"},
-    "bent_cigar_d10_i1": {"Agent": "task_003_sandbox/results/agent_task_003"},
-    "sphere_d10_i1": {"Agent": "task_004_sandbox/results/agent_task_004"},
     "psa_v10_d8": {"Agent": "main/agent_runs/psa_v10_blackbox_run1"},
+    "rastrigin_d10_i1": {"Agent": "archive_results/task_002_sandbox/results/agent_task_002"},
+    "bent_cigar_d10_i1": {"Agent": "archive_results/task_003_sandbox/results/agent_task_003"},
+    "sphere_d10_i1": {"Agent": "archive_results/task_004_sandbox/results/agent_task_004"},
+    "opv_pce_d11": {"Claude agent": "archive_results/task_005_sandbox/results/agent_task_005"},
 }
 
 # Validated default categorical palette, fixed order (see module docstring).
@@ -137,6 +136,8 @@ CANONICAL_BY_LENGTH = sorted(baseline_style, key=len, reverse=True)
 
 def canonical_method(raw_label: str) -> str:
     raw = raw_label.lower()
+    if raw.startswith("gp_"):
+        return "gp_bo"
     for key in CANONICAL_BY_LENGTH:
         if key in raw:
             return key
@@ -150,14 +151,14 @@ def load_rows(path: Path):
 
 def regret_trajectory(rows, f_opt):
     # Blank until the first feasible point (constrained tasks): regret is undefined there.
-    y = np.array([float(r["y_best_so_far"] or "nan") for r in rows])
+    y = np.array([float(r.get("y_best_so_far", r.get("best_y")) or "nan") for r in rows])
     return y - f_opt
 
 
-def phases_for(rows):
+def phases_for(rows, checkpoints=()):
     phases, cur, start = [], None, None
     for r in rows:
-        if r["optimizer"] != cur:
+        if r["optimizer"] != cur or int(r["eval_idx"]) - 1 in checkpoints:
             if cur is not None:
                 phases.append((cur, int(start), int(prev_idx)))
             cur, start = r["optimizer"], r["eval_idx"]
@@ -167,24 +168,33 @@ def phases_for(rows):
 
 
 def changelog_evals(path: Path):
-    """Evaluation numbers of the logged roadmap deviations ("## Evaluation N")."""
+    """Read current decision checkpoints and historical deviation entries."""
     if not path.exists():
         return []
-    return [int(m) for m in re.findall(r"^## Evaluation (\d+)", path.read_text(), re.MULTILINE)]
+    return [int(m) for m in re.findall(r"^## (?:Decision after evaluation|Evaluation) (\d+)", path.read_text(), re.MULTILINE)]
 
 
-def load_task(task_dir: Path):
+def load_task(task_dir: Path, agent_run=None, budget=None):
+    if agent_run is not None and budget is None:
+        meta = json.loads((agent_run / "meta.json").read_text())
+        budget = meta.get("budget", meta.get("requested_budget"))
     metas = {
         name: sorted((task_dir / name).glob("seed_*/meta.json"))
         for name in baseline_style
-        if (task_dir / name).is_dir()
+        if list((task_dir / name).glob("seed_*/meta.json"))
     }
+    if not metas:
+        raise ValueError(f"No baseline traces found in {task_dir}")
     f_opt = json.loads(next(iter(metas.values()))[0].read_text())["task_f_opt"]
 
     # ---- baseline trajectories (mean across seeds where there are several) ----
     baselines = {}  # name -> dict(x, regret, n_feasible, budget, n_seeds)
     for name, paths in metas.items():
         seed_ys = [regret_trajectory(load_rows(p.parent / "trace.csv"), f_opt) for p in paths]
+        allowed = json.loads(paths[0].read_text())["requested_budget"]
+        if budget is not None:
+            horizon = min(budget, allowed)
+            seed_ys = [np.pad(y[:horizon], (0, max(0, horizon-len(y))), mode="edge") for y in seed_ys]
         min_len = min(len(a) for a in seed_ys)
         stacked = np.stack([a[:min_len] for a in seed_ys])
         with warnings.catch_warnings():
@@ -194,41 +204,48 @@ def load_task(task_dir: Path):
             x=np.arange(1, min_len + 1),
             regret=mean_regret,
             n_feasible=int(np.isfinite(stacked[:, -1]).sum()),
-            budget=json.loads(paths[0].read_text())["requested_budget"],
+            budget=min(budget, allowed) if budget is not None else allowed,
             n_seeds=len(paths),
         )
 
     # ---- agent trajectories + phases + logged deviations ----
     agents = {}  # label -> dict(x, regret, phases, deviations, color)
-    for label, rel in AGENT_RUNS.get(task_dir.name, {}).items():
+    selected = {"Agent": agent_run.resolve()} if agent_run is not None else AGENT_RUNS.get(task_dir.name, {})
+    for label, rel in selected.items():
         run_dir = SANDBOX_ROOT / rel
         if not (run_dir / "trace.csv").exists():
             continue
         rows = load_rows(run_dir / "trace.csv")
+        if budget is not None:
+            rows = rows[:budget]
+        if not rows:
+            raise ValueError(f"Agent trace is empty: {run_dir}")
+        checkpoints = [n for n in changelog_evals(run_dir / "changelog.md") if n <= len(rows)]
         agents[label] = dict(
             x=np.array([int(r["eval_idx"]) for r in rows]),
             regret=regret_trajectory(rows, f_opt),
-            phases=phases_for(rows),
-            deviations=changelog_evals(run_dir / "changelog.md"),
+            phases=phases_for(rows, checkpoints),
+            deviations=checkpoints,
             color=AGENT_COLORS[len(agents)],
         )
     return baselines, agents
 
 
 def capped_note(baselines):
+    if not baselines:
+        return ""
     full = max(b["budget"] for b in baselines.values())
     capped = [n for n, b in baselines.items() if b["budget"] < full]
     if not capped:
         return ""
-    return "Capped baselines (see BUDGET_CAPS in scripts/run_sweep.py): " + ", ".join(
+    return "Historical baseline caps: " + ", ".join(
         f"{baseline_display_names[n]} at {baselines[n]['budget']}" for n in capped
     ) + "."
 
 
 # ==================== PLOT 1: counterfactual bar chart ====================
 def plot_counterfactual_bar(task_dir, baselines, agents):
-    used = {canonical_method(p[0]) for a in agents.values() for p in a["phases"]}
-    names = [n for n in baselines if n in used] if agents else list(baselines)
+    names = list(baselines)
     names.sort(key=lambda n: (np.isnan(baselines[n]["regret"][-1]), baselines[n]["regret"][-1]))
 
     entries = [(f"{label} (budget {len(a['x'])})", a["regret"][-1], a["color"]) for label, a in agents.items()]
@@ -262,7 +279,7 @@ def plot_counterfactual_bar(task_dir, baselines, agents):
         ax.text(plotted * 1.3, yi, label, va="center", ha="left", fontsize=9.5, color=TEXT_SECONDARY)
 
     title = (
-        "The agents vs. the single-method counterfactuals they cascaded through"
+        "The agents vs. every standalone baseline"
         if agents
         else "Final regret of every baseline (no agent run yet)"
     )
@@ -335,9 +352,9 @@ def plot_regret_vs_eval(task_dir, baselines, agents):
         title="Paired hue = same family\n(solid vs. dashed)",
         title_fontsize=8.5,
     )
-    note = "Baselines: mean over seeds; capped ones simply end early. " + capped_note(baselines)
+    note = "Baselines: mean over seeds; traces end at their comparison horizon. " + capped_note(baselines)
     if agents:
-        note = "Dots mark each agent's phase switches. " + note
+        note = "Dots mark agent blocks; continuations are separate decisions. " + note
     fig.text(0.0, -0.03, note, fontsize=8, color=TEXT_MUTED)
 
     fig.tight_layout()
@@ -348,18 +365,16 @@ def plot_regret_vs_eval(task_dir, baselines, agents):
 # ==================== PLOT 3: which method was active, when ====================
 # Reuses Plot 2's per-method colors so all three plots stay visually
 # consistent (same entity -> same color everywhere).
-NARROW_THRESHOLD_EVALS = 180  # below this width, route the label above with a leader
-
-
 def plot_agent_timeline(task_dir, baselines, agents):
     method_color = {k: v["color"] for k, v in baseline_style.items()}
     lanes = list(agents)[::-1]  # first agent on top
     budget = max(b["budget"] for b in baselines.values())
 
     fig, ax = plt.subplots(figsize=(11, 1.2 + 1.5 * len(lanes)), dpi=150)
+    narrow_labels = []
     for y0, label in enumerate(lanes):
         a = agents[label]
-        for raw_label, start, end in a["phases"]:
+        for number, (raw_label, start, end) in enumerate(a["phases"], 1):
             canon = canonical_method(raw_label)
             color = method_color.get(canon, MUTED_GRAY)
             display = baseline_display_names.get(canon, raw_label)
@@ -367,22 +382,21 @@ def plot_agent_timeline(task_dir, baselines, agents):
                 display = "restart " + raw_label.rsplit("_", 1)[-1]
             width = end - start + 1
             ax.broken_barh(
-                [(start, width)],
+                [(start - 1, width)],
                 (y0 - 0.32, 0.64),
                 facecolors=color,
                 edgecolors=SURFACE,
                 linewidth=1.5,
                 zorder=2,
             )
-            center = start + width / 2
-            if width >= NARROW_THRESHOLD_EVALS:
+            center = start - 1 + width / 2
+            if width >= .09 * budget:
                 ax.text(center, y0, display, ha="center", va="center", fontsize=9,
                         color="white", fontweight="medium", zorder=3)
             else:
-                label_y = y0 + 0.62
-                ax.plot([center, center], [y0 + 0.32, label_y - 0.05], color=TEXT_MUTED, linewidth=1, zorder=2)
-                ax.text(center, label_y, display, ha="center", va="bottom", fontsize=8.5,
-                        color=TEXT_PRIMARY, zorder=3)
+                ax.text(center, y0, str(number), ha="center", va="center", fontsize=8.5,
+                        color="white", fontweight="bold", zorder=3)
+                narrow_labels.append(f"{label} block {number}: {raw_label} ({start}–{end})")
 
         # Logged deviations from the agent's pre-registered roadmap
         # (changelog.md), not just "which method ran".
@@ -391,10 +405,10 @@ def plot_agent_timeline(task_dir, baselines, agents):
                     linewidth=1.3, zorder=4)
             ax.plot(ev, y0 + 0.95, marker="*", markersize=11, color=STATUS_WARNING,
                     markeredgecolor=TEXT_PRIMARY, markeredgewidth=0.6, zorder=5)
-            ax.text(ev + 12, y0 + 0.95, str(ev), ha="left", va="center",
+            ax.text(ev + .006 * budget, y0 + 0.95, str(ev), ha="left", va="center",
                     fontsize=7.8, color=TEXT_PRIMARY, zorder=5)
         if not a["deviations"]:
-            ax.text(budget - 2, y0 - 0.45, f"{label}: no changelog entries -- executed exactly as planned",
+            ax.text(budget - 2, y0 - 0.45, f"{label}: no additional decision checkpoints recorded",
                     ha="right", va="top", fontsize=7.8, color=TEXT_MUTED, style="italic", zorder=3)
 
     ax.set_xlim(0, budget)
@@ -420,20 +434,26 @@ def plot_agent_timeline(task_dir, baselines, agents):
         0.0,
         -0.05,
         "Segment color matches that method's line in plot2_regret_vs_eval.png. "
-        "Narrow segments are labeled above with a leader line. "
-        "Stars flag logged deviations from the agent's pre-registered roadmap (changelog.md), "
+        "Narrow segments are numbered. "
+        "Stars flag logged decision checkpoints (historical runs: deviations), "
         "labeled with the evaluation.",
         fontsize=8,
         color=TEXT_MUTED,
     )
+    if narrow_labels:
+        fig.text(0, -.19, '\n'.join(textwrap.wrap('; '.join(narrow_labels), 130)),
+                 fontsize=8, color=TEXT_SECONDARY, va='top')
 
     fig.tight_layout()
     fig.savefig(task_dir / "plot3_agent_method_timeline.png", bbox_inches="tight")
     plt.close(fig)
 
 
-def make_plots(task_dir: Path):
-    baselines, agents = load_task(task_dir)
+def make_plots(task_dir: Path, agent_run=None, budget=None, outdir=None):
+    baselines, agents = load_task(task_dir, agent_run, budget)
+    if outdir is not None:
+        task_dir = outdir / task_dir.name
+        task_dir.mkdir(parents=True, exist_ok=True)
     plot_counterfactual_bar(task_dir, baselines, agents)
     plot_regret_vs_eval(task_dir, baselines, agents)
     if agents:
@@ -445,8 +465,17 @@ if __name__ == "__main__":
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--results", default=str(MAIN_ROOT / "results_linux"))
     p.add_argument("--task", help="one results/<task> folder name; default: every task")
+    p.add_argument("--agent-run", type=Path, help="completed run's workspace/results/agent_run directory")
+    p.add_argument("--budget", type=int, help="comparison horizon; defaults to the supplied agent's budget")
+    p.add_argument("--outdir", type=Path, help="write figures here/<task>, leaving baseline artifacts unchanged")
     args = p.parse_args()
+    if args.agent_run and not args.task:
+        p.error("--agent-run requires --task")
+    if args.agent_run and not args.outdir:
+        p.error("--agent-run requires --outdir to preserve historical figures")
+    if args.budget is not None and args.budget < 1:
+        p.error("--budget must be positive")
     results = Path(args.results)
     tasks = [results / args.task] if args.task else sorted(d for d in results.iterdir() if d.is_dir())
     for task_dir in tasks:
-        make_plots(task_dir)
+        make_plots(task_dir, args.agent_run, args.budget, args.outdir)

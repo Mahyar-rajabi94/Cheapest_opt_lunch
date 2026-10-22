@@ -1,0 +1,203 @@
+{
+  "target": {
+    "name": "PCE",
+    "source_column": "calculated PCE (%)",
+    "unit": "%",
+    "direction": "maximize"
+  },
+  "inputs": [
+    "HOMO_D",
+    "LUMO_D",
+    "Eg_D",
+    "HOMO_A",
+    "LUMO_A",
+    "Eg_A",
+    "DA_ratio",
+    "additive_conc",
+    "anneal_temp",
+    "HTL_energy",
+    "ETL_energy"
+  ],
+  "continuous": {
+    "HOMO_D": {
+      "column": "HOMO_D (eV)",
+      "lower": -5.6,
+      "upper": -5.06,
+      "unit": "eV"
+    },
+    "LUMO_D": {
+      "column": "LUMO_D (eV)",
+      "lower": -3.7,
+      "upper": -2.9,
+      "unit": "eV"
+    },
+    "Eg_D": {
+      "column": "Eg_D (eV)",
+      "lower": 1.55,
+      "upper": 2.05,
+      "unit": "eV"
+    },
+    "HOMO_A": {
+      "column": "HOMO_A (eV)",
+      "lower": -6.07,
+      "upper": -5.24,
+      "unit": "eV"
+    },
+    "LUMO_A": {
+      "column": "LUMO_A (eV)",
+      "lower": -4.18,
+      "upper": -3.32,
+      "unit": "eV"
+    },
+    "Eg_A": {
+      "column": "Eg_A (eV)",
+      "lower": 1.23,
+      "upper": 2.19,
+      "unit": "eV"
+    },
+    "DA_ratio": {
+      "column": "D:A ratio (m/m)",
+      "lower": 0.5,
+      "upper": 1.67,
+      "unit": "mass ratio (donor/acceptor)"
+    },
+    "additive_conc": {
+      "column": "solvent additive conc. (% v/v)",
+      "lower": 0.0,
+      "upper": 3.6,
+      "unit": "% v/v"
+    },
+    "anneal_temp": {
+      "column": "temperature of thermal annealing",
+      "lower": 25,
+      "upper": 160,
+      "unit": "degC (25 = not annealed)"
+    },
+    "HTL_energy": {
+      "column": "HTL energy level (eV)",
+      "lower": -5.3,
+      "upper": -4.7,
+      "unit": "eV",
+      "snap_to_levels": [
+        -5.3,
+        -5.2,
+        -4.7
+      ],
+      "tie_break": "more_negative"
+    },
+    "ETL_energy": {
+      "column": "ETL energy level (eV)",
+      "lower": -4.65,
+      "upper": -2.14,
+      "unit": "eV",
+      "snap_to_levels": [
+        -4.65,
+        -4.46,
+        -4.23,
+        -4.18,
+        -4.1,
+        -4.08,
+        -4.05,
+        -3.93,
+        -3.9,
+        -3.6,
+        -3.0,
+        -2.9,
+        -2.18,
+        -2.14
+      ],
+      "tie_break": "more_negative"
+    }
+  },
+  "linear_constraints": [
+    {
+      "name": "LUMO_offset",
+      "coefficients": {
+        "LUMO_D": 1,
+        "LUMO_A": -1
+      },
+      "op": ">=",
+      "rhs": -0.15,
+      "optional": false
+    },
+    {
+      "name": "HOMO_offset",
+      "coefficients": {
+        "HOMO_D": 1,
+        "HOMO_A": -1
+      },
+      "op": ">=",
+      "rhs": -0.15,
+      "optional": false
+    },
+    {
+      "name": "eff_gap_min",
+      "coefficients": {
+        "LUMO_A": 1,
+        "HOMO_D": -1
+      },
+      "op": ">=",
+      "rhs": 1.05,
+      "optional": false
+    },
+    {
+      "name": "eff_gap_max",
+      "coefficients": {
+        "LUMO_A": 1,
+        "HOMO_D": -1
+      },
+      "op": "<=",
+      "rhs": 1.96,
+      "optional": false
+    },
+    {
+      "name": "gap_consistency_D",
+      "coefficients": {
+        "Eg_D": 1,
+        "LUMO_D": -1,
+        "HOMO_D": 1
+      },
+      "op": "<=",
+      "rhs": 0.15,
+      "optional": false
+    },
+    {
+      "name": "gap_consistency_A",
+      "coefficients": {
+        "Eg_A": 1,
+        "LUMO_A": -1,
+        "HOMO_A": 1
+      },
+      "op": "<=",
+      "rhs": 0.15,
+      "optional": false
+    },
+    {
+      "name": "gap_excess_D",
+      "coefficients": {
+        "LUMO_D": 1,
+        "HOMO_D": -1,
+        "Eg_D": -1
+      },
+      "op": "<=",
+      "rhs": 0.5,
+      "optional": true
+    },
+    {
+      "name": "gap_excess_A",
+      "coefficients": {
+        "LUMO_A": 1,
+        "HOMO_A": -1,
+        "Eg_A": -1
+      },
+      "op": "<=",
+      "rhs": 0.5,
+      "optional": true
+    }
+  ],
+  "files": {
+    "interlayer_levels": "interlayer_levels.csv",
+    "interlayer_support": "interlayer_support.csv"
+  },
+  "notes": "Bounds for the first 9 inputs are 1st-99th percentiles of the 541 complete rows. HTL_energy and ETL_energy are continuous but snapped to the nearest observed level before querying the emulator. Constraints are in original units."
+}

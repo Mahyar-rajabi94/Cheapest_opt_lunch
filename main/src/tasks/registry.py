@@ -12,6 +12,7 @@ from src.tasks.coco_constrained import COCOConstrainedTask
 from src.tasks.coco_mixint import COCOMixintTask
 from src.tasks.coco_noisy import COCONoisyTask
 from src.tasks.nevergrad_noisy import NevergradNoisyTask
+from src.tasks.opv import OPVTask
 from src.tasks.pymoo_g import PymooGTask
 from src.tasks.psa_v10 import PSAv10Task
 from src.tasks.yahpo import YAHPOTask
@@ -81,4 +82,6 @@ TASKS = {
     "yahpo_xgboost": lambda: YAHPOTask("rbv2_xgboost"),
     # psa_v10: user-supplied black box over discrete materials; 8 dims, piecewise-constant.
     "psa_v10": lambda: PSAv10Task(),
+    # OPV device PCE from a random-forest emulator of 526 devices; 11 dims, 6 linear constraints, piecewise constant.
+    "opv_pce": lambda: OPVTask(),
 }

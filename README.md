@@ -1,193 +1,187 @@
 # Agentoptimizer
 
-Research project: an LLM agent that selects, switches, and hybridizes black-box
-optimizers under a budget, instead of committing to a single fixed method.
+An LLM chooses optimization methods, hyperparameters, and evaluation block lengths
+for a black-box problem. It plans **one block at a time**, inspects its observations,
+and decides again. The total evaluation budget is enforced by a separate evaluator.
 
-## Structure
+[AGENTS.md](AGENTS.md) is the canonical agent prompt used for the iterative Astra
+experiments. [CLAUDE.md](CLAUDE.md) imports it; there is only one maintained prompt.
+The automated isolated runner below uses Codex CLI.
 
-```text
-Cheapest_opt_lunch/
-├── main/                       project source, baseline runner and results
-│   ├── AGENTS.md               reusable intake and campaign instructions
-│   ├── CLAUDE.md               imports the same instructions for Claude
-│   ├── task_definitions/       created by the agent during planning
-│   │   └── <run_id>.md         synthesized problem, reviewed by the user
-│   ├── src/tasks/registry.py   every baseline task, one line each
-│   ├── scripts/make_sandbox.py builds a blind sandbox for task_<NNN>
-│   └── agent_briefs/
-│       ├── task_001.md         optional saved example; not required to run
-│       ├── task_template.md    optional example of problem details
-│       └── blind_brief_template.md  blind brief, rendered by make_sandbox.py
-├── task_001_sandbox_claud/      self-contained Claude sandbox copy
-├── task_001_sandbox_openai/     self-contained Codex sandbox copy
-├── task_002_sandbox/            retained Task 002 benchmark sandbox
-├── task_003_sandbox/            retained Task 003 benchmark sandbox
-└── task_004_sandbox/            retained Task 004 benchmark sandbox
+## Install once
+
+Use Python 3.11+ and an installed, authenticated `codex` CLI. Run these commands
+from the repository root. Keep two Python environments: the agent gets optimizer
+libraries; only the private evaluator gets objective backends such as `ioh`.
+
+```bash
+python3.11 -m venv .venv
+.venv/bin/python -m pip install -r main/requirements.txt
+python3.11 -m venv .agent-venv
+.agent-venv/bin/python -m pip install -r main/requirements-agent.txt
+codex login
 ```
 
-The two Task 001 sandboxes carry local copies of the instructions and example
-prompts. They do not import instructions from `main/`: a blind run must not need
-access outside its sandbox. Maintain these four Markdown files in `main/`, then
-copy changes to those two sandboxes. Keep the copies identical.
+The native runner has been checked on macOS with Codex CLI
+`0.162.0-alpha.17.2`. It also has a Linux execution path, which needs validation
+on the target machine. It fails before inference if its isolation checks fail.
+Other CLI versions must support the named permission profiles used by the runner.
 
-The Task 002–004 sandboxes retain their existing benchmark briefs and artifacts.
-For a fresh conversational run based on one of those evaluators, include copies
-of `main/AGENTS.md` and `main/CLAUDE.md` in the clean standalone workspace.
-The plotting scripts and existing benchmark results remain under `main/`.
+## Run the agent
 
-## Define a task in your terminal
+First check setup and isolation. This spends **zero objective evaluations** and
+makes **no model call**:
 
-Start a fresh Claude or Codex session **from the chosen workspace's root**
-(`main/` for development, or an isolated sandbox root for a blind campaign).
-Codex discovers `AGENTS.md`; `CLAUDE.md` imports that same file for Claude.
-These are project instructions, not a replacement for the terminal client's
-system prompt. See the official [Codex instruction documentation](https://learn.chatgpt.com/docs/agent-configuration/agents-md)
-and [Claude instruction documentation](https://code.claude.com/docs/en/memory#import-additional-files).
-
-Describe the optimization problem as an ordinary user message. **The agent
-writes the task definition; you do not need to write or select a task brief.**
-The agent turns your description and clarification answers into
-`task_definitions/<run_id>.md` for your review. If your first message supplies
-everything needed, it goes directly to drafting that definition. Otherwise it
-asks focused questions first. For example:
-
-> I want to maximize measured yield by choosing experiments from my candidate
-> table. I can afford 40 evaluations. I will provide the table location and the
-> Python evaluator with its public calling example. Help me clarify the task.
-
-This deliberately incomplete prompt should begin a clarification conversation.
-The agent gathers the missing details, writes the definition, and waits for
-confirmation before optimization. The current Task 001 harness does not become
-a yield evaluator just because the user describes that problem.
-
-For the existing Task 001 problem, you can also describe it directly:
-
-> Minimize a deterministic black-box function with 10 continuous inputs, each
-> bounded by [-5, 5], using at most 2000 evaluations. New points anywhere inside
-> the box are allowed; there is no candidate table or additional constraint.
-> The supplied Python evaluator is `src/agent_harness/task_001.py`; its
-> implementation is sealed. I can provide its public calling contract. Clarify
-> anything else you need and write the task definition for me to confirm.
-
-This example still needs the public calling contract before it is ready to run.
-The agent should ask for it, not inspect sealed source or silently load an old
-brief. The files in `agent_briefs/` are retained only as optional examples. They
-are not automatically read and can be omitted from a new run workspace.
-
-## Planning and confirmation workflow
-
-```text
-User's natural-language problem description (complete or incomplete)
-    -> extract known facts and identify missing/conflicting information
-    -> clarify consequential uncertainty, if any
-    -> agent writes task_definitions/<run_id>.md
-    -> present that definition for review
-    -> WAIT for the user's explicit confirmation
-    -> mark the definition confirmed and preserve it
-    -> write the initial roadmap with that confirmed definition
-    -> run the existing optimization campaign and logging protocol
+```bash
+.venv/bin/python main/scripts/run_agent.py \
+  --task step_ellipsoid10 --budget 100 --check-only
 ```
 
-The agent uses the supplied objective, domain, candidate source, budget, and
-Python interface. A sufficiently specified problem goes straight to the draft
-definition. Questions should resolve uncertainty that could change the problem,
-invalidate execution, or materially improve the plan. The agent can help you
-notice missed assumptions, without requiring an exhaustive questionnaire.
+Then start a fresh campaign:
 
-Details such as pool eligibility, repetitions, or prior data are explored only
-when relevant and unclear. Scientific properties such as smoothness may remain
-unknown. The agent chooses routine operational defaults and shows them in the
-summary. A real Python evaluator and public calling contract are required before
-execution. Planning spends no evaluations, and even a complete definition still
-waits for your confirmation.
+```bash
+.venv/bin/python main/scripts/run_agent.py \
+  --task step_ellipsoid10 --budget 100 \
+  --model gpt-6-astra --effort xhigh
+```
 
-The generated definition contains task-specific facts, assumptions, and the
-public Python calling example; the reusable workflow stays in `AGENTS.md`.
-The agent marks the draft as awaiting confirmation and updates it if you correct
-anything. After you confirm, it marks that version confirmed and preserves it.
-Later changes require a separate revision and renewed confirmation.
+`--budget` is the number of **objective evaluations**, not model tokens or optimizer
+iterations. It is supplied in the public task input and enforced privately.
+Initialization, repeated points, finite differences and line searches all count.
+The agent chooses the next block's method, settings and length; continuations also
+require a new decision. It can preserve a live optimizer process between blocks.
 
-Before evaluating, the agent copies the confirmed definition into
-`roadmap_initial.md`, references its file, and adds the method-selection plan.
-Routine method switches remain agent decisions recorded in the append-only
-changelog. The generated task definition lives outside the campaign result
-directory, so that directory still contains exactly:
+For the other two recent experiments, use `--task sharp_ridge10` or
+`--task weierstrass10`. Every invocation creates a new opaque `runs/run-<id>/`;
+there is no resume/reset option. Runs may be launched from separate terminals in
+parallel. `--runs-dir`, `--agent-python` and `--codex` override local paths.
 
-- `roadmap_initial.md` — confirmed problem and immutable initial method plan.
-- `changelog.md` — append-only deviations; empty when there are none.
-- `trace.csv` — real evaluations written by the evaluator.
-- `meta.json` — run metadata written by the evaluator.
+The native runner currently accepts **continuous deterministic BBOB tasks** from
+[the task registry](main/src/tasks/registry.py), including the three above.
+The broader library also contains noisy, constrained, mixed-integer, conditional
+and polymer tasks. Their baselines remain available, but this isolated runner
+rejects them until their public variable/constraint contracts are implemented.
+See [TASKS.md](main/TASKS.md) and [ADDING_TASKS.md](main/ADDING_TASKS.md).
 
-This is a prompt-level workflow. It does not toggle the CLI's built-in plan
-mode or add a code-enforced approval gate. The existing harness still enforces
-its evaluation count. Optimizer implementations, objective code, the baseline
-runner, and trace/metadata formats are unchanged. The intake can describe a
-wider range of tasks, but execution still needs a compatible evaluator and
-optimization method; no discrete, pool, or multiobjective engine is added here.
+## What the agent can access
 
-## Task code → true identity
+```text
+Fresh Codex CLI context + canonical prompt + public task description
+    -> native OS sandbox: optimizer libraries and this run's workspace
+    -> public harness.evaluate(x): request file containing x
+    -> separate trusted evaluator: objective, durable budget and journal
+    -> numeric response returned to the agent
+```
 
-The blind-test sandboxes (and everything handed to an agent) refer to
-tasks only by code — `task_001`, `task_002`, etc. This mapping is exactly
-what must never leak into a sandbox or an agent's briefing; it exists only
-here, for the human reading results from `main/`.
+No VM is required. A fresh conversation or a different working directory alone
+is insufficient: the runner applies explicit deny-by-default filesystem rules.
+Agent commands can read their public workspace and optimizer runtime, and write
+scripts in `work/`, temporary files, requests and decision logs. They cannot read
+the repository, objective implementation, private evaluator state, previous runs,
+or siblings. Network access, browser/app tools, memories, personal configuration,
+and permission escalation are disabled for the campaign. The only execution tools
+are the trusted `workspace.run_command` and `workspace.write_stdin` MCP tools,
+which enforce the native sandbox on every command.
 
-| Task code  | Function (BBOB id)     | dim | True optimum (`f_opt`) |
-|------------|-------------------------|-----|-------------------------|
-| `task_001` | Rosenbrock (f8)         | 10  | 149.15                  |
-| `task_002` | Rastrigin (f15)         | 10  | 1000.0                  |
-| `task_003` | Bent Cigar (f12)        | 10  | -621.11                 |
-| `task_004` | Sphere (f1)             | 10  | 79.48                   |
+The CLI retains the credentials needed for model inference; those credentials
+are not exposed to agent commands. The agent sees bounds, dimension, direction,
+noise status, budget, and its own observations. It does not receive task identity,
+optimum, baseline results or this README.
 
-All four use BBOB instance 1. `f_opt` values are specific to that instance
-(a different instance would shift them).
+Preflight attempts forbidden reads/writes, a symlink escape, network access and
+process inspection on macOS. Checks are recorded before the first evaluation.
+These are tested isolation controls, not a formal guarantee against OS or tool
+vulnerabilities. Never run the optimization agent directly in the repository.
 
-These task codes identify the existing benchmark problems. Repeating a task is
-another run of that same problem; use a fresh run identifier and output directory.
-New user-defined problems need their own compatible Python evaluator and should
-not reuse an existing task code for a different objective.
+## Outputs and supervision
 
-## Preserve blind runs and existing results
+The launcher prints the run directory immediately. While it runs, inspect its
+private CLI event log from your supervisor terminal; do not send benchmark hints
+back to the agent.
 
-1. Start a brand-new conversation with no prior discussion of the objective's
-   identity. This development conversation is not suitable for a blind run.
-2. Give the agent access only to a standalone sandbox. `main/` includes source
-   and baseline result paths that reveal the objective. Changing the terminal's
-   working directory alone does not enforce filesystem isolation; do not expose
-   the repository parent, sibling workspaces, baseline results, or Git history
-   to the campaign agent.
-3. The Task 001–003 sandbox copies already contain historical campaign results.
-   Prepare a fresh standalone workspace without those results, old campaign
-   scripts, or previous generated definitions before a blind rerun. Preserve
-   the originals. Choosing a new output directory prevents overwriting, but
-   does not hide old results from the agent.
-4. Include `AGENTS.md`, `CLAUDE.md`, the required `src/` files, and the run
-   environment in that clean sandbox. Supply the problem and public evaluator
-   contract in the conversation or as explicitly provided documentation.
-   `agent_briefs/` is optional. The agent creates `task_definitions/` itself;
-   it does not need to read the sealed evaluator's implementation.
+```text
+runs/run-<id>/
+  workspace/
+    AGENTS.md                       generated copy of the canonical prompt
+    PUBLIC_EVALUATOR.md              public problem and actual budget
+    src/agent_harness/harness.py     transport client, no objective implementation
+    work/                           agent-written scripts
+    results/agent_run/
+      roadmap_initial.md            FIRST BLOCK ONLY; immutable after recording
+      changelog.md                  every subsequent decision, including continuations
+      trace.csv                     actual observations, written by evaluator
+      meta.json                     public run state, written by evaluator
+  private/
+    manifest.json                   source/prompt hashes, model and package versions
+    isolation_checks.json           preflight results
+    evaluations.sqlite              authoritative evaluations and decision snapshots
+    cli_events.jsonl                CLI tool calls and messages
+    agent_final.txt                 final agent response
+    integrity_audit.json            journal/artifact consistency checks
+    scoring.json                   task identity and optimum, for offline analysis
+```
 
-Score completed campaigns from `main/` afterward. The true optimum and other
-methods' performance must never be exposed to the blind optimization agent.
+The historical filename `roadmap_initial.md` remains for compatibility; it is not
+a full campaign roadmap. The evaluator snapshots decisions before evaluations,
+rejects edits to the initial record and requires an append-only changelog.
+Reconstructing the client does not reset the evaluation counter. On a crash or an
+unknown evaluation outcome, preserve the run directory and inspect the private
+journal; do not retry that campaign as though it had zero evaluations.
 
-## Check the conversational behavior
+## Baselines and figures
 
-In a fresh isolated test session, check these cases without spending objective
-budget. These are manual acceptance checks, not claims of automated enforcement:
+Run all standalone optimizers at the same budget into a **new** results directory:
 
-| Input or action | Expected behavior |
-| --- | --- |
-| Complete problem and public Python contract in a user message, no brief files | Goes straight to the definition and confirmation without redundant questions; zero evaluations before confirmation. |
-| “Optimize my experiment” | Asks focused questions; does not inherit Task 001's dimension, budget, or evaluator. |
-| User supplies the missing details in follow-up messages | Synthesizes those answers into the definition itself; never asks the user to author a brief. |
-| Problem with no Python evaluator | Requests the script/module and calling contract; does not invent one or start. |
-| Fixed table with continuous feature columns | Uses supplied pool restrictions and asks only about consequential gaps; does not assume new points are allowed. |
-| Operational details such as a run name are omitted | Chooses sensible defaults and shows them in the definition instead of asking extra questions. |
-| User domain disagrees with evaluator documentation | Surfaces the conflict and waits for resolution. |
-| Unknown smoothness or noise | Records it as unknown and proposes handling, while resolving actual execution blockers. |
-| Correct the proposed definition instead of confirming | Updates the unconfirmed file and summary, then waits for confirmation of the revision. |
-| Existing output directory or previous campaign | Arranges a fresh run without reading or overwriting historical results. |
+```bash
+.venv/bin/python main/scripts/run_sweep.py \
+  --task step_ellipsoid10 --budget 100 --seeds 10 --workers 4 \
+  --outdir runs/baselines-100
+```
 
-For a subsequent approved smoke campaign, verify that the roadmap exists before
-the first evaluation, every recorded value comes from the evaluator, optimizer
-switches are labeled, and the same four output files are produced.
+Stochastic baselines use ten seeds; deterministic methods use one. Current sweeps
+use the requested budget for every method. Historical `main/results_linux/` runs
+may have GP-BO, TuRBO and BOBYQA capped at 100; inspect their metadata. The newest
+full-budget benchmark is also preserved under `main/`. Numerical results can
+vary by platform and library version; use matched environments for formal comparisons.
+
+After the agent finishes, replace `<id>` below with its printed run ID:
+
+```bash
+.agent-venv/bin/python main/scripts/make_comparison_plots.py \
+  --results runs/baselines-100 --task step_ellipsoid_d10_i1 \
+  --agent-run runs/run-<id>/workspace/results/agent_run \
+  --outdir runs/run-<id>/figures
+```
+
+This produces baseline convergence, a final-regret comparison, and an agent
+method/decision timeline. The supplied agent's budget sets the comparison horizon;
+longer baseline traces are truncated and early-stopped incumbents are carried
+forward within their allowed budget. Historical prefix comparisons are not fresh
+baseline reruns configured for the smaller budget. Scoring happens outside the
+agent's workspace, using the private optimum from baseline metadata.
+
+## Repository layout and checks
+
+- `AGENTS.md`, `CLAUDE.md`: one canonical agent and its Claude import.
+- `main/src/tasks/`: private objective implementations and registry.
+- `main/src/optimizers/`: shared optimizer wrappers.
+- `main/src/agent_harness/harness.py`: public evaluation client.
+- `main/src/blind_runner/`: native execution, private evaluator and orchestration.
+- `main/scripts/`: agent runner, baseline runner and plotting entry points.
+- `archive_results/`: preserved historical agent artifacts; old source is in Git history.
+- `task_005_baseline/`, `poly_results/`: polymer data/model utilities and existing figures.
+- `runs/`: ignored generated workspaces, logs and new results.
+
+The numbered local harnesses, copied sandbox implementations and old planning
+briefs have been retired. A new supported task reuses the same public client.
+
+The historical PSA campaign in `main/scripts/campaign_psa_v10_run1.py` retains its
+original in-process harness in `_psa_v10_legacy_harness.py` for reproducibility.
+Use `run_agent.py` for new isolated agent campaigns on supported tasks.
+
+```bash
+.venv/bin/python -m unittest discover -s main/tests -v
+```
+
+The integrity tests use fake objectives to check budget exhaustion, duplicate
+request handling, crash recovery, configuration immutability and prospective logs.

@@ -1,0 +1,8 @@
+# Optimizer runtime only. Objective backends belong in the evaluator environment.
+numpy
+scipy
+cma
+botorch
+Py-BOBYQA
+pandas
+matplotlib

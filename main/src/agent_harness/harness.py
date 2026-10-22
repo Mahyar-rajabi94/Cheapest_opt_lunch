@@ -1,158 +1,69 @@
-"""Budget-enforcing black-box harness shared by every agent task.
-
-Each `task_<NNN>.py` subclasses `BlackBoxHarness` with its own objective.
-This module is intentionally self-contained (it does not import from
-src/tasks/) and does not expose the true optimum anywhere. Do not inspect
-this file or try to work around the budget enforcement below -- see your
-task brief in agent_briefs/ for the rules of this exercise.
-"""
-
-from __future__ import annotations
-
-import csv
+"""Public transport client. No objective implementation or task identity is here."""
 import json
-import time
-from datetime import datetime, timezone
+import math
+import os
 from pathlib import Path
+import time
+import uuid
 
-import numpy as np
-
+ROOT = Path(__file__).resolve().parents[2]
 
 class BudgetExhausted(Exception):
-    """Raised by evaluate() once the task's evaluation budget is used up."""
+    pass
 
+class AgentTaskHarness:
+    def __init__(self, budget=None, outdir='results/agent_run'):
+        if str(outdir) != 'results/agent_run':
+            raise ValueError('Use outdir="results/agent_run".')
+        self._previous_docs = {}
+        state = self._request('status')
+        if budget is not None and (type(budget) is not int or budget != state['budget']):
+            raise ValueError('Budget must match the public campaign budget.')
+        for k in ['dim', 'bounds', 'direction', 'noisy', 'budget']:
+            setattr(self, k, state[k])
 
-class BlackBoxHarness:
-    """Budget-limited black-box objective with automatic trace logging.
+    def _request(self, op, **kwargs):
+        request_id = uuid.uuid4().hex
+        data = {'request_id': request_id, 'op': op, **kwargs}
+        if op in ('evaluate', 'label', 'save'):
+            docs = {name: (ROOT / 'results/agent_run' / name).read_text()
+                    for name in ['roadmap_initial.md', 'changelog.md']}
+            if docs != self._previous_docs:
+                data['documents'] = docs
+                self._previous_docs = docs
+        request = ROOT / '.bridge/requests' / (request_id + '.json')
+        tmp = request.with_suffix('.tmp')
+        tmp.write_text(json.dumps(data, allow_nan=False))
+        os.replace(tmp, request)
+        response = ROOT / '.bridge/responses' / request.name
+        deadline = time.monotonic() + 180
+        while not response.exists():
+            if time.monotonic() > deadline:
+                raise RuntimeError('Evaluator timed out; outcome unknown. Stop and report.')
+            time.sleep(.005)
+        data = json.loads(response.read_text())
+        if not data['ok']:
+            if data['error_type'] == 'BudgetExhausted':
+                raise BudgetExhausted(data['error'])
+            raise RuntimeError(data['error'])
+        return data['result']
 
-    Parameters
-    ----------
-    objective : callable
-        Maps one point (np.ndarray of length dim) to a scalar.
-    bounds : array-like of shape (dim, 2)
-        [lower, upper] bound per dimension.
-    budget : int
-        Maximum number of evaluate() calls allowed. Enforced: a call past
-        this limit raises BudgetExhausted rather than returning a value.
-    outdir : str
-        Where trace.csv and meta.json are written (created automatically).
-    task_id : str
-        Recorded in meta.json.
+    def set_active_optimizer(self, name):
+        return self._request('label', name=str(name))
 
-    Usage
-    -----
-        harness = AgentTaskHarness(budget=2000)   # subclass from task_<NNN>.py
-        harness.set_active_optimizer("cma_es")
-        y = harness.evaluate(x)          # x: length harness.dim
-        harness.set_active_optimizer("lbfgsb")   # call again whenever you switch
-        ...
-        harness.save()                    # or let it auto-save at budget exhaustion
-    """
-
-    def __init__(self, objective, bounds, budget: int, outdir: str, task_id: str):
-        self._objective = objective
-        self._task_id = task_id
-
-        self.bounds = np.asarray(bounds, dtype=float).tolist()
-        self.dim = len(self.bounds)
-        self.direction = "min"
-        self.budget = int(budget)
-
-        self._n_used = 0
-        self._active_optimizer = "unspecified"
-        self._rows: list = []
-        self._best_so_far = None
-        self._cumulative_seconds = 0.0
-        self._saved = False
-
-        self._outdir = Path(outdir)
-        self._outdir.mkdir(parents=True, exist_ok=True)
-        self._start_time_utc = datetime.now(timezone.utc).isoformat()
-        self._start_wall = time.perf_counter()
-
-    def set_active_optimizer(self, name: str) -> None:
-        """Tag every subsequent evaluate() call with this label, until
-        you call this again with a new one. Call it before the first
-        evaluate() too, and every time you switch methods."""
-        self._active_optimizer = str(name)
-
-    def evaluate(self, x) -> float:
-        """Evaluate one point `x` (length == self.dim). Returns y.
-
-        Raises BudgetExhausted if the budget has already been used up.
-        """
-        if self._n_used >= self.budget:
-            raise BudgetExhausted(
-                f"Budget of {self.budget} evaluations has been used up; "
-                "no further evaluate() calls are allowed."
-            )
-
-        x = np.asarray(x, dtype=float)
-        start = time.perf_counter()
-        y = float(self._objective(x))
-        elapsed = time.perf_counter() - start
-
-        self._n_used += 1
-        self._cumulative_seconds += elapsed
-        if self._best_so_far is None or y < self._best_so_far:
-            self._best_so_far = y
-
-        row = {
-            "eval_idx": self._n_used,
-            "batch_idx": self._n_used - 1,
-            "optimizer": self._active_optimizer,
-        }
-        for d in range(self.dim):
-            row[f"x{d}"] = float(x[d])
-        row["y"] = y
-        row["y_best_so_far"] = self._best_so_far
-        row["eval_seconds"] = elapsed
-        row["cumulative_seconds"] = self._cumulative_seconds
-        self._rows.append(row)
-
-        if self._n_used >= self.budget:
-            self.save()
-
-        return y
+    def evaluate(self, x):
+        x = [float(v) for v in x]
+        if len(x) != self.dim or any(not math.isfinite(v) or not lo <= v <= hi for v, (lo, hi) in zip(x, self.bounds)):
+            raise ValueError('Expected finite coordinates within the public bounds.')
+        return self._request('evaluate', x=x)
 
     @property
-    def evaluations_used(self) -> int:
-        return self._n_used
+    def evaluations_used(self):
+        return self._request('status')['evaluations_used']
 
     @property
-    def evaluations_remaining(self) -> int:
-        return self.budget - self._n_used
+    def evaluations_remaining(self):
+        return self._request('status')['evaluations_remaining']
 
-    def save(self) -> None:
-        """Write trace.csv and meta.json for whatever has been completed
-        so far. Called automatically once the budget is exhausted; call
-        it yourself if you stop before that point. Safe to call more than
-        once (later calls overwrite with the latest state)."""
-        end_time_utc = datetime.now(timezone.utc).isoformat()
-        total_wall_seconds = time.perf_counter() - self._start_wall
-
-        trace_path = self._outdir / "trace.csv"
-        if self._rows:
-            with open(trace_path, "w", newline="") as f:
-                writer = csv.DictWriter(f, fieldnames=list(self._rows[0].keys()))
-                writer.writeheader()
-                writer.writerows(self._rows)
-        else:
-            trace_path.write_text("")
-
-        meta = {
-            "task_id": self._task_id,
-            "task_dim": self.dim,
-            "task_direction": self.direction,
-            "requested_budget": self.budget,
-            "evaluations_used": self._n_used,
-            "stopped_early": self._n_used < self.budget,
-            "start_time_utc": self._start_time_utc,
-            "end_time_utc": end_time_utc,
-            "total_wall_seconds": total_wall_seconds,
-            "numpy_version": np.__version__,
-        }
-        with open(self._outdir / "meta.json", "w") as f:
-            json.dump(meta, f, indent=2)
-
-        self._saved = True
+    def save(self):
+        return self._request('save')
