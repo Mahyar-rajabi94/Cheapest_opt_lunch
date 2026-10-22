@@ -1,0 +1,19 @@
+{
+  "task_name": "nevergrad_noisy_rosenbrock_d20_n0.1",
+  "task_dim": 20,
+  "task_direction": "min",
+  "task_f_opt": 0.0,
+  "task_noisy": true,
+  "optimizer_name": "bobyqa",
+  "optimizer_class": "src.optimizers.bobyqa.BOBYQA",
+  "seed": 0,
+  "requested_budget": 2000,
+  "evaluations_used": 290,
+  "stopped_early": true,
+  "stop_reason": "BOBYQA's solver thread has already returned (converged, or hit a numerical stopping condition) and will not propose further points. Final result: ****** Py-BOBYQA Results ******\nSolution xmin = [-1.00036407 -0.41758426 -0.48238896 -0.39522282  0.34110094  1.09335916\n  0.09403826 -0.23093442  0.05358297  0.19651063  0.04842421 -0.90285857\n  0.14217875 -0.59594236  0.06523468 -0.1598242  -0.06976465  0.04184497\n -0.1809475  -0.05878013]\nObjective value f(xmin) = 127008.4778\nNeeded 290 objective evaluations (at 290 points)\nApproximate gradient = [-4.40093015e+10 -5.21613894e+10 -7.94394820e+09  1.24976398e+11\n  4.29337743e+10 -6.01213045e+10  6.08591105e+09 -9.82166033e+09\n -9.98964561e+09 -4.50769919e+10 -2.21463118e+10 -1.20842991e+11\n -2.78759628e+10  5.69402024e+10  1.06957799e+11 -3.73815311e+10\n  1.51896902e+10  5.28039970e+10  1.34637758e+11 -9.30576974e+10]\nNot showing approximate Hessian because it is too long; check self.hessian\nExit flag = 0\nSuccess: rho has reached rhoend\n******************************\n",
+  "start_time_utc": "2026-10-22T11:33:25.244185+00:00",
+  "end_time_utc": "2026-10-22T11:33:26.891162+00:00",
+  "total_wall_seconds": 1.647016289178282,
+  "numpy_version": "2.4.6",
+  "scipy_version": "1.17.1"
+}

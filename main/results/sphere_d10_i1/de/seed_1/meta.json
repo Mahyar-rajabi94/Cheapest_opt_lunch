@@ -1,0 +1,18 @@
+{
+  "task_name": "sphere_d10_i1",
+  "task_dim": 10,
+  "task_direction": "min",
+  "task_f_opt": 79.48,
+  "optimizer_name": "de",
+  "optimizer_class": "src.optimizers.differential_evolution.DifferentialEvolution",
+  "seed": 1,
+  "requested_budget": 2000,
+  "evaluations_used": 2000,
+  "stopped_early": false,
+  "stop_reason": null,
+  "start_time_utc": "2026-10-21T06:10:12.035147+00:00",
+  "end_time_utc": "2026-10-21T06:10:12.087364+00:00",
+  "total_wall_seconds": 0.052229082997655496,
+  "numpy_version": "2.4.6",
+  "scipy_version": "1.17.1"
+}

@@ -1,0 +1,18 @@
+{
+  "task_name": "bbob_mixint_f15_d10_i1",
+  "task_dim": 10,
+  "task_direction": "min",
+  "task_f_opt": 100.0,
+  "optimizer_name": "turbo",
+  "optimizer_class": "src.optimizers.turbo.TuRBO",
+  "seed": 9,
+  "requested_budget": 100,
+  "evaluations_used": 100,
+  "stopped_early": false,
+  "stop_reason": null,
+  "start_time_utc": "2026-10-21T19:52:33.254744+00:00",
+  "end_time_utc": "2026-10-21T19:52:44.866990+00:00",
+  "total_wall_seconds": 11.612296259962022,
+  "numpy_version": "2.4.6",
+  "scipy_version": "1.17.1"
+}

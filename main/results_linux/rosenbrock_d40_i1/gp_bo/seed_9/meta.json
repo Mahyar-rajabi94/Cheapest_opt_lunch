@@ -1,0 +1,18 @@
+{
+  "task_name": "rosenbrock_d40_i1",
+  "task_dim": 40,
+  "task_direction": "min",
+  "task_f_opt": 149.15,
+  "optimizer_name": "gp_bo",
+  "optimizer_class": "src.optimizers.gp_bo.GPBO",
+  "seed": 9,
+  "requested_budget": 100,
+  "evaluations_used": 100,
+  "stopped_early": false,
+  "stop_reason": null,
+  "start_time_utc": "2026-10-21T18:54:49.659569+00:00",
+  "end_time_utc": "2026-10-21T18:55:17.483553+00:00",
+  "total_wall_seconds": 27.824020097963512,
+  "numpy_version": "2.4.6",
+  "scipy_version": "1.17.1"
+}

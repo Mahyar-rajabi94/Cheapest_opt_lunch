@@ -1,0 +1,18 @@
+{
+  "task_name": "psa_v10_d8",
+  "task_dim": 8,
+  "task_direction": "min",
+  "task_f_opt": 83.13,
+  "optimizer_name": "nelder_mead",
+  "optimizer_class": "src.optimizers.nelder_mead.NelderMead",
+  "seed": 0,
+  "requested_budget": 2000,
+  "evaluations_used": 429,
+  "stopped_early": true,
+  "stop_reason": "Nelder-Mead has already converged (or stopped) and will not propose further points. Final result:        message: Optimization terminated successfully.\n       success: True\n        status: 0\n           fun: 1170.125269505622\n             x: [ 5.000e-01  5.000e-01  5.000e-01  5.000e-01  5.000e-01\n                  5.000e-01  5.000e-01  5.000e-01]\n           nit: 43\n          nfev: 429\n final_simplex: (array([[ 5.000e-01,  5.000e-01, ...,  5.000e-01,\n                         5.000e-01],\n                       [ 5.001e-01,  5.000e-01, ...,  5.000e-01,\n                         5.000e-01],\n                       ...,\n                       [ 5.000e-01,  5.000e-01, ...,  5.001e-01,\n                         5.000e-01],\n                       [ 5.000e-01,  5.000e-01, ...,  5.000e-01,\n                         5.001e-01]], shape=(9, 8)), array([ 1.170e+03,  1.170e+03,  1.170e+03,  1.170e+03,\n                        1.170e+03,  1.170e+03,  1.170e+03,  1.170e+03,\n                        1.170e+03]))",
+  "start_time_utc": "2026-10-22T15:31:13.206914+00:00",
+  "end_time_utc": "2026-10-22T15:31:13.341879+00:00",
+  "total_wall_seconds": 0.13466099999959624,
+  "numpy_version": "2.5.4",
+  "scipy_version": "1.18.1"
+}

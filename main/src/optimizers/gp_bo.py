@@ -18,11 +18,13 @@ Standard, no-tuning defaults:
   project's own SobolSearch, before the first acquisition-driven point is
   proposed.
 
-Exact GP fitting costs grow roughly cubically with the amount of data, so
-this optimizer is only practical at small budgets -- consistent with its
-documented regime in docs/claude_deep_serach/optimizer_landscape.md
-(expensive, continuous problems, budgets of order 10 x dim, not 1000+ x
-dim).
+One deliberate departure from plain sequential BO, to make large budgets
+affordable: the GP hyperparameters are refit only every refit_every=50
+evaluations. In between, each ask still conditions the GP on all data told
+so far, reusing the last fitted hyperparameters. Fitting (many exact
+marginal-likelihood solves) dominates the per-step cost; conditioning is a
+single O(n^3) solve, so the remaining per-step cost is mostly the
+acquisition optimization.
 
 By convention, this optimizer MINIMIZES the objective (matching the rest
 of this package).
@@ -55,7 +57,8 @@ class GPBO:
     """Sequential GP-BO with the analytic LogEI acquisition function.
 
     This optimizer only supports asking for one point at a time (n=1):
-    each `ask` fits a fresh GP on all data told so far and optimizes LogEI
+    each `ask` conditions a GP on all data told so far (refitting its
+    hyperparameters every `refit_every` evaluations) and optimizes LogEI
     for the single next point; batch (q > 1) BO would need a different
     acquisition function (e.g. q-LogNEI) and is not implemented here.
 
@@ -87,6 +90,7 @@ class GPBO:
         self.n_init = 2 * (self.dim + 1)
         self.num_restarts = 10
         self.raw_samples = 512
+        self.refit_every = 50
 
         self._sobol = SobolSearch(bounds=bounds, seed=seed)
         self._torch_bounds = torch.tensor(self.bounds.T, dtype=torch.double)
@@ -95,6 +99,8 @@ class GPBO:
 
         self.X_ = np.empty((0, self.dim))
         self.y_ = np.empty((0,))
+        self._hyperparams = None
+        self._n_at_fit = 0
 
     def ask(self, n: int = 1) -> np.ndarray:
         """Propose 1 new candidate point, shape (1, dim)."""
@@ -116,8 +122,19 @@ class GPBO:
             input_transform=Normalize(d=self.dim, bounds=self._torch_bounds),
             outcome_transform=Standardize(m=1),
         )
-        mll = ExactMarginalLogLikelihood(model.likelihood, model)
-        fit_gpytorch_mll(mll)
+        if (
+            self._hyperparams is None
+            or len(self.y_) - self._n_at_fit >= self.refit_every
+        ):
+            mll = ExactMarginalLogLikelihood(model.likelihood, model)
+            fit_gpytorch_mll(mll)
+            self._hyperparams = _gp_hyperparams(model)
+            self._n_at_fit = len(self.y_)
+        else:
+            # strict=False: the outcome transform keeps the statistics it
+            # just computed from the current data.
+            model.load_state_dict(self._hyperparams, strict=False)
+            model.eval()
 
         best_f = float(self.y_.min())
         acqf = LogExpectedImprovement(model=model, best_f=best_f, maximize=False)
@@ -144,3 +161,12 @@ class GPBO:
             raise RuntimeError("No evaluations recorded yet; call tell() first.")
         i = np.argmin(self.y_)
         return self.X_[i], self.y_[i]
+
+
+def _gp_hyperparams(model):
+    """Copy of a fitted SingleTaskGP's kernel, mean and likelihood state."""
+    return {
+        k: v.clone()
+        for k, v in model.state_dict().items()
+        if k.startswith(("likelihood.", "mean_module.", "covar_module."))
+    }

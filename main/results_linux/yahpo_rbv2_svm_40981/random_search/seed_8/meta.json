@@ -1,0 +1,18 @@
+{
+  "task_name": "yahpo_rbv2_svm_40981",
+  "task_dim": 6,
+  "task_direction": "min",
+  "task_f_opt": 0.25901198387145996,
+  "optimizer_name": "random_search",
+  "optimizer_class": "src.optimizers.random_search.RandomSearch",
+  "seed": 8,
+  "requested_budget": 2000,
+  "evaluations_used": 2000,
+  "stopped_early": false,
+  "stop_reason": null,
+  "start_time_utc": "2026-10-21T19:52:32.102140+00:00",
+  "end_time_utc": "2026-10-21T19:52:32.433173+00:00",
+  "total_wall_seconds": 0.33106772508472204,
+  "numpy_version": "2.4.6",
+  "scipy_version": "1.17.1"
+}

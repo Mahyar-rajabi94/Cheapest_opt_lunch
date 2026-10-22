@@ -1,7 +1,10 @@
 .venv/
+.agent-venv/
+/runs/
 __pycache__/
 *.pyc
 .DS_Store
 *.egg-info/
 main/docs/
 main/tasks/MOF/
+external/

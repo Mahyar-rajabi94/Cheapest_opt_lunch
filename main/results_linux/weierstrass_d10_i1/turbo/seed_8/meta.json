@@ -1,0 +1,18 @@
+{
+  "task_name": "weierstrass_d10_i1",
+  "task_dim": 10,
+  "task_direction": "min",
+  "task_f_opt": 71.35,
+  "optimizer_name": "turbo",
+  "optimizer_class": "src.optimizers.turbo.TuRBO",
+  "seed": 8,
+  "requested_budget": 100,
+  "evaluations_used": 100,
+  "stopped_early": false,
+  "stop_reason": null,
+  "start_time_utc": "2026-10-21T18:54:49.619027+00:00",
+  "end_time_utc": "2026-10-21T18:54:57.681110+00:00",
+  "total_wall_seconds": 8.06210996909067,
+  "numpy_version": "2.4.6",
+  "scipy_version": "1.17.1"
+}

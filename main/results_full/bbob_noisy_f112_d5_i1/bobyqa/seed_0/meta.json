@@ -1,0 +1,19 @@
+{
+  "task_name": "bbob_noisy_f112_d5_i1",
+  "task_dim": 5,
+  "task_direction": "min",
+  "task_f_opt": 149.1500000101,
+  "task_noisy": true,
+  "optimizer_name": "bobyqa",
+  "optimizer_class": "src.optimizers.bobyqa.BOBYQA",
+  "seed": 0,
+  "requested_budget": 2000,
+  "evaluations_used": 104,
+  "stopped_early": true,
+  "stop_reason": "BOBYQA's solver thread has already returned (converged, or hit a numerical stopping condition) and will not propose further points. Final result: ****** Py-BOBYQA Results ******\nSolution xmin = [-0.64008779 -1.25065774 -0.88624929  0.77629478 -3.93821946]\nObjective value f(xmin) = 1154.224018\nNeeded 104 objective evaluations (at 104 points)\nApproximate gradient = [ 45962017.60047694   1410258.3969111   -1395505.9867967\n  84566016.7589982  -20597234.91428259]\nApproximate Hessian = [[ 2.25444521e+14 -5.27263320e+13 -1.42840930e+14  1.31390706e+14\n   2.03678498e+14]\n [-5.27263320e+13 -1.34122667e+14  8.45475098e+11 -7.62133819e+13\n  -1.82068761e+14]\n [-1.42840930e+14  8.45475098e+11  1.59060754e+14 -7.01282057e+13\n  -4.69074998e+14]\n [ 1.31390706e+14 -7.62133819e+13 -7.01282057e+13 -2.26495765e+12\n  -3.04468888e+13]\n [ 2.03678498e+14 -1.82068761e+14 -4.69074998e+14 -3.04468888e+13\n   6.19695871e+14]]\nExit flag = 0\nSuccess: rho has reached rhoend\n******************************\n",
+  "start_time_utc": "2026-10-22T04:34:13.828144+00:00",
+  "end_time_utc": "2026-10-22T04:34:25.931377+00:00",
+  "total_wall_seconds": 12.103262389078736,
+  "numpy_version": "2.4.6",
+  "scipy_version": "1.17.1"
+}

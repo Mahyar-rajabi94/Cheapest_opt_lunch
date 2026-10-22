@@ -1,0 +1,18 @@
+{
+  "task_name": "psa_v10_d8",
+  "task_dim": 8,
+  "task_direction": "min",
+  "task_f_opt": 83.13,
+  "optimizer_name": "random_search",
+  "optimizer_class": "src.optimizers.random_search.RandomSearch",
+  "seed": 1,
+  "requested_budget": 2000,
+  "evaluations_used": 2000,
+  "stopped_early": false,
+  "stop_reason": null,
+  "start_time_utc": "2026-10-22T15:31:06.876338+00:00",
+  "end_time_utc": "2026-10-22T15:31:07.478501+00:00",
+  "total_wall_seconds": 0.6019300000002659,
+  "numpy_version": "2.5.4",
+  "scipy_version": "1.18.1"
+}

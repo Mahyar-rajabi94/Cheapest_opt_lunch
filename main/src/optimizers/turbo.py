@@ -30,8 +30,16 @@ tutorial:
   The externally visible history (X_, y_, best()) is never discarded --
   only the data used to fit the *current* trust region's GP is local.
 
+One deliberate departure from the tutorial, to make large budgets
+affordable (as in gp_bo.py): the GP hyperparameters are refit only every
+refit_every=50 evaluations, and always on a new trust region's first
+batch. In between, each batch still conditions the GP on all local data,
+reusing the last fitted hyperparameters (so the trust region's
+lengthscale-based shape also updates only at refits).
+
 By convention, this optimizer MINIMIZES the objective (matching the rest
-of this package).
+of this package). Internally the GP is fit on -y, because BoTorch's
+Thompson-sampling selector (MaxPosteriorSampling) maximizes.
 """
 
 from __future__ import annotations
@@ -52,6 +60,8 @@ from botorch.models import SingleTaskGP
 from botorch.models.transforms.input import Normalize
 from botorch.models.transforms.outcome import Standardize
 from gpytorch.mlls import ExactMarginalLogLikelihood
+
+from src.optimizers.gp_bo import _gp_hyperparams
 
 
 class TuRBO:
@@ -95,6 +105,7 @@ class TuRBO:
         self.batch_size = 4
         self.n_init = 2 * self.dim
         self.n_candidates = min(100 * self.dim, 5000)
+        self.refit_every = 50
 
         self._length_min = 0.5 ** 7
         self._length_max = 1.6
@@ -134,6 +145,8 @@ class TuRBO:
         self._local_best_y = np.inf
         self._evolve_evals_since_update = 0
         self._phase = "init"
+        self._hyperparams = None
+        self._n_at_fit = 0
 
     def ask(self, n: int = 1) -> np.ndarray:
         """Propose `n` new candidate points, shape (n, dim)."""
@@ -157,8 +170,13 @@ class TuRBO:
 
         # Fit a GP on this trust region's own local data so far (not the
         # whole run's history -- that's reset on restart).
+        # BoTorch's MaxPosteriorSampling (used below) picks the candidates
+        # with the *highest* sampled values, i.e. it assumes maximization.
+        # This optimizer minimizes, so the GP is fit on -y: the maximum of
+        # -y is the minimum of y. (Fitting on raw y made TuRBO chase the
+        # worst regions of the trust region.)
         X_t = torch.tensor(self._local_X_unit, dtype=torch.double)
-        Y_t = torch.tensor(self._local_y, dtype=torch.double).unsqueeze(-1)
+        Y_t = torch.tensor(-self._local_y, dtype=torch.double).unsqueeze(-1)
 
         model = SingleTaskGP(
             X_t,
@@ -166,8 +184,19 @@ class TuRBO:
             input_transform=Normalize(d=self.dim, bounds=self._unit_bounds),
             outcome_transform=Standardize(m=1),
         )
-        mll = ExactMarginalLogLikelihood(model.likelihood, model)
-        fit_gpytorch_mll(mll)
+        if (
+            self._hyperparams is None
+            or len(self._local_y) - self._n_at_fit >= self.refit_every
+        ):
+            mll = ExactMarginalLogLikelihood(model.likelihood, model)
+            fit_gpytorch_mll(mll)
+            self._hyperparams = _gp_hyperparams(model)
+            self._n_at_fit = len(self._local_y)
+        else:
+            # strict=False: the outcome transform keeps the statistics it
+            # just computed from the current data.
+            model.load_state_dict(self._hyperparams, strict=False)
+            model.eval()
 
         weights = model.covar_module.lengthscale.squeeze().detach()
         weights = weights / weights.mean()

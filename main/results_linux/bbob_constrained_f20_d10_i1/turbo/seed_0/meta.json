@@ -1,0 +1,19 @@
+{
+  "task_name": "bbob_constrained_f20_d10_i1",
+  "task_dim": 10,
+  "task_direction": "min",
+  "task_f_opt": 1072.3569958546307,
+  "task_n_constraints": 3,
+  "optimizer_name": "turbo",
+  "optimizer_class": "src.optimizers.turbo.TuRBO",
+  "seed": 0,
+  "requested_budget": 100,
+  "evaluations_used": 100,
+  "stopped_early": false,
+  "stop_reason": null,
+  "start_time_utc": "2026-10-21T18:31:35.768198+00:00",
+  "end_time_utc": "2026-10-21T18:31:43.803970+00:00",
+  "total_wall_seconds": 8.035822611069307,
+  "numpy_version": "2.4.6",
+  "scipy_version": "1.17.1"
+}

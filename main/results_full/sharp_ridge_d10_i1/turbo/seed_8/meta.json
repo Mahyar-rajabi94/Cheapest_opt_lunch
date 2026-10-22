@@ -1,0 +1,18 @@
+{
+  "task_name": "sharp_ridge_d10_i1",
+  "task_dim": 10,
+  "task_direction": "min",
+  "task_f_opt": 29.97,
+  "optimizer_name": "turbo",
+  "optimizer_class": "src.optimizers.turbo.TuRBO",
+  "seed": 8,
+  "requested_budget": 2000,
+  "evaluations_used": 2000,
+  "stopped_early": false,
+  "stop_reason": null,
+  "start_time_utc": "2026-10-22T04:44:44.053873+00:00",
+  "end_time_utc": "2026-10-22T04:45:24.995816+00:00",
+  "total_wall_seconds": 40.94196965103038,
+  "numpy_version": "2.4.6",
+  "scipy_version": "1.17.1"
+}

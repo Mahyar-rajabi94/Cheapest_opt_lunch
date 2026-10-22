@@ -1,0 +1,18 @@
+{
+  "task_name": "rastrigin_d10_i1",
+  "task_dim": 10,
+  "task_direction": "min",
+  "task_f_opt": 1000.0,
+  "optimizer_name": "lbfgsb",
+  "optimizer_class": "src.optimizers.lbfgsb.LBFGSB",
+  "seed": 0,
+  "requested_budget": 2000,
+  "evaluations_used": 451,
+  "stopped_early": true,
+  "stop_reason": "L-BFGS-B has already converged (or stopped) and will not propose further points. Final result:   message: CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH\n  success: True\n   status: 0\n      fun: 1120.3888635062756\n        x: [ 1.869e-01  4.242e-01 -3.039e-02  2.471e-01  9.201e-01\n            -3.118e-02 -1.591e+00  6.303e-01 -1.510e+00 -8.978e-01]\n      nit: 30\n      jac: [-8.845e-03  1.155e-02 -2.638e-03 -6.935e-03  6.844e-03\n             7.776e-03  7.844e-03 -8.026e-03  1.075e-02  3.683e-03]\n     nfev: 451\n     njev: 41\n hess_inv: <10x10 LbfgsInvHessProduct with dtype=float64>",
+  "start_time_utc": "2026-10-21T06:57:19.906306+00:00",
+  "end_time_utc": "2026-10-21T06:57:19.918670+00:00",
+  "total_wall_seconds": 0.012369249991024844,
+  "numpy_version": "2.4.6",
+  "scipy_version": "1.17.1"
+}

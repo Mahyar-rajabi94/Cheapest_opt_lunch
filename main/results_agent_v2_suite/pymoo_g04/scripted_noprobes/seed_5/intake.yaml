@@ -1,0 +1,27 @@
+dim: 5
+bounds:
+- - 78.0
+  - 102.0
+- - 33.0
+  - 45.0
+- - 27.0
+  - 45.0
+- - 27.0
+  - 45.0
+- - 27.0
+  - 45.0
+budget_evals: 2000
+variable_types:
+- continuous
+- continuous
+- continuous
+- continuous
+- continuous
+eval_cost: cheap
+noise: deterministic
+gradients_available: false
+batch_size: 1
+constraints: black-box inequality constraints; infeasible points return 1e12 + 1e6*violation
+  + tanh(f)
+prior_knowledge: ''
+warm_start_points: []

@@ -1,0 +1,19 @@
+{
+  "task_name": "pymoo_g04",
+  "task_dim": 5,
+  "task_direction": "min",
+  "task_f_opt": -30665.538671783317,
+  "task_n_constraints": 6,
+  "optimizer_name": "random_search",
+  "optimizer_class": "src.optimizers.random_search.RandomSearch",
+  "seed": 8,
+  "requested_budget": 2000,
+  "evaluations_used": 2000,
+  "stopped_early": false,
+  "stop_reason": null,
+  "start_time_utc": "2026-10-22T04:05:56.198770+00:00",
+  "end_time_utc": "2026-10-22T04:05:56.365867+00:00",
+  "total_wall_seconds": 0.16713377484120429,
+  "numpy_version": "2.4.6",
+  "scipy_version": "1.17.1"
+}

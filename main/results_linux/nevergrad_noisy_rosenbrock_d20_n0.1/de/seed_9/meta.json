@@ -1,0 +1,19 @@
+{
+  "task_name": "nevergrad_noisy_rosenbrock_d20_n0.1",
+  "task_dim": 20,
+  "task_direction": "min",
+  "task_f_opt": 0.0,
+  "task_noisy": true,
+  "optimizer_name": "de",
+  "optimizer_class": "src.optimizers.differential_evolution.DifferentialEvolution",
+  "seed": 9,
+  "requested_budget": 2000,
+  "evaluations_used": 2000,
+  "stopped_early": false,
+  "stop_reason": null,
+  "start_time_utc": "2026-10-21T19:27:03.250904+00:00",
+  "end_time_utc": "2026-10-21T19:27:03.341758+00:00",
+  "total_wall_seconds": 0.0908690569922328,
+  "numpy_version": "2.4.6",
+  "scipy_version": "1.17.1"
+}

@@ -1,0 +1,18 @@
+{
+  "task_name": "yahpo_rbv2_svm_40981",
+  "task_dim": 6,
+  "task_direction": "min",
+  "task_f_opt": 0.25901198387145996,
+  "optimizer_name": "bobyqa",
+  "optimizer_class": "src.optimizers.bobyqa.BOBYQA",
+  "seed": 0,
+  "requested_budget": 2000,
+  "evaluations_used": 146,
+  "stopped_early": true,
+  "stop_reason": "BOBYQA's solver thread has already returned (converged, or hit a numerical stopping condition) and will not propose further points. Final result: ****** Py-BOBYQA Results ******\nSolution xmin = [0.66546136 0.60345396 0.52827095 0.8600539  0.38282414 0.39739256]\nObjective value f(xmin) = 0.262437582\nNeeded 146 objective evaluations (at 146 points)\nApproximate gradient = [ 0.00783915 -0.00707064  0.01642501 -0.0005717  -0.02286192  0.00547461]\nApproximate Hessian = [[ -390148.24089706   400422.05484921  1707532.05498378  1405596.35818317\n   -925488.19414419 -1990584.75979907]\n [  400422.05484921 -2570807.45979095  1400813.25519538   479110.84232015\n  -1516985.14525548 -1497456.92875737]\n [ 1707532.05498378  1400813.25519538  1482473.74378859  1273518.60044108\n  -1291309.88964318 -1871807.73584584]\n [ 1405596.35818317   479110.84232015  1273518.60044108  1054718.54309383\n    788494.54551367 -4612109.66217363]\n [ -925488.19414419 -1516985.14525548 -1291309.88964318   788494.54551367\n   5556834.4486773  -3002735.6513065 ]\n [-1990584.75979907 -1497456.92875737 -1871807.73584584 -4612109.66217363\n  -3002735.6513065   2616764.54369488]]\nExit flag = 0\nSuccess: rho has reached rhoend\n******************************\n",
+  "start_time_utc": "2026-10-22T11:33:24.388659+00:00",
+  "end_time_utc": "2026-10-22T11:33:24.577509+00:00",
+  "total_wall_seconds": 0.18888066103681922,
+  "numpy_version": "2.4.6",
+  "scipy_version": "1.17.1"
+}

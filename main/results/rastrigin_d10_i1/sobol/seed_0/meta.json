@@ -1,0 +1,18 @@
+{
+  "task_name": "rastrigin_d10_i1",
+  "task_dim": 10,
+  "task_direction": "min",
+  "task_f_opt": 1000.0,
+  "optimizer_name": "sobol",
+  "optimizer_class": "src.optimizers.sobol_search.SobolSearch",
+  "seed": 0,
+  "requested_budget": 2000,
+  "evaluations_used": 2000,
+  "stopped_early": false,
+  "stop_reason": null,
+  "start_time_utc": "2026-10-21T06:45:29.510046+00:00",
+  "end_time_utc": "2026-10-21T06:45:29.542132+00:00",
+  "total_wall_seconds": 0.03209029200661462,
+  "numpy_version": "2.4.6",
+  "scipy_version": "1.17.1"
+}
