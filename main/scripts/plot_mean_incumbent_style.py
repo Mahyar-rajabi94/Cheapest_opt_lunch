@@ -29,9 +29,6 @@ from plot_dionysus_vs_agents import baseline_trajectory  # noqa: E402
 
 BG = "#fcfcfc"
 INK = "#172334"       # title + agent line
-SUBTITLE_GRAY = "#5b6472"
-META_GRAY = "#8a93a3"
-FOOTNOTE_GRAY = "#8a93a3"
 GRIDLINE = "#eceef1"
 CURSOR_GRAY = "#b8bfc8"
 AXIS_GRAY = "#4a5160"
@@ -54,9 +51,7 @@ def main():
     task = "delaney"
     f_opt = -11.6
     budget = 100
-    n_candidates = 892
     agent_dir = "claude_agent_run_hptuning_tweak"
-    agent_label = "Claude agent (hp-tuning tweak)"
     series = [
         ("gp", "mordred", "GP (mordred features)", "#da8332"),
         ("gp", "mfp", "GP (fingerprint features)", "#8e5eb3"),
@@ -74,22 +69,18 @@ def main():
     y_max = max(ay_curve.max(), max(c[1].max() for c in baseline_curves)) * 1.08
 
     fig = plt.figure(figsize=(12.8, 7.6), dpi=100, facecolor=BG)
-    ax = fig.add_axes([0.085, 0.226, 0.856, 0.579])
+    ax = fig.add_axes([0.085, 0.12, 0.856, 0.74])
     ax.set_facecolor(BG)
 
-    fig.text(0.085, 0.934, "DIONYSUS Delaney · mean incumbent regret",
+    fig.text(0.085, 0.934, "Low-solubility molecule discovery · mean incumbent regret",
               fontsize=22, fontweight="bold", color=INK, ha="left", va="top")
-    fig.text(0.085, 0.897, f"{agent_label} versus {series[0][2]} and {series[1][2]}",
-              fontsize=13, color=SUBTITLE_GRAY, ha="left", va="top")
-    fig.text(0.085, 0.854, f"{n_candidates:,} candidates · molecular descriptors · mean across runs",
-              fontsize=12, color=META_GRAY, ha="left", va="top")
-    counter_text = fig.text(0.945, 0.854, "", fontsize=13, fontweight="bold", color=INK,
+    counter_text = fig.text(0.945, 0.934, "", fontsize=13, fontweight="bold", color=INK,
                              ha="right", va="top")
 
     ax.set_xlim(0, budget)
     ax.set_ylim(0, y_max)
-    ax.set_xlabel("Objective evaluations (initialization included)", fontsize=12, color=AXIS_GRAY)
-    ax.set_ylabel("Mean incumbent regret", fontsize=12, color=AXIS_GRAY)
+    ax.set_xlabel("Budget", fontsize=12, color=AXIS_GRAY)
+    ax.set_ylabel("Regret", fontsize=12, color=AXIS_GRAY)
     ax.tick_params(labelsize=10.5, colors=AXIS_GRAY)
     ax.grid(axis="y", color=GRIDLINE, linewidth=1.0)
     ax.set_axisbelow(True)
@@ -101,26 +92,18 @@ def main():
     (cursor_line,) = ax.plot([], [], color=CURSOR_GRAY, linewidth=1.1, linestyle=(0, (4, 3)), zorder=2)
 
     (agent_line,) = ax.plot([], [], color=INK, linewidth=3.4, zorder=5,
-                             label=f"{agent_label} (n=1)")
+                             label="Agent")
     (agent_dot,) = ax.plot([], [], "o", color=INK, markersize=5.5, zorder=6)
 
     base_lines, base_dots = [], []
     for _, _, label, color, n in baseline_curves:
-        (ln,) = ax.plot([], [], color=color, linewidth=2.2, zorder=4, label=f"{label} (n={n})")
+        (ln,) = ax.plot([], [], color=color, linewidth=2.2, zorder=4, label=label)
         (dot,) = ax.plot([], [], "o", color=color, markersize=4.5, zorder=4.5)
         base_lines.append(ln)
         base_dots.append(dot)
 
     legend = ax.legend(loc="upper right", frameon=False, fontsize=11, labelcolor=INK,
                         handlelength=1.8, bbox_to_anchor=(1.0, 1.0))
-
-    for y, text in [
-        (0.126, "Regret = full-pool minimum − best observed score. Lower is better."),
-        (0.102, "Curves show the agent's single run and arithmetic means across 30 baseline restarts."),
-        (0.078, f"Comparison: all {budget} agent calls; baseline calls 1–{budget}, "
-                "including diversity-sampling initialization."),
-    ]:
-        fig.text(0.085, y, text, fontsize=10, color=FOOTNOTE_GRAY, ha="left", va="top")
 
     frames = list(range(1, budget + 1))
 
