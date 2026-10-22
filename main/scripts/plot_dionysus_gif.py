@@ -48,6 +48,21 @@ def agent_regret_curve(task: str, agent_dir: str, f_opt: float):
     return eval_idx, np.maximum(y, 1e-6)
 
 
+def agent_method_segments(task: str, agent_dir: str):
+    """[(start_eval, method_name), ...] in order, one entry per method switch."""
+    rows = load_rows(ROOT / "results" / f"dionysus_{task}" / agent_dir / "trace.csv")
+    segments, cur = [], None
+    for r in rows:
+        if r["optimizer"] != cur:
+            segments.append((int(r["eval_idx"]), r["optimizer"]))
+            cur = r["optimizer"]
+    return segments
+
+
+def friendly_method_name(name: str) -> str:
+    return name.replace("_", " ").capitalize()
+
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--task", required=True, help="dionysus task name, e.g. freesolv")
@@ -57,8 +72,9 @@ def main():
     p.add_argument("--baseline-model", required=True)
     p.add_argument("--baseline-feature", required=True)
     p.add_argument("--baseline-label", default="Baseline")
-    p.add_argument("--step", type=int, default=2, help="evaluations advanced per frame")
-    p.add_argument("--fps", type=int, default=15)
+    p.add_argument("--step", type=int, default=1, help="evaluations advanced per frame")
+    p.add_argument("--fps", type=int, default=8)
+    p.add_argument("--max-budget", type=int, default=None, help="cut the animation off at this evaluation")
     p.add_argument("--outdir", default=str(ROOT.parent / "slide_figures" / "dionysus"))
     args = p.parse_args()
 
@@ -66,8 +82,16 @@ def main():
     agent_x, agent_y = agent_regret_curve(args.task, args.agent, args.f_opt)
     base_x, base_y = baseline_trajectory(data_dir, args.baseline_model, args.baseline_feature, args.f_opt, "minimize")
     base_y = np.maximum(base_y, 1e-6)
+    method_segments = agent_method_segments(args.task, args.agent)
 
     n_frames_total = max(agent_x[-1], base_x[-1])
+    if args.max_budget is not None:
+        n_frames_total = min(n_frames_total, args.max_budget)
+        a_keep = agent_x <= n_frames_total
+        b_keep = base_x <= n_frames_total
+        agent_x, agent_y = agent_x[a_keep], agent_y[a_keep]
+        base_x, base_y = base_x[b_keep], base_y[b_keep]
+        method_segments = [(s, m) for s, m in method_segments if s <= n_frames_total]
     frame_budgets = list(range(1, n_frames_total + 1, args.step))
     if frame_budgets[-1] != n_frames_total:
         frame_budgets.append(n_frames_total)
@@ -93,6 +117,35 @@ def main():
     (base_dot,) = ax.plot([], [], "o", color=BASELINE_COLOR, markersize=7)
     (agent_dot,) = ax.plot([], [], "o", color=AGENT_COLOR, markersize=8)
 
+    # Box listing every method the agent used (up to the cutoff); whichever
+    # one is active at the current budget is highlighted.
+    unique_methods = []
+    for _, m in method_segments:
+        if m not in unique_methods:
+            unique_methods.append(m)
+    n_methods = len(unique_methods)
+    line_h = 0.065
+    top = 0.97
+    box_pad = 0.025
+    box_x0, box_x1 = 0.46, 0.99
+    box_y0 = top - n_methods * line_h - box_pad
+    box_y1 = top + box_pad
+    ax.add_patch(plt.Rectangle((box_x0, box_y0), box_x1 - box_x0, box_y1 - box_y0,
+                                transform=ax.transAxes, facecolor="white", edgecolor="#cccccc",
+                                linewidth=1.2, zorder=5))
+    method_texts = []
+    for i, m in enumerate(unique_methods):
+        t = ax.text(box_x1 - 0.02, top - i * line_h, friendly_method_name(m), transform=ax.transAxes,
+                    ha="right", va="top", fontsize=9.5, color="#999999", fontweight="normal", zorder=6)
+        method_texts.append(t)
+
+    def active_method_index(budget):
+        idx = 0
+        for i, (start, _) in enumerate(method_segments):
+            if start <= budget:
+                idx = i
+        return unique_methods.index(method_segments[idx][1])
+
     def update(budget):
         a_mask = agent_x <= budget
         b_mask = base_x <= budget
@@ -102,9 +155,17 @@ def main():
             agent_dot.set_data([agent_x[a_mask][-1]], [agent_y[a_mask][-1]])
         if b_mask.any():
             base_dot.set_data([base_x[b_mask][-1]], [base_y[b_mask][-1]])
-        return base_line, agent_line, base_dot, agent_dot
+        active_idx = active_method_index(budget)
+        for i, t in enumerate(method_texts):
+            if i == active_idx:
+                t.set_color(AGENT_COLOR)
+                t.set_fontweight("bold")
+            else:
+                t.set_color("#999999")
+                t.set_fontweight("normal")
+        return base_line, agent_line, base_dot, agent_dot, *method_texts
 
-    anim = FuncAnimation(fig, update, frames=frame_budgets, blit=True)
+    anim = FuncAnimation(fig, update, frames=frame_budgets, blit=False)
     outdir = Path(args.outdir)
     outdir.mkdir(parents=True, exist_ok=True)
     out_path = outdir / f"{args.task}_regret_vs_budget.gif"
