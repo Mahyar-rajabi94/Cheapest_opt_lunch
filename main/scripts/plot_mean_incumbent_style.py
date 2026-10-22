@@ -72,16 +72,16 @@ def main():
     ax = fig.add_axes([0.085, 0.12, 0.856, 0.74])
     ax.set_facecolor(BG)
 
-    fig.text(0.085, 0.934, "Low-solubility molecule discovery · mean incumbent regret",
+    fig.text(0.085, 0.934, "Low-solubility molecule discovery",
               fontsize=22, fontweight="bold", color=INK, ha="left", va="top")
     counter_text = fig.text(0.945, 0.934, "", fontsize=13, fontweight="bold", color=INK,
                              ha="right", va="top")
 
     ax.set_xlim(0, budget)
     ax.set_ylim(0, y_max)
-    ax.set_xlabel("Budget", fontsize=12, color=AXIS_GRAY)
-    ax.set_ylabel("Regret", fontsize=12, color=AXIS_GRAY)
-    ax.tick_params(labelsize=10.5, colors=AXIS_GRAY)
+    ax.set_xlabel("Budget", fontsize=16, color=AXIS_GRAY)
+    ax.set_ylabel("Regret", fontsize=16, color=AXIS_GRAY)
+    ax.tick_params(labelsize=14, colors=AXIS_GRAY)
     ax.grid(axis="y", color=GRIDLINE, linewidth=1.0)
     ax.set_axisbelow(True)
     for spine in ("top", "right"):
