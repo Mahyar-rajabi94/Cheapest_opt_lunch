@@ -45,8 +45,11 @@ Then start a fresh campaign:
 ```bash
 .venv/bin/python main/scripts/run_agent.py \
   --task step_ellipsoid10 --budget 100 \
-  --model gpt-6-astra --effort xhigh
+  --model gpt-6-astra --effort max
 ```
+
+The defaults are `gpt-6-astra` and `max`, so both flags can be omitted.
+Use `--effort xhigh` to retain the reasoning setting used in earlier experiments.
 
 `--budget` is the number of **objective evaluations**, not model tokens or optimizer
 iterations. It is supplied in the public task input and enforced privately.
@@ -55,13 +58,13 @@ The agent chooses the next block's method, settings and length; continuations al
 require a new decision. It can preserve a live optimizer process between blocks.
 
 To run Claude instead, add `--agent claude` (default model `claude-opus-5-5`,
-efforts up to `max`; `--claude` overrides the CLI path). Claude Code runs headless
+same `max` default effort; `--claude` overrides the CLI path). Claude Code runs headless
 with no built-in tools, settings, memory, CLAUDE.md, skills or claude.ai connectors:
 its only tools are the same sandboxed `run_command`/`write_stdin` MCP executor.
 
 ```bash
 .venv/bin/python main/scripts/run_agent.py \
-  --task step_ellipsoid10 --budget 100 --agent claude --effort xhigh
+  --task step_ellipsoid10 --budget 100 --agent claude
 ```
 
 For the other two recent experiments, use `--task sharp_ridge10` or

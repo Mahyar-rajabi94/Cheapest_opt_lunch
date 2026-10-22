@@ -341,8 +341,8 @@ def main(argv=None):
     parser.add_argument('--seed', type=int, default=0, help='Observation-noise seed for noisy tasks')
     parser.add_argument('--agent', default='codex', choices=['codex', 'claude'], help='CLI that drives the model')
     parser.add_argument('--model', help='Default: gpt-6-astra (codex), claude-opus-5-5 (claude)')
-    parser.add_argument('--effort', default='xhigh', choices=['low', 'medium', 'high', 'xhigh', 'max'],
-                        help='max is Claude only')
+    parser.add_argument('--effort', default='max', choices=['low', 'medium', 'high', 'xhigh', 'max'],
+                        help='Reasoning effort (default: max).')
     parser.add_argument('--agent-python', type=Path, default=REPO / '.agent-venv/bin/python')
     parser.add_argument('--codex', type=Path, default=shutil.which('codex'),
                         help='Codex CLI; also the per-command sandbox for both agents')
@@ -356,8 +356,6 @@ def main(argv=None):
         parser.error('Use a positive budget and install Codex CLI (signed in, for --agent codex).')
     if args.agent == 'claude' and args.claude is None:
         parser.error('Install and sign in to Claude Code CLI, or pass --claude.')
-    if args.agent == 'codex' and args.effort == 'max':
-        parser.error('Codex supports efforts up to xhigh.')
     args.model = args.model or {'codex': 'gpt-6-astra', 'claude': 'claude-opus-5-5'}[args.agent]
     # Preserve the venv executable path: resolving its symlink would bypass the venv.
     args.agent_python = args.agent_python.expanduser().absolute()
