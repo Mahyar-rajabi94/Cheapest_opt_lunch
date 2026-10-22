@@ -1,0 +1,12 @@
+{"at": "2026-10-22T18:23:46.719748+00:00", "action": "increase_parallelism", "previous": 4, "maximum": 8, "reason": "User requested maximum safe speed; memory_pressure reported 44% free on 24 GiB host.", "changes_to_agent_protocol": false}
+{"at": "2026-10-22T18:33:52.606853+00:00", "action": "raise_concurrency_ceiling", "max_workers": 12, "free_percent_before": 41, "watch_pid": 54998, "reason": "User requested maximum safe throughput; observed low CPU and adequate memory."}
+{"at": "2026-10-22T18:33:52.624593+00:00", "action": "memory_guard", "free_percent": 42, "max_workers": 12}
+{"at": "2026-10-22T18:37:19.083002+00:00", "action": "memory_guard", "free_percent": 32, "max_workers": 8}
+{"at": "2026-10-22T18:37:59.628267+00:00", "action": "memory_guard", "free_percent": 42, "max_workers": 12}
+{"at": "2026-10-22T18:39:29.815629+00:00", "action": "raise_concurrency_ceiling", "max_workers": 16, "free_percent_before": 45, "watch_pid": 55940, "reason": "User requested maximum safe throughput; twelve campaigns remain within resource headroom."}
+{"at": "2026-10-22T18:39:29.836017+00:00", "action": "memory_guard", "free_percent": 45, "max_workers": 16}
+{"at": "2026-10-22T18:41:10.958980+00:00", "action": "memory_guard", "free_percent": 36, "max_workers": 12}
+{"at": "2026-10-22T18:41:54.686638+00:00", "action": "memory_guard", "free_percent": 33, "max_workers": 8}
+{"at": "2026-10-22T18:42:14.934991+00:00", "action": "memory_guard", "free_percent": 40, "max_workers": 16}
+{"at": "2026-10-22T18:43:17.435813+00:00", "action": "memory_guard", "free_percent": 38, "max_workers": 12}
+{"at": "2026-10-22T18:43:57.982015+00:00", "action": "memory_guard", "free_percent": 42, "max_workers": 16}

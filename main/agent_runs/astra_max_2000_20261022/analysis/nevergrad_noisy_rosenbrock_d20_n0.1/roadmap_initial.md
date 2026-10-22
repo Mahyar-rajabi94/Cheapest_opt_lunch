@@ -1,0 +1,15 @@
+# First optimization block
+
+The public task is to minimize a noisy scalar black box in 20 real coordinates, each in [-5, 5], without additional constraints. The hard campaign budget is 2,000 objective calls, including repeats. There are no observations. The score is the noise-free value at the point attaining the lowest observed y; that latent value is unavailable. Noise magnitude and its spatial dependence are unknown, so repeated measurements will inform interpretation but do not establish a global noise model. No identity, smoothness, separability, or optimum is assumed.
+
+## Method and initialization
+
+Use CMA-ES through the supported cma.CMAEvolutionStrategy ask/tell API, pycma 4.5.0, with NumPy 2.4.6. The provided wrapper fixes parameters that this campaign should control, so a small campaign-local adapter uses the underlying library. Initialize the mean at the box midpoint (all zero), sigma=2.0 (20% of the coordinate range), population=20, seed=61137, active covariance updates=True, full covariance from the start (CMA_diagonal=0), and bounds=[-5,5] in every coordinate. Use pycma 4.5.0 default BoundTransform and internal step-size/covariance learning rates and rank recombination (10 positive parents). Disable library file logging and console verbosity (verb_log=0, verbose=-9). All other inherited defaults are those of pycma 4.5.0; its default stopping conditions trigger a checkpoint, not an automatic restart.
+
+First evaluate the center eight times, tagged cma_es, to estimate within-point noise and get a central reference. Then evaluate twelve complete generations of 20 individually measured candidates. The center repetitions are diagnostic and are not passed as a synthetic generation. CMA-ES uses ranks and adapts a full covariance without requiring accurate finite-difference gradients. A population of 20 exceeds the library default of 12 for this dimension and provides broader selection under unknown noise, while retaining useful generational progress. The initial scale provides broad interior exploration without assuming a promising region.
+
+## First step limit and review
+
+At most 248 additional objective calls; pause at cumulative evaluation 248. Eight replicates give a preliminary variance estimate; twelve generations allow initial movement and scale adaptation in 20 dimensions while using only 12.4% of the total budget. No later method or budget allocation is selected here.
+
+At the checkpoint inspect the center sample mean/standard deviation, best observed point and value, generation minima/medians/spreads, step size, covariance axis ratio, and remaining budget. Compare progress with observed noise, recognizing that eight replicates at one point cannot characterize heteroscedasticity or validate the single best observation. Pause sooner if CMA-ES signals termination, an observation is nonfinite, or the evaluator errors. An evaluator error ends execution without retrying an unknown call. A local guard prevents crossing either the current block limit or the campaign budget. The same live harness and optimizer state remain available for the next independently chosen decision.

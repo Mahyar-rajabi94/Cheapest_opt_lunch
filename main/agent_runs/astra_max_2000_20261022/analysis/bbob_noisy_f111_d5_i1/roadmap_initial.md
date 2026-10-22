@@ -1,0 +1,9 @@
+# Initial decision: Sobol exploration and noise measurement
+
+Minimize a noisy scalar objective in five coordinates, each in [-5, 5], with no other constraints. The total hard budget is 2000 calls, including repeats. There are no prior observations. The campaign is scored at the point with the lowest observed y using its private noise-free value. The noise distribution, magnitude, and spatial variation are unknown; replication is diagnostic and does not assume Gaussian or constant noise. The objective remains sealed.
+
+Use the supplied SobolSearch wrapper with SciPy 1.17.1, dimension 5, scramble=True, seed=20261022, and the full stated bounds. Draw 64 distinct space-filling points. Then measure the box center eight times. Finally repeat each of the three lowest observed Sobol points eight additional times, in rounds. The initial three-point selection is subject to selection bias; repeat-only and combined summaries will both be inspected. No other Sobol settings are changed from SciPy 1.17.1 defaults (bits=None resolves to 30, optimization=None). NumPy version is 2.4.6.
+
+Maximum additional calls: 96; pause at cumulative evaluation 96. Sixty-four is a balanced power-of-two Sobol design and provides broad coverage in five dimensions. Thirty-two extra measurements give four locations for estimating variability and checking whether the apparent low points remain promising, without committing a large part of the budget before learning the response scale.
+
+Inspect value quantiles, the best observed point, separation between good locations, and within-location means/standard deviations versus between-location variation. Pause earlier on any evaluator error or nonfinite observation, without retrying an unknown evaluation. The driver guards the block limit, global budget, and bounds. No later method or allocation is selected in this initial record.

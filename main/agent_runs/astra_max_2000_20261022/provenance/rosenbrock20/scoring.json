@@ -1,0 +1,8 @@
+{
+  "task": "rosenbrock20",
+  "task_name": "rosenbrock_d20_i1",
+  "f_opt": 149.15,
+  "noisy": false,
+  "n_constraints": 0,
+  "seed": 0
+}

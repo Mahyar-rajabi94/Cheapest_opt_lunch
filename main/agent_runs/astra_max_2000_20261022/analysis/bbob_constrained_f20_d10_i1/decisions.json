@@ -1,0 +1,82 @@
+[
+  {
+    "block": 1,
+    "method": "sobol_survey",
+    "first_eval": 1,
+    "last_eval": 65,
+    "calls": 65,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "sobol_survey",
+        "first_eval": 1,
+        "last_eval": 65
+      }
+    ],
+    "decision_text": "# Initial decision: constrained space-filling survey\n\nThe public task is deterministic minimization in 10 dimensions on [-5,5]^10 with three black-box inequalities. Feasibility requires every returned g <= 0 with tolerance 1e-10. The result is the best feasible actual observation. The total hard budget is 2000 calls, including infeasible and repeated points. No observations are available; no smoothness, convexity, feasible volume, or objective identity is assumed.\n\nThe first block uses the provided `src.optimizers.sobol_search.SobolSearch` wrapper, backed by SciPy 1.17.1 `scipy.stats.qmc.Sobol`, with dimension 10, scrambling enabled, seed 4226, no post-sampling optimization, and its inherited 30-bit sequence default. Evaluate the box center once, then a complete 64-point Sobol design mapped to the stated bounds. The center provides a neutral reference; the power-of-two design provides broad reproducible coverage without choosing an unsupported objective model. All calls use optimizer label `sobol_survey`. Constraint values are retained separately; only feasible observations qualify as the incumbent.\n\nMaximum additional calls: 65. Pause at cumulative evaluation 65. This uses 3.25% of the budget and gives a modest broad sample for estimating feasibility prevalence and response scales in 10 dimensions, without delaying reconsideration for a large survey.\n\nAt the checkpoint inspect feasible count, best feasible objective and location, objective quantiles, individual constraint ranges, and least-violation observations. Assess whether the data support focused optimization and what scales and constraint handling would be appropriate. Stop sooner on an evaluator error or nonfinite returned values and report without retrying an unknown call. No later method or budget allocation is selected here.\n"
+  },
+  {
+    "block": 2,
+    "method": "cobyqa_local",
+    "first_eval": 66,
+    "last_eval": 215,
+    "calls": 150,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "cobyqa_local",
+        "first_eval": 66,
+        "last_eval": 215
+      }
+    ],
+    "decision_text": "## Decision after evaluation 65\n**Budget:** 65 used / 2000 total; 1935 remaining.\n**Evidence:** The survey produced 11 feasible observations (16.9%). Best feasible objective is 2039.9150232927216 at evaluation 52, with constraints [-18800.0715, -199.8381, -17599.9905]. The lowest objective, 136.84742127248302, is infeasible. Objective median is 3996.739576263118, and constraint magnitudes differ substantially (observed extrema span roughly 2.2e5, 3.6e4, 5.2e4). No noise replication is needed for the stated deterministic evaluator. Smoothness and local model accuracy remain untested.\n**Decision:** Switch to SciPy constrained quadratic trust-region search (COBYQA), initialized at the best feasible observation (evaluation 52). Preserve all observations and the harness. Reuse exact observed points through a cache so separate objective and constraint callbacks do not spend duplicate calls. A suspended solver thread will retain model/trust-region state at checkpoints; it cannot evaluate independently of the foreground budget gate.\n**Hyperparameters:** SciPy 1.17.1 `minimize(method='COBYQA')`; initial_tr_radius=1.0 in original coordinates, final_tr_radius=1e-7, feasibility_tol=1e-10, maxfev=2000, maxiter=10000, scale=False, disp=False, inherited f_target=-infinity and other internal COBYQA defaults. Objective scale is the survey median absolute y (3996.739576263118); each constraint scale is max(1, survey median absolute g_j). Require scaled g_j + 1e-8 <= 0 to provide a small feasibility buffer. Bounds are hard [-5,5]. The foreground cap, rather than solver maxfev, controls this block.\n**Reason:** Feasibility is already found; a constrained local model can exploit it without choosing an arbitrary objective-versus-violation penalty. Quadratic models allow efficient exploration of local curvature while tolerating unavailable derivatives. Scaling prevents constraint units from dominating numerical conditioning. A unit radius explores a meaningful neighborhood (10% of box width).\n**Next step limit:** 150 additional objective calls; pause at cumulative evaluation 215.\n**Why this length:** About seven 21-point interpolation-set sizes allow model construction and several trust-region updates, while keeping the initial local-search commitment modest.\n**Review:** Assess feasible incumbent improvement, feasibility rate, trajectory, and solver status. Pause sooner if the solver terminates or errors, or any evaluator call fails; do not retry an unknown evaluation. A short plateau alone will not be treated as method failure.\n\n"
+  },
+  {
+    "block": 3,
+    "method": "cobyqa_local",
+    "first_eval": 216,
+    "last_eval": 395,
+    "calls": 180,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "cobyqa_local",
+        "first_eval": 216,
+        "last_eval": 395
+      }
+    ],
+    "decision_text": "## Decision after evaluation 215\n**Budget:** 215 used / 2000 total; 1785 remaining.\n**Evidence:** The 150-call local block found 23 feasible observations and improved the feasible incumbent from 2039.9150232927216 to 1078.8721955341346 (47.1% reduction) at call 200. Its constraints are [-2.385126607478014, -0.5960691889686132, -19352.70464383074], suggesting two nearly active constraints. The block objective median is 1091.806568090201; the lower raw value 842.8878658362357 is infeasible. The solver has not terminated. The observations are deterministic, but local model accuracy and basin quality remain uncertain.\n**Decision:** Continue the existing COBYQA instance, retaining its full live model and trust-region state, observation cache, all observations, and harness counter.\n**Hyperparameters:** Unchanged from the decision at 65. Realized g scales are [91028.62438044912, 13109.270622282645, 9647.91177444196]; retain these fixed survey scales and the 1e-8 scaled inward constraint buffer. Do not reset radius or interpolation geometry while the local model is still productive.\n**Reason:** Substantial improvement and a recent feasible incumbent justify allowing the existing local model to refine the active boundary. There is insufficient evidence of convergence to justify a restart.\n**Next step limit:** 180 additional objective calls; pause at cumulative evaluation 395.\n**Why this length:** Roughly eight to nine interpolation-set sizes provide room for boundary refinement after the promising first local block, while retaining most of the budget for decisions informed by that refinement.\n**Review:** Examine best feasible progress over subintervals, constraint margins and near-boundary infeasible candidates, and solver termination. Pause sooner on solver termination or an error. Any evaluator error ends evaluation without retry.\n\n"
+  },
+  {
+    "block": 4,
+    "method": "slsqp_refine",
+    "first_eval": 396,
+    "last_eval": 535,
+    "calls": 140,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "slsqp_refine",
+        "first_eval": 396,
+        "last_eval": 535
+      }
+    ],
+    "decision_text": "## Decision after evaluation 395\n**Budget:** 395 used / 2000 total; 1605 remaining.\n**Evidence:** Continuing COBYQA improved the feasible incumbent only from 1078.8721955341346 to 1078.549262950221, with just 4 feasible points out of 180. The new incumbent at 331 has constraints [-0.5108934425661573, -0.13929460883446154, -19308.975290718023]. Recent objectives are near 1078.46 but violate the second constraint by 0.008 to 0.023, or the first by small amounts. Recent parameter changes are small; COBYQA has not terminated. This indicates difficult boundary refinement, not proof of local optimality or of general method failure.\n**Decision:** Switch to SciPy SLSQP initialized at the best feasible point, evaluation 331. Retain the suspended COBYQA state without allowing it to evaluate. Retain all observations and the same harness; construct a fresh SLSQP Hessian approximation and reuse exact observations via the shared callback cache.\n**Hyperparameters:** SciPy 1.17.1 `minimize(method='SLSQP')`, maxiter=200, ftol=1e-11, eps=1e-6 absolute forward-difference step, disp=False, inherited SLSQP line search and Hessian-update defaults. Reuse fscale=3996.739576263118 and gscale=[91028.62438044912,13109.270622282645,9647.91177444196]. Use scaled feasibility buffer 1e-7 (tenfold increase from COBYQA) to reduce failures from raw constraint rounding near zero. Bounds remain hard. Objective and constraint finite-difference requests share exact evaluations.\n**Reason:** Deterministic nearby evaluations support testing a derivative-based constrained method. Direct gradient estimates may model the active constraints more accurately than the struggling interpolation geometry. Smoothness is a working local assumption to be tested by progress, not an asserted property of the black box. The finite-difference step balances truncation and cancellation with relatively large raw constraint scales.\n**Next step limit:** 140 additional objective calls; pause at cumulative evaluation 535.\n**Why this length:** Around twelve 11-call forward-difference sweeps, allowing line searches, should show whether the new local model materially improves feasible progress. The step also stops on solver termination.\n**Review:** Inspect feasible objective reduction, constraint residuals, trajectory and SLSQP status. Reassess finite-difference step and scaling at the checkpoint; pause sooner on solver termination or any error, and stop all evaluation on evaluator error.\n\n"
+  },
+  {
+    "block": 5,
+    "method": "slsqp_refine",
+    "first_eval": 536,
+    "last_eval": 735,
+    "calls": 200,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "slsqp_refine",
+        "first_eval": 536,
+        "last_eval": 735
+      }
+    ],
+    "decision_text": "## Decision after evaluation 535\n**Budget:** 535 used / 2000 total; 1465 remaining.\n**Evidence:** SLSQP used 140 calls, with 10 feasible points, and improved the feasible incumbent only marginally to 1078.5489627813465 at evaluation 397 (a finite-difference probe). Raw objectives reached 1073.2909061971027, below the previous neighborhood, but infeasibly. The latest finite-difference sweep is around objective 1074.829, with constraints about [2.64,12.31,-19299.8], and its position has moved farther from the starting point. The solver remains active. Only roughly a dozen gradient sweeps have been possible; current constraint violations do not establish failure.\n**Decision:** Continue the existing SLSQP instance, preserving its Hessian approximation, line-search/iteration state and exact observation cache. Keep all recorded data and the same harness.\n**Hyperparameters:** Unchanged from the decision at 395: eps=1e-6, ftol=1e-11, maxiter=200, fixed objective/constraint scaling, 1e-7 normalized inward constraint margin, SciPy 1.17.1 defaults otherwise. Retain settings because finite differences appear numerically resolved and recent increasing movement may reflect useful Hessian adaptation.\n**Reason:** The objective has begun moving lower than the COBYQA neighborhood, albeit infeasibly. A continuation gives the constrained iterations a fair chance to correct feasibility while exploiting the accumulated curvature estimate. Restarting now would discard that estimate after a modest number of iterations.\n**Next step limit:** 200 additional objective calls; pause at cumulative evaluation 735.\n**Why this length:** Approximately eighteen gradient sweeps with allowance for line searches can distinguish transient infeasibility from sustained lack of useful progress. This leaves a substantial uncommitted budget.\n**Review:** Inspect meaningful feasible improvement, constraint restoration, last trajectory, and solver completion. Pause sooner on termination or error; an evaluator error stops the campaign without retry.\n\n"
+  }
+]

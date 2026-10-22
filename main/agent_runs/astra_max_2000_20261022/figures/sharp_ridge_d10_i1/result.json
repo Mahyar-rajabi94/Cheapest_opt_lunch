@@ -1,0 +1,65 @@
+{
+  "task": "sharp_ridge10",
+  "task_name": "sharp_ridge_d10_i1",
+  "evaluations": 2000,
+  "status": "complete",
+  "run_note": "",
+  "agent_regret": 3.730750519537196e-05,
+  "baseline_mean_regrets": {
+    "random_search": 749.9887787863461,
+    "sobol": 741.0395632931449,
+    "cma_es": 1.6691005691978202,
+    "de": 525.116106761246,
+    "turbo": 35.4387867906276,
+    "gp_bo": 136.8100680354388,
+    "bobyqa": 0.03197587808363167,
+    "nelder_mead": 421.4680367778749,
+    "lbfgsb": 0.22357777414195823
+  },
+  "baseline_feasible_seed_counts": {
+    "random_search": [
+      10,
+      10
+    ],
+    "sobol": [
+      10,
+      10
+    ],
+    "cma_es": [
+      10,
+      10
+    ],
+    "de": [
+      10,
+      10
+    ],
+    "turbo": [
+      10,
+      10
+    ],
+    "gp_bo": [
+      10,
+      10
+    ],
+    "bobyqa": [
+      1,
+      1
+    ],
+    "nelder_mead": [
+      1,
+      1
+    ],
+    "lbfgsb": [
+      1,
+      1
+    ]
+  },
+  "decision_blocks": 15,
+  "noisy": false,
+  "n_constraints": 0,
+  "source_commit": "591e3de6a553c026976e3f785eceb8cac8b6690b",
+  "model": "gpt-6-astra",
+  "effort": "max",
+  "campaign_id": "run-a92925c1ce5b",
+  "provenance_dir": "provenance/sharp_ridge10"
+}

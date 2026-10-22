@@ -1,0 +1,65 @@
+{
+  "task": "weierstrass10",
+  "task_name": "weierstrass_d10_i1",
+  "evaluations": 2000,
+  "status": "complete",
+  "run_note": "",
+  "agent_regret": 0.007165388122700733,
+  "baseline_mean_regrets": {
+    "random_search": 13.331617871615938,
+    "sobol": 13.903410765825493,
+    "cma_es": 8.13837281315622,
+    "de": 15.076876432461356,
+    "turbo": 5.223929501008861,
+    "gp_bo": 3.079862425098605,
+    "bobyqa": 44.649708027526685,
+    "nelder_mead": 101.45927120864573,
+    "lbfgsb": 61.44478645677336
+  },
+  "baseline_feasible_seed_counts": {
+    "random_search": [
+      10,
+      10
+    ],
+    "sobol": [
+      10,
+      10
+    ],
+    "cma_es": [
+      10,
+      10
+    ],
+    "de": [
+      10,
+      10
+    ],
+    "turbo": [
+      10,
+      10
+    ],
+    "gp_bo": [
+      10,
+      10
+    ],
+    "bobyqa": [
+      1,
+      1
+    ],
+    "nelder_mead": [
+      1,
+      1
+    ],
+    "lbfgsb": [
+      1,
+      1
+    ]
+  },
+  "decision_blocks": 14,
+  "noisy": false,
+  "n_constraints": 0,
+  "source_commit": "591e3de6a553c026976e3f785eceb8cac8b6690b",
+  "model": "gpt-6-astra",
+  "effort": "max",
+  "campaign_id": "run-02a7bce4a27c",
+  "provenance_dir": "provenance/weierstrass10"
+}

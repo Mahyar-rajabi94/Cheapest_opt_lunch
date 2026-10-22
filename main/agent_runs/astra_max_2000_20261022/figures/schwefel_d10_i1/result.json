@@ -1,0 +1,65 @@
+{
+  "task": "schwefel10",
+  "task_name": "schwefel_d10_i1",
+  "evaluations": 2000,
+  "status": "complete",
+  "run_note": "",
+  "agent_regret": 0.23687679397085049,
+  "baseline_mean_regrets": {
+    "random_search": 1347.611474671126,
+    "sobol": 1271.2796744116085,
+    "cma_es": 1.7113894127345133,
+    "de": 1023.2260123097258,
+    "turbo": 2.37503733847858,
+    "gp_bo": 2.762830393164279,
+    "bobyqa": 2.4789609600871927,
+    "nelder_mead": 2.374729582459395,
+    "lbfgsb": 3.0011785908103548
+  },
+  "baseline_feasible_seed_counts": {
+    "random_search": [
+      10,
+      10
+    ],
+    "sobol": [
+      10,
+      10
+    ],
+    "cma_es": [
+      10,
+      10
+    ],
+    "de": [
+      10,
+      10
+    ],
+    "turbo": [
+      10,
+      10
+    ],
+    "gp_bo": [
+      10,
+      10
+    ],
+    "bobyqa": [
+      1,
+      1
+    ],
+    "nelder_mead": [
+      1,
+      1
+    ],
+    "lbfgsb": [
+      1,
+      1
+    ]
+  },
+  "decision_blocks": 17,
+  "noisy": false,
+  "n_constraints": 0,
+  "source_commit": "591e3de6a553c026976e3f785eceb8cac8b6690b",
+  "model": "gpt-6-astra",
+  "effort": "max",
+  "campaign_id": "run-b6f40dfd13c4",
+  "provenance_dir": "provenance/schwefel10"
+}

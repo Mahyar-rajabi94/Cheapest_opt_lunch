@@ -1,0 +1,194 @@
+[
+  {
+    "block": 1,
+    "method": "cma_es",
+    "first_eval": 1,
+    "last_eval": 248,
+    "calls": 248,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "cma_es",
+        "first_eval": 1,
+        "last_eval": 248
+      }
+    ],
+    "decision_text": "# First optimization block\n\nThe public task is to minimize a noisy scalar black box in 20 real coordinates, each in [-5, 5], without additional constraints. The hard campaign budget is 2,000 objective calls, including repeats. There are no observations. The score is the noise-free value at the point attaining the lowest observed y; that latent value is unavailable. Noise magnitude and its spatial dependence are unknown, so repeated measurements will inform interpretation but do not establish a global noise model. No identity, smoothness, separability, or optimum is assumed.\n\n## Method and initialization\n\nUse CMA-ES through the supported cma.CMAEvolutionStrategy ask/tell API, pycma 4.5.0, with NumPy 2.4.6. The provided wrapper fixes parameters that this campaign should control, so a small campaign-local adapter uses the underlying library. Initialize the mean at the box midpoint (all zero), sigma=2.0 (20% of the coordinate range), population=20, seed=61137, active covariance updates=True, full covariance from the start (CMA_diagonal=0), and bounds=[-5,5] in every coordinate. Use pycma 4.5.0 default BoundTransform and internal step-size/covariance learning rates and rank recombination (10 positive parents). Disable library file logging and console verbosity (verb_log=0, verbose=-9). All other inherited defaults are those of pycma 4.5.0; its default stopping conditions trigger a checkpoint, not an automatic restart.\n\nFirst evaluate the center eight times, tagged cma_es, to estimate within-point noise and get a central reference. Then evaluate twelve complete generations of 20 individually measured candidates. The center repetitions are diagnostic and are not passed as a synthetic generation. CMA-ES uses ranks and adapts a full covariance without requiring accurate finite-difference gradients. A population of 20 exceeds the library default of 12 for this dimension and provides broader selection under unknown noise, while retaining useful generational progress. The initial scale provides broad interior exploration without assuming a promising region.\n\n## First step limit and review\n\nAt most 248 additional objective calls; pause at cumulative evaluation 248. Eight replicates give a preliminary variance estimate; twelve generations allow initial movement and scale adaptation in 20 dimensions while using only 12.4% of the total budget. No later method or budget allocation is selected here.\n\nAt the checkpoint inspect the center sample mean/standard deviation, best observed point and value, generation minima/medians/spreads, step size, covariance axis ratio, and remaining budget. Compare progress with observed noise, recognizing that eight replicates at one point cannot characterize heteroscedasticity or validate the single best observation. Pause sooner if CMA-ES signals termination, an observation is nonfinite, or the evaluator errors. An evaluator error ends execution without retrying an unknown call. A local guard prevents crossing either the current block limit or the campaign budget. The same live harness and optimizer state remain available for the next independently chosen decision.\n"
+  },
+  {
+    "block": 2,
+    "method": "cma_es",
+    "first_eval": 249,
+    "last_eval": 560,
+    "calls": 312,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "cma_es",
+        "first_eval": 249,
+        "last_eval": 560
+      }
+    ],
+    "decision_text": "## Decision after evaluation 248\n**Budget:** 248 used / 2000 total; 1752 remaining.\n**Evidence:** Eight center observations had mean 255215.4274 and sample SD 18969.8796 (7.4% of the mean). The best observation was 11403.3655 at call 131. Generation medians fell from 681833.5519 to 134889.8737, with a minimum median of 101347.0272 in generation 9. Generations 8-12 did not beat the incumbent, but five generations without improvement are weak evidence in 20 dimensions under noise. Sigma increased from 2.0 to 2.5445 and covariance axis ratio reached 1.6016; distribution spread remains large relative to center noise. No stopping condition fired. The noise at the incumbent and current search center is still unknown.\n**Decision:** Continue CMA-ES with the same live optimizer, mean, covariance, evolution paths, RNG, observations, and harness counter. First obtain six new observations at the incumbent from call 131 and six at the current bounded CMA favorite, as diagnostics; then execute 15 complete generations. Diagnostic repeats are not synthetic populations and do not update CMA-ES.\n**Hyperparameters:** Unchanged from roadmap_initial.md: pycma 4.5.0, population 20, full active covariance, BoundTransform and inherited learning-rate/step-size defaults. Retain internally adapted sigma=2.5445 rather than manually contracting it, since the initial progress and evolving covariance do not justify a restart. Six repeats per point balance a local noise check against search cost.\n**Reason:** Large improvements in the distribution support retaining the search, while the recent fluctuation and unknown noise near better points warrant diagnostics before interpreting a plateau. Covariance adaptation has only had 12 updates; abandoning it now would discard useful state.\n**Next step limit:** 312 additional objective calls; pause at cumulative evaluation 560.\n**Why this length:** Twelve diagnostic calls and 15 generations provide more than one prior block's adaptation updates while retaining 1440 evaluations for decisions based on new evidence. This is long enough to see whether the broad distribution moves downward, without treating a few noisy generations as decisive.\n**Review:** Inspect repeat means/SDs, best and median progression, sigma, covariance axis ratio, and improvement relative to measured local noise. Pause sooner on CMA termination or nonfinite results; evaluator errors stop execution without retry. No subsequent method is selected.\n"
+  },
+  {
+    "block": 3,
+    "method": "cma_es",
+    "first_eval": 561,
+    "last_eval": 846,
+    "calls": 286,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "cma_es",
+        "first_eval": 561,
+        "last_eval": 846
+      }
+    ],
+    "decision_text": "## Decision after evaluation 560\n**Budget:** 560 used / 2000 total; 1440 remaining.\n**Evidence:** Incumbent repeats averaged 14020.4404 with SD 3192.1826; one repeat gave the new raw minimum 8484.2219 at call 251, at the same location as call 131. Thus the raw best improvement alone is not spatial progress. The preceding CMA favorite averaged 43126.9036 with SD 5304.8674. The population median fell from 153560.5379 in generation 13 to 38806.2908 in generation 27; new candidates reached 8788.5547 and 9622.2092. Sigma contracted to 1.7510 and axis ratio is 1.8074; no termination fired. As a no-evaluation diagnostic, generic ridge linear/diagonal-quadratic/full-quadratic models were trained on the first 402 unique points and checked on the final 140 unique points. Even the lowest held-out RMSE was 41741.3 (diagonal quadratic, ridge 10), versus test SD 49032.6; full quadratics were worse. These errors do not support replacing the search with that surrogate. This diagnostic used only collected observations and inferred no objective identity.\n**Decision:** Continue the same CMA-ES state and harness. Measure the current bounded favorite six times, then execute 14 full generations. Preserve all observations, covariance, mean, paths, RNG, and adapted step size.\n**Hyperparameters:** Retain the initial pycma 4.5.0 configuration and population 20. Sigma=1.7510 is the internally adapted starting scale for this block. No restart or manual parameter change: the median is still improving and observed local noise is smaller than population spread. Six diagnostic repeats provide a check of the current center.\n**Reason:** The distribution has made substantial progress despite a noisy incumbent and needs further adaptation. The uncertainty in the best point is evidence to compare distribution/replicate statistics, not evidence that CMA-ES is ineffective. The held-out models do not yet provide a reliable alternative.\n**Next step limit:** 286 additional objective calls; pause at cumulative evaluation 846.\n**Why this length:** Six diagnostic measurements and 14 updates allow the now-contracting search to make measurable progress, while checking again before another 300 calls and before noise is likely to dominate its smaller spread. This length is selected from the observed contraction and continued median improvement, rather than copied from the prior block.\n**Review:** Inspect center repeat mean/SD, generation median and best progress, sigma/covariance, and how many new locations beat the prior incumbent. Pause on library termination or nonfinite observations; stop without retry on evaluator error. No later method is selected.\n"
+  },
+  {
+    "block": 4,
+    "method": "noise_check",
+    "first_eval": 847,
+    "last_eval": 862,
+    "calls": 16,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "noise_check",
+        "first_eval": 847,
+        "last_eval": 862
+      }
+    ],
+    "decision_text": "## Decision after evaluation 846\n**Budget:** 846 used / 2000 total; 1154 remaining.\n**Evidence:** At the beginning of the block, the then-current favorite had repeat mean 4794.4571 and sample SD 1136.3700, a substantial improvement over the preceding center. The best new raw observation is 157.9415 at call 711. Other new points gave 554.3080, 670.2299, and 1001.3214. The final population median is 7901.3887, down from 31840.5583 in the first generation of this block; final population SD is 4177.0058. Sigma contracted to 1.0408, axis ratio is 1.8767, and no stop condition fired. The lowest observations are now comparable to or below the previously measured noise SD, so their latent quality cannot be inferred from their raw minimum.\n**Decision:** Perform a bounded diagnostic block, tagged noise_check, with eight new evaluations at the raw incumbent (call 711) and eight at the current bounded CMA favorite. Keep the CMA optimizer frozen and retain its entire state, all observations, and the same harness. Do not choose another search block until these diagnostics are reviewed.\n**Hyperparameters:** Eight independent repeated observations per location, using the same exact coordinates; report mean, sample SD, median, and individual values. No optimizer tuning applies to repeats. The saved CMA configuration remains unchanged from roadmap_initial.md, with its adapted state preserved.\n**Reason:** Population improvement supports ongoing optimization, but the scoring rule makes distinguishing real location improvement from a noisy minimum consequential. Local replication now has more decision value than assuming the earlier noise scale still applies. The current center may be better than the lowest observed candidate even if it has not produced the raw minimum.\n**Next step limit:** 16 additional objective calls; pause at cumulative evaluation 862.\n**Why this length:** Two sets of eight repeats give a basic uncertainty comparison at a cost below 1% of the total budget. A deliberately short diagnostic block allows the next search decision to use measured local noise without committing hundreds of calls in advance.\n**Review:** Compare the two locations' means, SDs, uncertainty, and minima with recent population spread. Assess whether the incumbent's low observation represents a reliable improvement. Stop on any evaluator error without retry; no following method is preselected.\n"
+  },
+  {
+    "block": 5,
+    "method": "cma_es_mean2",
+    "first_eval": 863,
+    "last_eval": 1190,
+    "calls": 328,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "cma_es_mean2",
+        "first_eval": 863,
+        "last_eval": 1190
+      }
+    ],
+    "decision_text": "## Decision after evaluation 862\n**Budget:** 862 used / 2000 total; 1138 remaining.\n**Evidence:** Eight fresh measurements at the raw incumbent averaged 11687.1762 with sample SD 3543.9291 (median 11535.7971), making the original 157.9415 observation an unusually favorable draw. The current CMA favorite averaged 4117.7501 with SD 709.9379 (median 4098.3407), supporting a better location despite its higher raw minimum. The preceding generation's population SD was 4177.0058, so noise can materially reorder candidate selection. A no-evaluation local diagnostic trained additive polynomial ridge models on 446 later search observations and held out the latest 120. Degree 4 with ridge 0.1 gave the best RMSE 4997.3, versus test SD 7185.6, but still large error relative to the center's noise and objective level. Other tested degrees/settings were poorer; this is insufficient evidence to replace CMA-ES with the model.\n**Decision:** Adjust CMA-ES evaluation aggregation, tagged cma_es_mean2: measure every candidate twice and pass its arithmetic mean to tell(). Retain the existing optimizer's mean, covariance, paths, RNG, population, and adapted sigma. Execute eight complete generations, then measure the resulting bounded favorite eight times. Preserve all individual evaluations in the harness; averaged fitness values are optimizer-only statistics, never fabricated trace observations.\n**Hyperparameters:** Same pycma 4.5.0 configuration as initially, with population 20 and adapted sigma starting at 1.0408. Change measurements per candidate from 1 to 2; select on their means. Under independent centered measurement errors, averaging reduces selection noise; neither Gaussian noise nor spatially constant variance is assumed. Two repeats trade a modest noise reduction against retaining enough generational updates. Final center diagnostic uses eight repeats. No optimizer rebuild occurs.\n**Reason:** The current center is supported by repeats, while the raw incumbent is dominated by a favorable draw. Retaining the center and covariance is preferable to restarting at that incumbent. Paired measurements target the now-observed ranking uncertainty while the distribution is still improving. No generic surrogate has sufficient validation accuracy to justify directing the search.\n**Next step limit:** 328 additional objective calls; pause at cumulative evaluation 1190.\n**Why this length:** Eight generations cost 320 calls under paired evaluation, enough to inspect multiple updates after changing aggregation; eight final center observations assess location quality independently of the raw minimum. The block spends under 30% of the remaining budget and leaves 810 calls for subsequent evidence-based decisions.\n**Review:** Compare paired-noise estimates to candidate-mean spread, generation median progress, final-center repeat statistics against 4117.7501 +/- 709.9379, sigma and axis ratio. Pause earlier on CMA termination/nonfinite observations; stop without retry on evaluator error. No following method is selected.\n"
+  },
+  {
+    "block": 6,
+    "method": "noise_check",
+    "first_eval": 1191,
+    "last_eval": 1202,
+    "calls": 12,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "noise_check",
+        "first_eval": 1191,
+        "last_eval": 1202
+      }
+    ],
+    "decision_text": "## Decision after evaluation 1190\n**Budget:** 1190 used / 2000 total; 810 remaining.\n**Evidence:** Paired-selection generation medians declined from 8729.2183 to 5013.0658; final sigma is 0.9062 and axis ratio 1.9454. Pair-difference noise RMS ranged from 1477.5 to 4420.7 across generations, substantial relative to candidate-mean spread. The new favorite's eight individual observations were 182.8, 675.9, 1698.9, 875.9, 286.5, 460.1, 1334.3, and -2417.4: mean 387.1251 and sample SD 1245.7130. This supports progress over the prior center mean 4117.7501, but heavy noise/outliers make fine resolution uncertain. The raw best is now -5488.7425 at call 943, a different point. Negative observations are permitted; there is no known objective lower bound or noise distribution. No library termination occurred.\n**Decision:** Freeze and retain the CMA state and perform 12 fresh observations at the raw incumbent from call 943, tagged noise_check. Keep all previous records and the same harness counter. Do not yet commit a new search block.\n**Hyperparameters:** Twelve independent measurements at unchanged incumbent coordinates. No optimizer hyperparameters apply to repeats. The retained CMA state remains the initial configuration with mean-of-two fitness and sigma=0.9062.\n**Reason:** The observed center improvement is encouraging, but the point selected by the score is an extreme negative observation elsewhere. Its repeat mean and spread are needed to distinguish real location quality from an unusually favorable noisy call, especially now that noise is large relative to local objective differences.\n**Next step limit:** 12 additional objective calls; pause at cumulative evaluation 1202.\n**Why this length:** Twelve repeats provide a more stable basic mean/variance check than the original pair at a cost of 0.6% of the total budget. This small diagnostic leaves 798 calls and avoids deciding a large noise-sensitive block without checking the scored point.\n**Review:** Compare incumbent repeat statistics with the favorite mean 387.1251/SD 1245.7130 and assess uncertainty and extreme observations. Stop without retry on an evaluator error; no later method is selected.\n"
+  },
+  {
+    "block": 7,
+    "method": "cma_local_med3",
+    "first_eval": 1203,
+    "last_eval": 1502,
+    "calls": 300,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "cma_local_med3",
+        "first_eval": 1203,
+        "last_eval": 1502
+      }
+    ],
+    "decision_text": "## Decision after evaluation 1202\n**Budget:** 1202 used / 2000 total; 798 remaining.\n**Evidence:** The raw incumbent's 12 fresh observations averaged 7059.4524 with SD 1733.9528 and median 7066.6298, versus its record -5488.7425. Two diagnostic blocks have now shown severe favorable outliers at raw incumbents (calls 711 and 943). The current CMA favorite's preceding eight observations averaged 387.1251 with SD 1245.7130; seven of eight were between 182.8 and 1698.9, with one -2417.4. Its local quality is much more promising than the point currently selected by the scoring rule. Current CMA offspring still had median mean-fitness 5013.0658, suggesting its sigma=0.9062 explores substantially worse neighborhoods than its center. These finite samples suggest outlier sensitivity but do not establish a parametric noise distribution or a true optimum.\n**Decision:** Restart a local CMA-ES run at the bounded favorite from generation 49, tagged cma_local_med3, with smaller initial sigma. Execute six complete generations, selecting on each candidate's median of three real observations, then evaluate the resulting favorite 12 times. Preserve the old optimizer in memory for reference, all individual observations, and the same live harness/budget. Reset covariance to identity and reset evolution paths and RNG in the new optimizer; do not initialize from the unreliable raw incumbent.\n**Hyperparameters:** pycma 4.5.0 supported CMAEvolutionStrategy constructor; sigma0=0.35, population=16, seed=61138, full active covariance, bounds [-5,5], verb_log=0 and verbose=-9; default BoundTransform, rank weights (8 positive parents), covariance/step-size learning rates and stopping tolerances inherited from pycma 4.5.0. Use three measurements per candidate and their median for tell(), never as a trace observation. Sigma 0.35 is 39% of the previous scalar scale, focusing evaluations near the independently promising center. Population 16 retains a broad selection pool within the reduced budget; median-of-three is less sensitive than a pair mean to one extreme draw. A constructor restart is used to change initialization and population through supported interfaces; the modest prior axis ratio (1.9454) makes discarding its learned correlations a tolerable cost for controlled contraction.\n**Reason:** Repeated evidence of extreme raw minima and the gap between center and offspring quality justify concentrating around the supported center with more robust selection. This choice follows local measurements rather than treating a short plateau as failure. A smaller neighborhood reduces exposure to poorer locations while still permitting improvement; a true value near zero is not assumed.\n**Next step limit:** 300 additional objective calls; pause at cumulative evaluation 1502.\n**Why this length:** Six generations of 16 candidates times three calls consume 288 evaluations; 12 final center measurements quantify progress and uncertainty. Six updates are enough to assess the behavior after changing radius and aggregation, while leaving 498 calls for a new decision.\n**Review:** Compare triplicate-median trends and median absolute deviations, final center mean/median/SD, raw incumbent changes, sigma and covariance. Pause earlier on a library stopping condition or nonfinite observations; stop without retry on evaluator error. No later step is selected.\n"
+  },
+  {
+    "block": 8,
+    "method": "center_race",
+    "first_eval": 1503,
+    "last_eval": 1574,
+    "calls": 72,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "center_race",
+        "first_eval": 1503,
+        "last_eval": 1574
+      }
+    ],
+    "decision_text": "## Decision after evaluation 1502\n**Budget:** 1502 used / 2000 total; 498 remaining.\n**Evidence:** The contracted CMA population's triplicate medians were much lower than the earlier broad search, with generation medians between 1238.7212 and 2104.9120 (last 1373.9128). Within-triplet median absolute deviations ranged 242.6-682.8. Sigma stayed near its initial scale (final 0.3523), axis ratio is 1.3014, and no stop fired. The local favorite's 12 repeats averaged 179.0889 with SD 1513.1840 and median 277.9774; the preceding center averaged 387.1251 over eight repeats with SD 1245.7130. The 208-unit mean difference is much smaller than sampling uncertainty, so improved latent quality is not established. The block's raw minimum was -3291.6188, and the campaign's raw incumbent remains call 943, whose fresh repeat mean was 7059.4524.\n**Decision:** Switch temporarily to a finite center comparison, tagged center_race. Evaluate the preceding broad-search center, current local-search center, and their coordinate-wise midpoint 24 times each. Interleave all 72 calls with a fixed randomized order. Retain both CMA optimizers, every observation, and the same harness counter; no covariance updates occur in this block. The midpoint is a new measured candidate, not an assumed interpolated objective value.\n**Hyperparameters:** Three fixed candidates: noise_groups['latest_favorite']['x'], noise_groups['local_favorite']['x'], and their midpoint; 24 new repeats each; randomized order from NumPy default_rng seed=61139. Compare fresh arithmetic means, medians, 10%-trimmed means, SDs and observed ranges. Report sampling uncertainty without assuming a known tail law. These are custom finite-candidate sampling controls, with NumPy 2.4.6 and SciPy 1.17.1 statistics; no optimizer defaults are inherited.\n**Reason:** Additional noisy CMA updates cannot yet distinguish the two independently promising centers. Fresh interleaved replication reduces selection bias in comparing them and checks whether the midpoint is competitive within this locally promising neighborhood. The population-center gap motivates checking the interior midpoint, but convexity is not assumed. The scoring rule currently selects a much poorer supported location, so continued real evaluations at supported low-value candidates are relevant as well as diagnostic.\n**Next step limit:** 72 additional objective calls; pause at cumulative evaluation 1574.\n**Why this length:** Twenty-four repeats per candidate provide materially lower standard error than the preceding 8-12 samples, while using only 14.5% of the remaining budget. Three candidates test local location quality without another expensive covariance adaptation block.\n**Review:** Compare fresh means, robust summaries, variance and tail observations; check whether any candidate can be distinguished and whether the raw selected point changes. Stop without retry on evaluator error. No later block is selected.\n"
+  },
+  {
+    "block": 9,
+    "method": "midpoint_confirm",
+    "first_eval": 1575,
+    "last_eval": 1702,
+    "calls": 128,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "midpoint_confirm",
+        "first_eval": 1575,
+        "last_eval": 1702
+      }
+    ],
+    "decision_text": "## Decision after evaluation 1574\n**Budget:** 1574 used / 2000 total; 426 remaining.\n**Evidence:** Fresh 24-repeat means (standard errors) were: broad center 717.1067 (214.2841), local center 1296.6857 (246.8782), midpoint 251.3889 (219.6196). Their medians were 850.5502, 1061.0656, and 177.8124; 10%-trimmed means were 771.1231, 1238.3101, and 250.8687. All three summaries favor the midpoint over the new local center. The midpoint-broad mean difference is only about 1.5 combined standard errors and is not conclusive. Midpoint SD was 1075.9117, large compared with location differences. The raw incumbent remains -5488.7425 at the separately measured poorer point (repeat mean 7059.4524).\n**Decision:** Continue a focused repeated-measurement search at the midpoint, tagged midpoint_confirm, while preserving both CMA states and the full observation history. Obtain at most 128 new real observations at its exact coordinates. Pause early if it acquires the global lowest observed value after at least 32 new measurements; this triggers review, not a preselected next action.\n**Hyperparameters:** Fixed midpoint from the prior center comparison, up to 128 repetitions; minimum 32 before the raw-incumbent-change early checkpoint. Compare both fresh-only and pooled midpoint means, medians, 10%-trimmed means, SDs and ranges. No optimizer adaptation or synthetic observation is used. Statistical computations use NumPy 2.4.6 and SciPy 1.17.1; there are no library optimizer defaults.\n**Reason:** Fine local differences are currently smaller than measurement noise, while the midpoint is supported by multiple fresh summaries and lies within a promising neighborhood. More samples substantially reduce uncertainty about this candidate. Under the given scoring rule, a lower real observation at this well-supported location would also replace a current incumbent whose low y is contradicted by its repeat measurements. No known tail law, guaranteed record, or zero lower bound is assumed.\n**Next step limit:** At most 128 additional objective calls; pause no later than cumulative evaluation 1702 (earlier under the specified incumbent-change condition).\n**Why this length:** Adding 128 measurements raises the midpoint sample count from 24 to at most 152, substantially improving precision under ordinary independent finite-variance errors. It spends 30% of the remaining budget and leaves at least 298 evaluations for a new decision, rather than consuming the remaining budget without review.\n**Review:** Inspect fresh and pooled central tendency/uncertainty, tail behavior, and which location holds the raw minimum; reconsider whether more search or confirmation has value. Pause on the stated record condition; stop without retry on evaluator error. No later method is selected.\n"
+  },
+  {
+    "block": 10,
+    "method": "center_race",
+    "first_eval": 1703,
+    "last_eval": 1791,
+    "calls": 89,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "center_race",
+        "first_eval": 1703,
+        "last_eval": 1791
+      }
+    ],
+    "decision_text": "## Decision after evaluation 1702\n**Budget:** 1702 used / 2000 total; 298 remaining.\n**Evidence:** The 128 fresh midpoint samples averaged 666.1456 with SD 1077.9892 and SE 95.2817. All 152 midpoint samples averaged 600.6577 with SD 1084.7616, SE 87.9858, median 633.1538 and 10%-trimmed mean 621.3126. The first 24 samples' lower mean was optimistic; the broad center remains statistically competitive (fresh 24-sample mean 717.1067, SE 214.2841). No raw record occurred: midpoint minimum -2594.9674, campaign record still -5488.7425 elsewhere. A no-evaluation fourfold grouped validation of local linear and diagonal-quadratic ridge models used the 96 triplicate candidate medians, keeping repeats within groups. The best RMSE was 930.5 (diagonal quadratic, ridge 50) against response SD 1069.5, with Spearman 0.437; other models were poorer. This weak predictive accuracy relative to location differences does not support a reliable model-directed refinement.\n**Decision:** Adjust the finite comparison, tagged center_race, to gather 96 new observations at the broad-search center and 64 at the midpoint, in randomized interleaved order. Retain all collected data, both frozen CMA states, and the same harness. Pause early if either sampled candidate acquires the global lowest observed value after at least 32 new measurements.\n**Hyperparameters:** Two unchanged candidate coordinates; replication allocation broad=96, midpoint=64, shuffled with NumPy default_rng seed=61141. The larger allocation to the broad center addresses its much larger uncertainty. Use arithmetic and 10%-trimmed means, medians and sample SD/SE for review; statistics inherit NumPy 2.4.6/SciPy 1.17.1 implementations, with no optimizer defaults. Preserve individual real calls in the trace.\n**Reason:** More accurate midpoint measurements removed an apparent clear advantage. These two supported locations are close enough in estimated quality that a well-replicated comparison has more evidence value than further steps directed by weak local models. Concentrating actual evaluations at supported low-value locations also offers an opportunity for the scorer's selected point to improve without exploring poorly supported regions. The current raw record's noise-free value remains unavailable.\n**Next step limit:** At most 160 additional objective calls; pause by cumulative evaluation 1862, or earlier under the stated record-change condition after at least 32 calls.\n**Why this length:** Ninety-six broad-center measurements reduce its sampling uncertainty substantially, while 64 midpoint measurements maintain a contemporaneous comparison. This uses 54% of the remaining budget and leaves at least 138 calls for a further evidence-based decision; the allocation is explicitly reconsidered from the unequal uncertainties.\n**Review:** Compare fresh and all-observation summaries at both exact points, whether a statistically meaningful difference emerges, tail behavior, and which location is selected by the raw record. Stop without retry on evaluator error; no subsequent block is selected.\n"
+  },
+  {
+    "block": 11,
+    "method": "midpoint_confirm",
+    "first_eval": 1792,
+    "last_eval": 1887,
+    "calls": 96,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "midpoint_confirm",
+        "first_eval": 1792,
+        "last_eval": 1887
+      }
+    ],
+    "decision_text": "## Decision after evaluation 1791\n**Budget:** 1791 used / 2000 total; 209 remaining.\n**Evidence:** The preceding block paused early after 89 of its allowed 160 calls because the broad center acquired the raw record -5700.6241 at call 1791. The actual allocation was 53 broad-center and 36 midpoint calls. All 85 measurements at the broad center average 752.0819 (SD 2002.8607, SE 217.2407, median 749.5505, 10%-trimmed mean 695.0921). New extremes -5700.6 and +15500.7 reinforce that isolated measurements can be misleading. All 188 midpoint measurements average 546.5292 (SD 1138.8720, SE 83.0608, median 584.9978, trimmed mean 585.5791). The center difference is not conclusive, but both are far better supported than the previous raw record location with repeat mean 7059.4524. The score-selected point has therefore changed to a well-replicated promising location; its exact noise-free value is still hidden.\n**Decision:** Continue focused evaluation at the midpoint, tagged midpoint_confirm, for at most 96 additional calls. Keep exact coordinates, all observations and both frozen optimizer states. Pause earlier if it acquires the raw record after at least 32 calls in this block. This is an opportunity to improve the selected location, not an assertion that the two latent values are distinguishable.\n**Hyperparameters:** Same fixed midpoint and descriptive statistics as the decision at 1574; revised maximum 96 calls, minimum 32 before an incumbent-change early checkpoint. No optimizer hyperparameters or rebuild apply. Underlying NumPy/SciPy versions are unchanged.\n**Reason:** The new raw record is now at a supported low-value location, removing the previously demonstrated large discrepancy in location quality. The midpoint has slightly better supported central tendency across mean/median/trimmed mean and more stable variance, so focused measurements there are preferable to introducing unsupported local moves under high noise. Heavy-tailed-looking extremes motivate caution about normal-based precision and prevent claims of a known noise law.\n**Next step limit:** At most 96 additional objective calls; pause by cumulative evaluation 1887, or earlier if the stated record-change condition is met.\n**Why this length:** This adds about half the midpoint's present sample count and uses 46% of the remaining budget, leaving at least 113 calls for another evidence-based decision. A shorter limit than the preceding block reflects the smaller remaining budget and the newly improved raw selected location.\n**Review:** Assess whether the midpoint's central tendency stays competitive, whether the score-selected point changes, and whether further evaluations have a plausible benefit. Stop without retry on evaluator error. No later block is selected.\n"
+  },
+  {
+    "block": 12,
+    "method": "midpoint_confirm",
+    "first_eval": 1888,
+    "last_eval": 2000,
+    "calls": 113,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "midpoint_confirm",
+        "first_eval": 1888,
+        "last_eval": 2000
+      }
+    ],
+    "decision_text": "## Decision after evaluation 1887\n**Budget:** 1887 used / 2000 total; 113 remaining.\n**Evidence:** The latest 96 midpoint observations averaged 689.3573 (SD 1443.9040), and all 284 averaged 594.8091 (SD 1249.5971, SE 74.1499, median 642.4948, trimmed mean 632.0447). The latest raw minimum -4535.6287 did not replace the broad-center record -5700.6241. The midpoint's central tendency remains slightly below the broad center's all-sample mean 752.0819/trimmed mean 695.0921, but the difference is still small relative to uncertainty at the broad center. Both are supported promising locations; no exact latent value or optimum is available.\n**Decision:** Continue midpoint_confirm at the same exact coordinates for the remaining bounded block of 113 real calls. Preserve all history and frozen optimizer states. No optimizer restart or new candidate is introduced.\n**Hyperparameters:** Unchanged fixed-point measurement and statistics from the preceding block. Maximum 113 calls. There is no raw-incumbent-change early checkpoint within this block: the same candidate remains supported for measurement, and this block is only slightly larger than the just-reviewed 96-call block. Evaluator errors still stop execution without retry; nonfinite observations also stop for review.\n**Reason:** With 113 calls left, a new 20-dimensional noise-aware search would have little opportunity to establish location quality, and validated local surrogates were weak. The midpoint remains marginally preferable on multiple pooled summaries, so concentrating real measurements there offers a plausible improvement to the selected location while further quantifying its quality. This decision follows the new 96-call results and is not an automatic rule to exhaust unused calls.\n**Next step limit:** 113 additional objective calls; pause at cumulative evaluation 2000, the hard campaign limit.\n**Why this length:** One final block of 113 is comparable to the preceding 96-call confirmation block and does not delay a potentially meaningful hyperparameter decision: this is a fixed-point method with none to adapt. Its precision and possible scored-location benefit justify using these remaining calls at the supported candidate.\n**Review:** At the budget limit, report the actual raw minimum and selected point, repeat-based uncertainty, total calls and stop outcome; save through the same harness and verify the four required artifacts. No later optimization step is selected.\n"
+  }
+]

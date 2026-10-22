@@ -1,0 +1,8 @@
+{
+  "task": "pymoo_g07",
+  "task_name": "pymoo_g07",
+  "f_opt": 24.306209068925877,
+  "noisy": false,
+  "n_constraints": 8,
+  "seed": 0
+}

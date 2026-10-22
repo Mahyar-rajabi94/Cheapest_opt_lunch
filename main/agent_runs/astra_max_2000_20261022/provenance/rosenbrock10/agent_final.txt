@@ -1,0 +1,5 @@
+Best observed minimum: **149.15**, using **1,859 of 2,000 evaluations**.
+
+Stopped after numerical convergence, an unsuccessful restart challenge, and 96 exploratory points without improvement. Global optimality remains unproven.
+
+Saved and verified exactly four files in `results/agent_run`: `roadmap_initial.md`, `changelog.md`, `trace.csv`, and `meta.json`. The metadata contains the best input vector.

@@ -1,0 +1,226 @@
+[
+  {
+    "block": 1,
+    "method": "sobol_noise",
+    "first_eval": 1,
+    "last_eval": 96,
+    "calls": 96,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "sobol_noise",
+        "first_eval": 1,
+        "last_eval": 96
+      }
+    ],
+    "decision_text": "# Initial decision: broad coverage and noise measurement\n\nMinimize a noisy scalar objective in five coordinates, each in [-5, 5], with no other constraints and a hard total budget of 2,000 real evaluations. There are no prior observations. Scoring uses the noise-free objective at the point with the lowest observed y. The objective remains sealed. Noise distribution, magnitude, independence and spatial variation are unknown; repeated measurements will give preliminary, not definitive, estimates. No smoothness or separability is assumed as a fact.\n\nThe first step is `sobol_noise`: 64 scrambled Sobol points covering the full box, followed by eight additional evaluations at each of four distinct anchors: the two smallest initial observations, the initial observation at median rank, and the remaining design point closest to the box center. Each anchor therefore has nine observations including its design observation. Including median and central anchors helps avoid estimating noise only at selected low observations.\n\nImplementation: provided `src.optimizers.sobol_search.SobolSearch`, backed by SciPy 1.17.1 qmc.Sobol, dimension 5, scramble=True, seed=20261022. SciPy defaults are inherited for bits (30) and optimization (None). Bounds are the public box. No optimizer model is initialized and there are no additional method hyperparameters. A campaign-local persistent driver retains the sole harness, all actual observations, and method state. It guards every objective call against both block and total limits. Only harness.evaluate produces objective observations.\n\nMaximum additional evaluations: 96. Pause at cumulative evaluation 96. Sixty-four is a balanced power-of-two Sobol design; 32 repeat calls give four small within-point noise samples while using only 4.8% of the total budget. This step is long enough to compare broad variation with noise, but short enough to reconsider the search method early.\n\nAt the checkpoint inspect objective quantiles, locations of low observations, replicated means and standard deviations, consistency of the two initially best points, and noise scale relative to the spatial variation. A nonfinite result or evaluator error ends the block immediately; no unknown evaluation is retried. Otherwise complete this bounded design and return control for a fresh decision. No later method or allocation is selected in advance.\n"
+  },
+  {
+    "block": 2,
+    "method": "cma_median3",
+    "first_eval": 97,
+    "last_eval": 312,
+    "calls": 216,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "cma_median3",
+        "first_eval": 97,
+        "last_eval": 312
+      }
+    ],
+    "decision_text": "## Decision after evaluation 96\n**Budget:** 96 used / 2000 total; 1904 remaining.\n**Evidence:** The 64-point design ranges from 716.460 to 345101.869, with median 39409.529. The lowest design point has nine-observation mean 740.468, SD 374.118, and minimum 293.087. The second anchor has mean 1727.779 and SD 920.257. The median-ranked anchor has mean 103313.429 and SD 72288.855; the near-central anchor ranges from 1073.820 to 82182.946 (mean 15627.007, SD 26310.636). Noise is large, variable across these locations, and possibly skewed. These small samples do not establish a noise law. The best replicated location is credible relative to the broad spatial scale, but single observations can mislead.\n**Decision:** Switch to `cma_median3`, initializing a new CMA-ES at the anchor with the lowest nine-observation mean: [-1.1368267424404621, -0.48029767349362373, -1.223348332569003, -0.9676148742437363, 0.12796313501894474]. Retain all observations and the sole harness. Initialize covariance to identity. Evaluate each candidate three times and tell CMA the median of its three actual observations; individual raw calls remain unchanged in the trace.\n**Hyperparameters:** Use cma 4.5.0 CMAEvolutionStrategy directly because the provided wrapper fixes initialization and population settings. sigma0=1.25 in original coordinates, popsize=12, bounds=[-5,5]^5, seed=20261023, verbose=-9, verb_log=0. Inherit cma 4.5.0 default rank-weighted recombination, active covariance adaptation, cumulative step-size adaptation, and boundary transform. Three replicates per candidate damp outliers without the cost of nine. Sigma covers a substantial neighborhood while reflecting the promising anchor; population 12 gives six selected parents and more stable ranks than the dimension-based default.\n**Reason:** Rank-based covariance adaptation can handle unknown directional scales without fitting a stationary global noise model. The first data justify reducing sensitivity to outliers and searching around the promising region, while retaining a broad initial local step size.\n**Next step limit:** 216 additional objective calls, pause at cumulative evaluation 312 (six complete generations of 12 candidates times three calls).\n**Why this length:** Six generations allow initial covariance and step-size adaptation and yield a trend in population medians. This uses 10.8% of the full budget before another decision, limiting commitment under noisy evidence.\n**Review:** Compare generation medians, robust candidate minima, observed best, sigma and covariance axis ratio. Assess whether motion is supported across candidates rather than one lucky observation. Pause sooner on CMA termination, any evaluator error, or a nonfinite value; errors are not retried. No subsequent method is selected.\n\n"
+  },
+  {
+    "block": 3,
+    "method": "cma_median3",
+    "first_eval": 313,
+    "last_eval": 600,
+    "calls": 288,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "cma_median3",
+        "first_eval": 313,
+        "last_eval": 600
+      }
+    ],
+    "decision_text": "## Decision after evaluation 312\n**Budget:** 312 used / 2000 total; 1688 remaining.\n**Evidence:** Six CMA generations reduced the observed minimum from 293.087 to 155.007. The final best candidate produced [155.007,229.807,180.108], with median 180.108. Population score medians were 4217.656, 7511.354, 3345.274, 1848.607, 1316.868 and 1329.579. Sigma adapted from 1.25 to 1.0873 and the axis ratio reached 2.2304. A different candidate had [198.599,202.064,9304.749], confirming continued outlier sensitivity and supporting robust ranking. Progress is distributed across generations rather than established by only one low value.\n**Decision:** Continue `cma_median3`, retaining the full CMA mean, covariance, evolution paths, random generator, and all collected observations. No restart.\n**Hyperparameters:** Unchanged from the configuration recorded after evaluation 96: cma 4.5.0, population 12, three actual calls per candidate, median ranking, inherited covariance/step-size defaults. The current sigma=1.0873 is internally adapted, not manually reset. Keep repetition at three because visible outliers remain large; no evidence yet supports a costly increase or noisier decrease.\n**Reason:** Population medians and the replicated winner improved, while covariance is still learning directional structure. Continuing uses that accumulated state and tests whether the trend persists.\n**Next step limit:** 288 additional calls; pause at cumulative evaluation 600 (eight full generations).\n**Why this length:** Eight generations give a longer view of adaptation than the exploratory six-generation block and are justified by the positive trend. The block still leaves 1400 calls for subsequent evidence-based decisions.\n**Review:** Inspect robust population progress, replicated candidate quality, sigma, axis ratio and location. Do not interpret a few noisy nonimproving generations alone as failure. Pause earlier on CMA termination, nonfinite observations or evaluator error; do not retry evaluator errors.\n\n"
+  },
+  {
+    "block": 4,
+    "method": "cma_median3",
+    "first_eval": 601,
+    "last_eval": 960,
+    "calls": 360,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "cma_median3",
+        "first_eval": 601,
+        "last_eval": 960
+      }
+    ],
+    "decision_text": "## Decision after evaluation 600\n**Budget:** 600 used / 2000 total; 1400 remaining.\n**Evidence:** The observed minimum improved from 155.007 to 150.226. Its three measurements were [155.022,172.624,150.226]. Recent distinct candidates also had medians 163.730,159.112 and176.821. Population median scores over this block were 773.474,1642.192,641.356,565.805,1176.149,470.923,340.187,378.618. Sigma declined from 1.0873 to0.7259 with axis ratio2.1951. The population is concentrating on better regions despite noisy reversals. The small change in the record alone cannot establish a noise-free gain or an optimum.\n**Decision:** Continue `cma_median3` with all CMA state retained and no reset. Keep all past observations available in the persistent process.\n**Hyperparameters:** Unchanged configuration from evaluation96, cma4.5.0, population12, median of three calls, full covariance and default step-size adaptation. Reconsidered replication and scale: robust ranking still protects against large high outliers, and internal sigma reduction is already focusing the search, so retain both the repetition count and adaptation rules.\n**Reason:** Improvement in the population distribution is stronger evidence than a short plateau in the observed minimum. Continued covariance learning can test whether more precise positioning improves low measurements.\n**Next step limit:** 360 additional calls; pause at cumulative evaluation960 (ten generations).\n**Why this length:** The optimizer has now shown two blocks of population improvement. Ten generations permit meaningful additional covariance adaptation in five dimensions and a trend comparison while preserving1040 calls after the block. This longer block follows observed progress, rather than a preallocated campaign schedule.\n**Review:** Assess the last several generation medians and robust winners, sigma, axis ratio, location and minimum. Look for sustained population stagnation as well as progress. Pause earlier on CMA termination, nonfinite result or evaluator error, with no retry of unknown evaluations.\n\n"
+  },
+  {
+    "block": 5,
+    "method": "cma_median3",
+    "first_eval": 961,
+    "last_eval": 1176,
+    "calls": 216,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "cma_median3",
+        "first_eval": 961,
+        "last_eval": 1176
+      }
+    ],
+    "decision_text": "## Decision after evaluation 960\n**Budget:** 960 used / 2000 total; 1040 remaining.\n**Evidence:** The observed record decreased from 150.226 to 149.484. Population medians in the ten-generation block progressed from 220.916 to 161.223, reaching 158.808 in generation23. The last two robust winners scored151.282 and151.944, with raw triples [151.282,152.550,149.686] and [151.944,150.803,154.234]. Sigma=0.3040, axis ratio=3.2869. The block's raw median was181.619 versus544.263 previously. These data support continued concentration, but subunit changes in the record cannot be separated from noise by themselves.\n**Decision:** Continue `cma_median3` for a shorter diagnostic refinement block. Retain all CMA and observation state, without restart or manual sigma change.\n**Hyperparameters:** Same cma4.5.0 configuration recorded after96, including population12 and median of three. Reconsidered increasing repetitions: candidate triples and population trends still convey a useful signal, so keep three for this block and inspect rank stability through winner spread and population spread. Keep adaptive covariance and step size since both are still changing.\n**Reason:** Candidate quality continues improving, so neither a restart nor a model switch is presently supported. A shorter checkpoint interval is appropriate as objective differences shrink toward the observed measurement variation.\n**Next step limit:** 216 additional objective calls; pause at cumulative evaluation1176, after six generations.\n**Why this length:** Six generations provide72 new candidate locations and216 measurements while limiting the delay before reconsidering noise handling near the present low region. This is shorter than the preceding block because absolute gains are now small.\n**Review:** Inspect replicated winners, population medians, record changes, sigma and axis ratio. Assess whether stable progress remains or rank noise dominates. Pause early for CMA termination, nonfinite observation or evaluator error; never retry unknown evaluations.\n\n"
+  },
+  {
+    "block": 6,
+    "method": "cma_median7",
+    "first_eval": 1177,
+    "last_eval": 1428,
+    "calls": 252,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "cma_median7",
+        "first_eval": 1177,
+        "last_eval": 1428
+      }
+    ],
+    "decision_text": "## Decision after evaluation 1176\n**Budget:** 1176 used / 2000 total; 824 remaining.\n**Evidence:** The observed record improved slightly from149.484 to149.439, at a point with triple [180.433,149.439,152.523]. Generation25-30 population medians were159.205,155.593,155.792,157.143,153.931,155.943. Thus population improvement is now slower. Sigma fell to0.1847; coordinate sampling SDs are[0.1163,0.0871,0.0865,0.0668,0.0788]. Across these six generations, median within-candidate ranges were10.34-17.71, exceeding between-candidate median IQRs4.07-9.14. Pairwise Spearman correlations between individual measurement rankings range from-0.287 to0.636 and are mostly near zero. Sample sizes are small (12 candidates per generation), but collectively they indicate rank noise. The final robust winner had [149.854,150.180,149.718], which also shows that low-spread observations are possible.\n**Decision:** Adjust to `cma_median7`: retain the same CMA mean, covariance, paths and RNG, but evaluate each candidate seven times and rank candidates by the seven-observation median. Retain all observations and the same harness. No restart.\n**Hyperparameters:** Change repetitions3->7. Keep popsize12, bounds, cma4.5.0 defaults and current internally adapted sigma/covariance as specified after96. The generation function accepts the supported external replication parameter; CMA continues to receive one scalar score per proposed point. Seven improves robustness and precision without committing to very large replication counts.\n**Reason:** Continuing with noisy ranks risks spending calls adapting covariance to measurement variation. Increased replication directly addresses the observed disagreement. There is still a promising local population, so resetting its geometry is not justified.\n**Next step limit:** 252 additional objective calls; pause at cumulative evaluation1428 after three full generations (12 candidates times seven calls).\n**Why this length:** Higher replication makes each generation cost84 calls. Three generations provide36 independent locations to assess the effect on robust scores while limiting commitment to the new setting to252 calls.\n**Review:** Compare population medians and replicated winners with the preceding block; inspect internal sigma/covariance and agreement between disjoint replicate subsets. Check whether added measurements improve directional signal. Pause early on CMA termination, nonfinite observations or evaluator error; unknown evaluations are not retried.\n\n"
+  },
+  {
+    "block": 7,
+    "method": "gp_log_mean",
+    "first_eval": 1429,
+    "last_eval": 1456,
+    "calls": 28,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "gp_log_mean",
+        "first_eval": 1429,
+        "last_eval": 1456
+      }
+    ],
+    "decision_text": "## Decision after evaluation 1428\n**Budget:** 1428 used / 2000 total; 572 remaining.\n**Evidence:** With seven replicates, population medians were155.785,155.586,155.852 and robust winners152.762,151.606,153.009. The observed record stayed149.438641. Correlations between median scores from disjoint 3/4 replicate subsets were0.280,0.007,-0.287. This short block alone does not prove CMA unsuitable, but increased replication did not visibly restore rank signal. Sigma=0.16455 and axis ratio=4.278. A read-only model diagnostic grouped all1428 real observations into460 distinct locations. A GP predicting mean log(y), with estimated heteroskedastic measurement variance, was tested on32 held-out locations among the160 nearest the CMA mean: log-MSE0.007111 versus0.009659 for a constant local prediction (26.4% reduction). Mean estimated held-out noise variance0.002020 indicates remaining model error. On all data, the model proposes a point within0.75 per coordinate of the current CMA mean with predicted geometric mean91.292 and log posterior SD0.459. This is an uncertain surrogate prediction, not an observation or established improvement.\n**Decision:** Switch for a small trial to `gp_log_mean`: pool all observations in a noise-aware GP and sequentially evaluate four minimizers of its posterior mean. Retain all history, the same harness, and the dormant CMA state. The search box is fixed for this block at the last CMA mean +/-0.75, clipped to public bounds. No global optimum claim is inferred from model predictions.\n**Hyperparameters:** BoTorch0.18.1 SingleTaskGP, GPyTorch1.15.2, Torch2.14.1 double precision and2 threads. Inherit SingleTaskGP default RBF kernel with ARD and dimension-scaled lengthscale priors, default mean/prior and fitting optimizer; Standardize(m=1), inputs normalized to the full[-5,5] box. Group targets are actual within-location mean log(y); all observations so far are positive. Observation variance is sample variance in log space shrunk with4 prior degrees of freedom toward the median variance at24 nearest replicated locations, divided by replication count and floored at1e-7. This variance estimate is approximate. Refit all data after each candidate, maxiter150, seed20261024. Acquisition is PosteriorMean(maximize=False), optimized with10 restarts,512 raw starts,maxiter150. Seven real calls per candidate; no observed value is replaced by a model prediction. The initial full-data model is reused from the diagnostic; later fits retain data but refit GP hyperparameters. CMA state is unchanged.\n**Reason:** The accumulated spatial data contain some predictive information despite weak ranks among small candidate populations. A very small model-guided trial tests that information while limiting exposure to uncertain extrapolation and the log-transform assumption.\n**Next step limit:** 28 additional objective calls; pause at cumulative evaluation1456 (four sequential proposals, seven observations each).\n**Why this length:** This is a new, imperfect model with an optimistic prediction in an uncertain region. Four proposals allow several data updates and a direct prediction-versus-measurement check for only4.9% of remaining calls.\n**Review:** Compare predicted log means/uncertainties with measured geometric means and medians, assess improvement and proposal locations. Pause early if a nonpositive finite result invalidates the logarithmic model, an optimizer error prevents a proposal, or an evaluator error/nonfinite result occurs. Never retry an unknown evaluation. No subsequent method is chosen.\n\n"
+  },
+  {
+    "block": 8,
+    "method": "gp_log_conservative",
+    "first_eval": 1457,
+    "last_eval": 1484,
+    "calls": 28,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "gp_log_conservative",
+        "first_eval": 1457,
+        "last_eval": 1484
+      }
+    ],
+    "decision_text": "## Decision after evaluation 1456\n**Budget:** 1456 used / 2000 total; 544 remaining.\n**Evidence:** All four GP proposals were poor: predicted geometric means91.29,103.80,122.97,125.75 versus measured geometric means343.25,298.84,577.78,253.85 and medians306.49,281.53,331.23,192.79. Every proposal touched a boundary of the +/-0.75 search box. Several prediction errors were multiple posterior standard deviations. The best observation remains149.438641. These observations show substantial extrapolation bias despite the earlier held-out predictive improvement; the surrogate's low predictions cannot be trusted in sparse regions.\n**Decision:** Adjust to `gp_log_conservative` for another small trial. Keep all data, the fitted GP configuration and dormant CMA state; constrain proposals to the last CMA mean +/-0.25 in each coordinate (clipped to original bounds) and minimize posterior mean plus two posterior standard deviations in log space. Refitting retains the new negative evidence from all four failed proposals.\n**Hyperparameters:** Inherit the GP and noise estimation configuration recorded after1428. Search half-width0.75->0.25; acquisition changes from mean to mean+2*SD to penalize uncertain low predictions. Keep7 repetitions,10 restarts,512 raw starts,maxiter150 and per-candidate all-data refitting. This is a campaign-local acquisition using BoTorch0.18.1 supported AcquisitionFunction and model.posterior APIs. No change to objective, raw observations or scoring.\n**Reason:** The failure was strongest in sparse extrapolation regions. A smaller, densely sampled neighborhood plus an uncertainty penalty directly tests whether useful local model information survives without trusting optimistic boundary predictions.\n**Next step limit:** 28 additional calls; pause at cumulative evaluation1484 (four proposals times seven calls).\n**Why this length:** The model has just failed an empirical test, so another long block would be unjustified. Four sequential proposals can check the targeted correction at small cost while leaving516 calls for a fresh decision.\n**Review:** Compare measured and predicted geometric means, local medians, observed minimum and candidate movement. Assess whether the uncertainty penalty keeps predictions calibrated enough for local improvement. Pause on nonpositive data, proposal failure, nonfinite observation or evaluator error; do not retry unknown evaluations.\n\n"
+  },
+  {
+    "block": 9,
+    "method": "gp_log_conservative",
+    "first_eval": 1485,
+    "last_eval": 1568,
+    "calls": 84,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "gp_log_conservative",
+        "first_eval": 1485,
+        "last_eval": 1568
+      }
+    ],
+    "decision_text": "## Decision after evaluation 1484\n**Budget:** 1484 used / 2000 total; 516 remaining.\n**Evidence:** Restricting the search and penalizing uncertainty produced four closely spaced, credible local points. Predicted geometric means152.079,151.937,152.149,152.678 compared with measured151.659,154.393,153.421,151.793; measured medians150.539,151.727,151.073,151.167. These noisy measurements are far better than the preceding extrapolation trial. The observed record improved to149.282305 at[-0.4253656136927244,-0.9792059962940449,-0.7807266328967426,0.8800092577770169,-3.7644863777190523]. Posterior SDs are only latent-model uncertainties and do not include the full measurement spread. The new record alone is not proof of a noise-free gain, but all four locations performed well.\n**Decision:** Continue `gp_log_conservative`, preserving all observations, current GP data/model, the fixed +/-0.25 search box and dormant CMA state. Refit after every new seven-measurement candidate as before.\n**Hyperparameters:** Unchanged from decisions1428 and1456: mean+2*SD acquisition, seven repetitions, full-data log GP with shrunk heteroskedastic noise, 10 acquisition restarts/512 raw starts/maxiter150, per-candidate GP refitting. Keep uncertainty coefficient2 because it corrected the failed sparse extrapolation; retain seven repetitions for model noise estimates.\n**Reason:** The corrected model generated consistently good candidates and reasonably matched measured log means. Sequential pooling now has more empirical support than it did before the small trials.\n**Next step limit:** 84 additional calls; pause at cumulative evaluation1568 (12 proposals times seven calls).\n**Why this length:** Twelve sequential model updates provide a useful trend in proposal movement and predictive calibration, while using only16.3% of the remaining budget. The increased length is justified by the successful four-proposal trial.\n**Review:** Assess candidate quality, observed minimum, prediction errors and spatial movement. Check whether repeated proposals concentrate at one location without further signal. Pause early on invalid logarithmic data, proposal failure, nonfinite observation or evaluator error; never retry an unknown evaluation.\n\n"
+  },
+  {
+    "block": 10,
+    "method": "gp_log_risk05",
+    "first_eval": 1569,
+    "last_eval": 1624,
+    "calls": 56,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "gp_log_risk05",
+        "first_eval": 1569,
+        "last_eval": 1624
+      }
+    ],
+    "decision_text": "## Decision after evaluation 1568\n**Budget:** 1568 used / 2000 total; 432 remaining.\n**Evidence:** Twelve conservative GP proposals stayed in a very small cluster (approximately x1=-0.45 to-0.42 and similarly small movement elsewhere). Candidate medians ranged150.934-153.605; the84-call median was151.667. Predicted geometric means152.03-152.72 versus actual151.37-155.68 were broadly useful but somewhat optimistic. The block minimum149.319997 did not improve the record149.282305. A read-only acquisition comparison showed kappa2 chooses the same dense cluster (predicted geomean152.704, logSD0.00217), while kappa0.5 chooses[-0.76088,-1.31332,-0.90738,0.85285,-3.74853] with predicted geomean152.081 and logSD0.00881. These are predictions only; the difference is small and uncertain.\n**Decision:** Adjust local GP acquisition to `gp_log_risk05`, minimizing mean+0.5*SD. Retain the fixed +/-0.25 box, all data and fitted model, and dormant CMA state. Continue sequential proposals and all-data refitting.\n**Hyperparameters:** Only uncertainty penalty changes2->0.5; all GP, noise estimation, normalization, fitting, acquisition optimization and seven-replicate settings remain as recorded after1428/1456. The smaller penalty permits a nearby, less densely sampled competing region to be evaluated. The wider +/-0.75 extrapolation box is not restored because that trial failed.\n**Reason:** The conservative rule now spends evaluations on near-duplicates. The diagnostic identifies a modestly better predicted but uncertain local direction. Lowering the penalty is a controlled way to test it while using the same data and restricted geometry.\n**Next step limit:** 56 additional calls; pause at cumulative evaluation1624 (eight proposals times seven calls).\n**Why this length:** Eight updates can test the competing local region and allow the model to respond to contrary evidence. It is shorter than the preceding12-proposal block because the acquisition setting is changing and remaining budget is432.\n**Review:** Assess whether proposal diversity and replicated quality improve, compare prediction errors and record changes, and determine whether the less conservative rule remains within reliable local predictions. Pause early on invalid logarithmic data, proposal failure, nonfinite observation or evaluator error; do not retry unknown evaluations.\n\n"
+  },
+  {
+    "block": 11,
+    "method": "replicated_candidates",
+    "first_eval": 1625,
+    "last_eval": 1744,
+    "calls": 120,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "replicated_candidates",
+        "first_eval": 1625,
+        "last_eval": 1744
+      }
+    ],
+    "decision_text": "## Decision after evaluation 1624\n**Budget:** 1624 used / 2000 total; 376 remaining.\n**Evidence:** The lower-penalty GP first tested the competing local corner twice, obtaining medians151.413 and152.296, then returned to the established cluster. The block's candidate medians ranged150.299-152.488; raw minimum149.430 did not improve the record149.282305. Predictions around152.1-152.8 remained broadly plausible, although occasional high observations produced geometric means up to157.563. Merely reducing the penalty has not opened a clearly better direction. Several previous three-measurement candidates had lower medians than current seven-measurement candidates, but were selected from noisy small samples and have not been independently compared.\n**Decision:** Switch to `replicated_candidates` for a fresh comparison of five promising locations: (1) the global observed winner, (2) the current GP mean+0.5*SD minimizer within the unchanged local box, (3) the lowest existing geometric-mean candidate with at least seven observations, and (4-5) the two lowest existing median candidates with at least three observations, requiring Euclidean separation of0.05 from previously chosen anchors. Use existing observations only for anchor selection; analyze24 new measurements per anchor separately to expose selection noise. All data, GP and CMA state are retained.\n**Hyperparameters:** 5 anchors,24 fresh replicates each, RNG seed20261025,24 rounds with the five anchors evaluated in a newly shuffled order each round. The0.05 separation avoids using nominally different near-duplicates for the small-sample alternatives. The GP proposal uses the existing BoTorch0.18.1 configuration and acquisition optimizer; anchor selection and measurement summaries use NumPy2.4.6. No new surrogate is fitted inside this block. Report raw means/SDs, medians, geometric means and log-mean SEs; estimates are summaries of real calls, not trace replacements.\n**Reason:** Candidate locations are converging, while small differences in noisy measurements determine the recorded winner. Fresh balanced replication is now more informative than repeatedly fitting nearly duplicate proposals, and can also produce a lower observed value at a consistently good point. Interleaving reduces confounding by unmeasured time effects without assuming such effects exist.\n**Next step limit:** 120 additional calls; pause at cumulative evaluation1744 (five anchors times24).\n**Why this length:** Twenty-four fresh samples per anchor give substantially more independent evidence than the previous three/seven, while keeping five plausible alternatives in contention. The block leaves256 calls and does not decide how those will be used.\n**Review:** Compare fresh candidate distributions and uncertainty, assess the recorded winner versus the statistically promising locations, and inspect any new record. Check whether differences are large relative to fresh sampling uncertainty. Pause on evaluator error or nonfinite observation and never retry an unknown evaluation.\n\n"
+  },
+  {
+    "block": 12,
+    "method": "gp_reference_pairs",
+    "first_eval": 1745,
+    "last_eval": 1872,
+    "calls": 128,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "gp_reference_pairs",
+        "first_eval": 1745,
+        "last_eval": 1872
+      }
+    ],
+    "decision_text": "## Decision after evaluation 1744\n**Budget:** 1744 used / 2000 total; 256 remaining.\n**Evidence:** The120 fresh interleaved calls gave raw means155.693,155.272,152.756,162.598,154.566 for observed winner, GP choice, replicated geometric-mean winner and the two small-sample alternatives, respectively. Their geometric means were155.353,155.170,152.713,162.116,154.480, with log-mean SEs0.01333,0.00750,0.00491,0.01561,0.00689. The first three-sample alternative did not retain its promising initial performance. The replicated winner is strongest in these fresh summaries, but its advantage over all nearby alternatives is not decisive given uncertainty. Its new minimum149.294539 nearly matched the record149.282305, which remains unchanged.\n**Decision:** Hybridize local model proposals with balanced reference replication as `gp_reference_pairs`. Use the validated replicated geometric-mean winner[-0.44355798472695707,-1.0101955144499417,-0.8116259642225243,0.8508648315516893,-3.772088388160024] as a fixed reference. Refit the GP on all data including the fresh comparison, and center a new +/-0.15 box on this reference. In each of eight rounds, propose one mean+0.5*SD minimizer and collect eight actual observations at both that point and the reference, interleaving their order. Update the GP after each round. Retain all observation, GP and dormant CMA state.\n**Hyperparameters:** GP/noise/fitting configuration remains as recorded after1428; kappa0.5 retained. Search box recenters on the validated point and half-width shrinks0.25->0.15 to focus the remaining local comparisons. Eight repetitions per new candidate and eight reference measurements per round; seed20261026 for within-pair ordering. The estimator is the mean log observation, so an even replication count requires no median convention change. Acquisition retains10 restarts,512 raw starts,maxiter150. The reference is fixed for the current block; no automatic campaign-level switching.\n**Reason:** The fresh data identify a credible reference and demonstrate the weakness of selecting by very small samples. Balanced reference measurements strengthen its estimated quality while model proposals can still discover a better nearby point. Recentering uses the validated observations instead of a stale CMA mean.\n**Next step limit:** 128 additional calls; pause at cumulative evaluation1872 (eight rounds, two locations, eight calls each).\n**Why this length:** Eight adaptive comparisons provide64 measurements of new proposals and64 additional reference measurements, enough to inspect consistency and refine both candidate ranking and the reference distribution. The remaining128 calls are not assigned to a future method here.\n**Review:** Compare new candidate distributions against the same reference across rounds; inspect prediction accuracy, spatial movement, reference stability and any new record. Reconsider the final remaining calls from these observations. Pause early on invalid logarithmic data, proposal failure, nonfinite observation or evaluator error; never retry unknown evaluations.\n\n"
+  },
+  {
+    "block": 13,
+    "method": "consensus_comparison",
+    "first_eval": 1873,
+    "last_eval": 1936,
+    "calls": 64,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "consensus_comparison",
+        "first_eval": 1873,
+        "last_eval": 1936
+      }
+    ],
+    "decision_text": "## Decision after evaluation 1872\n**Budget:** 1872 used / 2000 total; 128 remaining.\n**Evidence:** Eight balanced GP/reference rounds did not improve149.282305; their best measurement was149.441037. New-proposal geometric means ranged151.022-157.906 and reference round geometric means150.788-159.661, so small samples still fluctuate strongly. The reference now has95 total measurements: mean153.985, median151.867, geometric mean153.881, log-mean SE0.003736, minimum149.294539. Its initially favorable comparison therefore weakened with additional data. Model proposals again occupy a small cluster, with no convincing separated direction or record improvement.\n**Decision:** Switch to `consensus_comparison`: compare the global observed winner against the coordinate-wise arithmetic average of the eight recent GP proposal locations. The averaged coordinate is a new candidate, not an estimated objective value. Both are measured32 times in interleaved random order, with no model update during this block. Retain all history and method states. The average is a local heuristic to reduce proposal jitter, not an assumption that the objective is globally convex.\n**Hyperparameters:** Two anchors,32 fresh measurements each, pair-order RNG seed20261027. The consensus uses all eight proposal vectors from the completed block equally, without selecting their individual noisy scores. No new optimizer defaults apply. Report fresh and accumulated distributions separately; raw trace remains exclusively real evaluations.\n**Reason:** Remaining model movement is small and tied to noisy fits. A consensus point within that well-sampled cluster is a plausible alternative to the single observed winner, while independent comparison avoids trusting a lucky batch. The larger95-measurement reference estimate provides context without consuming more calls there now.\n**Next step limit:** 64 additional calls; pause at cumulative evaluation1936 (two anchors times32).\n**Why this length:** Thirty-two fresh measurements per point provide a useful comparison on the scale of earlier24-sample checks. Using half of the remaining budget permits one more evidence-based decision rather than automatically consuming all128 calls on an untested consensus.\n**Review:** Compare fresh means, medians, geometric means and their uncertainty, including any new observed record, against the established95-measurement reference. Choose remaining work only after this comparison. Pause on evaluator error or nonfinite observations and never retry an unknown evaluation.\n\n"
+  },
+  {
+    "block": 14,
+    "method": "final_pair_replication",
+    "first_eval": 1937,
+    "last_eval": 2000,
+    "calls": 64,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "final_pair_replication",
+        "first_eval": 1937,
+        "last_eval": 2000
+      }
+    ],
+    "decision_text": "## Decision after evaluation 1936\n**Budget:** 1936 used / 2000 total; 64 remaining.\n**Evidence:** The fresh32-measurement comparison gave observed-winner mean153.680, median152.337, geometric mean153.622 (log-mean SE0.004859), versus consensus mean154.326, median152.260, geometric mean154.089 (SE0.009551). These differences are small relative to uncertainty and the consensus produced no new record. The observed minimum remains149.282305. The established reference has95 measurements with geometric mean153.881 and SE0.003736, also compatible with the winner's performance. There is no supported new spatial direction in these data.\n**Decision:** Switch to `final_pair_replication`: evaluate the global observed winner and the established95-measurement reference32 more times each, in interleaved random order. Preserve all observations and use the same harness. No additional surrogate fitting or coordinate change is planned for this block.\n**Hyperparameters:** Two fixed anchors,32 fresh repetitions per anchor, pair-order RNG seed20261028. NumPy2.4.6 provides shuffling and summaries; no other method hyperparameters or inherited optimizer defaults apply. Both points have substantial empirical support and near-record observations; do not favor the unconfirmed consensus.\n**Reason:** The last64 calls cannot support a well-validated new broad search, whereas balanced replication at two credible locations can improve the selected observed point and strengthen the final distribution summaries without following a lucky small sample. Their uncertainty overlap supports keeping both in contention.\n**Next step limit:** 64 additional calls; pause at cumulative evaluation2000, the hard total budget.\n**Why this length:** Thirty-two additional measurements at each credible anchor matches the preceding comparison's fresh sample size and uses exactly the remaining64 calls. This allocation follows the failed consensus test and the two anchors' overlapping evidence; it is not automatic continuation of a previous block. The per-call guard and harness both enforce2000.\n**Review:** Inspect the final observed winner and all measurements at that point, record the outcome and stop at budget exhaustion, call harness.save(), and verify the four required files. Pause early only on evaluator error or nonfinite observation, with no retry of an unknown evaluation.\n\n"
+  }
+]

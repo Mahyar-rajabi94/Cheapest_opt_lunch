@@ -1,0 +1,274 @@
+[
+  {
+    "block": 1,
+    "method": "sobol_initial",
+    "first_eval": 1,
+    "last_eval": 64,
+    "calls": 64,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "sobol_initial",
+        "first_eval": 1,
+        "last_eval": 64
+      }
+    ],
+    "decision_text": "# First optimization step\n\nMinimize the deterministic scalar objective over 10 coordinates, with bounds\n`[[0,1],[0,1],[0,3],[0,3],[0,7],[0,7],[0,15],[0,15],[-5,5],[-5,5]]`.\nThere are no further constraints and no prior observations. The hard total\nbudget is 2,000 real harness evaluations. The objective remains a sealed black\nbox. No smoothness, separability, convexity, or known optimal value is assumed.\nDeterminism means this first step does not need replication.\n\nUse the provided `src.optimizers.sobol_search.SobolSearch` wrapper, backed by\nSciPy 1.17.1 `scipy.stats.qmc.Sobol`. Initialize a new 10-dimensional scrambled\nSobol sequence with seed 20261022. Explicit settings: `scramble=True` (inherited\nwrapper default), 64 points; other sampler defaults are those of SciPy 1.17.1\n(including no post-sampling optimization). Search coordinates are normalized\nto [0,1], then mapped affinely to the public bounds for every evaluation.\nThis provides broad coverage without assuming local structure or privileging\ncoordinates with wider physical bounds. The optimizer label is `sobol_initial`.\n\nThe first block is at most 64 additional objective calls and pauses at\ncumulative evaluation 64. A power of two preserves Sobol balance; 64 points\nprovide a modest initial picture in 10 dimensions while using only 3.2% of\nthe total budget. This is only the first-step decision; no subsequent method\nor budget allocation is selected here.\n\nAt the checkpoint, inspect the observed range and quantiles, best locations,\nprogress through the sequence, and exploratory coordinate rank correlations.\nCorrelations from this small sample are uncertain and cannot establish\nseparability or absence of interactions. Stop sooner on any evaluator error\nwithout retrying the unknown call, or on an invalid/nonfinite response; those\nconditions require review. A persistent driver enforces both the block cap\nand campaign counter before each call. Save harness artifacts at the checkpoint.\n"
+  },
+  {
+    "block": 2,
+    "method": "bobyqa_local1",
+    "first_eval": 65,
+    "last_eval": 204,
+    "calls": 140,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "bobyqa_local1",
+        "first_eval": 65,
+        "last_eval": 204
+      }
+    ],
+    "decision_text": "## Decision after evaluation 64\n**Budget:** 64 used / 2000 total; 1936 remaining.\n**Evidence:** The Sobol block returned best -116.56254819024433 (evaluation 57), median 117.58591923071437, and maximum 1268.4438122276777. The runner-up was -110.85945930935779 at a distinct location. Coordinate rank correlations ranged from -0.332 to 0.522; these exploratory statistics do not establish a structural model. All values were finite and the declared objective is deterministic.\n**Decision:** Switch to BOBYQA initialized at the best observed normalized point. Retain every observation and the original harness. Start a persistent solver thread whose requests are serviced only within an explicitly authorized block.\n**Hyperparameters:** Py-BOBYQA 1.5.0 supported `solve` API; npt=21 (2d+1 interpolation points), rhobeg=0.10, rhoend=1e-8, bounds=[0,1]^10, objfun_has_noise=False, seek_global_minimum=False, scaling_within_bounds=False (already normalized), restarts.use_restarts=False, maxfun=1936 as a global solver ceiling. Remaining algorithm defaults are inherited from Py-BOBYQA 1.5.0. The existing wrapper fixes its starting point at the center, so the campaign adapter uses the same queue pattern to expose the chosen initialization and radius. Label: `bobyqa_local1`.\n**Reason:** A promising incumbent is available, while no local evidence exists. An inexpensive quadratic trust-region model can test whether local refinement yields rapid gains. The 0.10 radius probes a meaningful neighborhood without moving the initial point to accommodate the bounds.\n**Next step limit:** 140 additional objective calls; pause at cumulative evaluation 204.\n**Why this length:** Allows the 21-point interpolation initialization plus up to 119 refinement/model-maintenance calls, enough to assess improvement without committing a large share of the remaining budget.\n**Review:** Inspect best-value trajectory, proposed step sizes, and any solver termination. Pause sooner on solver convergence, any evaluator error (no retry), or nonfinite response. No later method is selected.\n"
+  },
+  {
+    "block": 3,
+    "method": "cma_global1",
+    "first_eval": 205,
+    "last_eval": 444,
+    "calls": 240,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "cma_global1",
+        "first_eval": 205,
+        "last_eval": 444
+      }
+    ],
+    "decision_text": "\n## Decision after evaluation 204\n**Budget:** 204 used / 2000 total; 1796 remaining.\n**Evidence:** BOBYQA improved -116.56254819024433 to -136.71911366552862. Bests at evaluations 124, 164, and 204 were -136.71885636363058, -136.71911333240783, and -136.71911366552862. Thus the last 40 calls gained only 3.33e-7. Top recent points differ by roughly 1e-7 in normalized coordinates. This supports local convergence in one basin, not a global optimum. The solver has not formally terminated.\n**Decision:** Switch to a broad CMA-ES search centered at the current incumbent. Preserve the paused BOBYQA solver, all observations, and the single harness. Initialize a fresh CMA population/covariance because the previous method had no population state.\n**Hyperparameters:** pycma 4.5.0 `CMAEvolutionStrategy`; normalized bounds [0,1]^10, initial mean=best observed point, sigma0=0.25, popsize=16, seed=20261023, CMA_active=True, CMA_diagonal=0 (full covariance), verbose=-9, verb_log=0. Other adaptation, boundary-transform, and stopping defaults are inherited from pycma 4.5.0. Label `cma_global1`. The 0.25 initial standard deviation deliberately explores well beyond the local solver's final neighborhood; 16 candidates balance selection diversity with generation count.\n**Reason:** Local refinement has nearly saturated while most of the budget remains. A rank-based population method can seek better regions without trusting a global quadratic model inferred from sparse data. Full covariance allows coordinate interactions to be learned.\n**Next step limit:** 240 additional objective calls; pause at cumulative evaluation 444.\n**Why this length:** Fifteen generations allow multiple covariance/scale updates in 10 dimensions while reserving frequent enough review to detect whether the population is making progress.\n**Review:** Compare best and generation-median values, sigma, coordinate standard deviations, and population progress. Stop earlier on CMA termination or evaluator error/nonfinite output. A temporary plateau alone will not establish unsuitability; no later method is selected.\n"
+  },
+  {
+    "block": 4,
+    "method": "cma_global1",
+    "first_eval": 445,
+    "last_eval": 700,
+    "calls": 256,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "cma_global1",
+        "first_eval": 445,
+        "last_eval": 700
+      }
+    ],
+    "decision_text": "\n## Decision after evaluation 444\n**Budget:** 444 used / 2000 total; 1556 remaining.\n**Evidence:** CMA-ES found -149.09767319410386 at evaluation 425, improving the incumbent by 12.37856. Generation medians improved from -53.8758 to -124.8094. Sigma adapted from 0.25 to 0.1468167, with coordinate standard deviations 0.0843\u20130.1747. New bests occurred in generations 1, 5, 12, and 14; the distribution is still progressing rather than merely returning one lucky point.\n**Decision:** Continue the same `cma_global1` instance, retaining its population history, mean, covariance, evolution paths, sigma, and random state. All campaign observations and paused local state remain available.\n**Hyperparameters:** Unchanged from the decision at 204 (pycma 4.5.0, popsize 16, full active covariance, normalized bounds); ordinary internal adaptation continues from sigma=0.14681673209970172. No restart or manual radius reset. The initial seed is not reapplied.\n**Reason:** Improvement in both incumbent and population median supports giving the adapted distribution more time. Increasing precision prematurely could discard useful ongoing exploration.\n**Next step limit:** 256 additional objective calls (16 generations); pause at cumulative evaluation 700.\n**Why this length:** Sixteen more generations provide a comparable observation window after adaptation has begun, enough to judge whether the narrowing distribution continues to improve. This uses 16.5% of the remaining budget and leaves substantial flexibility.\n**Review:** Assess generation medians, new best frequency, search scales, and CMA stopping conditions. Pause sooner for optimizer termination or evaluator error/nonfinite response; no later method is predetermined.\n"
+  },
+  {
+    "block": 5,
+    "method": "bobyqa_local2",
+    "first_eval": 701,
+    "last_eval": 810,
+    "calls": 110,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "bobyqa_local2",
+        "first_eval": 701,
+        "last_eval": 810
+      }
+    ],
+    "decision_text": "\n## Decision after evaluation 700\n**Budget:** 700 used / 2000 total; 1300 remaining.\n**Evidence:** Continued CMA improved the best from -149.09767319410386 to -158.9158320192525 (evaluation 595). Median generation value reached -150.5067 at generation 26 and was -147.2342 at generation 31. Sigma is 0.0849408, coordinate stds 0.0424\u20130.1083. No incumbent improvement occurred in the last 105 calls, though population values remain better than the previous block; this is not evidence that CMA is unsuitable. Several strong candidates occupy the same broad region, with different coordinate combinations.\n**Decision:** Pause and retain `cma_global1`; start a new BOBYQA instance at the best observed point to assess how much local improvement it contains. Keep both previous optimizer states and all observations in the same process/harness.\n**Hyperparameters:** Py-BOBYQA 1.5.0, npt=21, rhobeg=0.015, rhoend=1e-6, maxfun=1300. Other settings/defaults match the decision at 64 (no automatic restarts, deterministic, already normalized). Label `bobyqa_local2`. The starting point's smallest distance to a bound is 0.0160794; a radius of 0.015 fits without shifting it. The solver can expand the trust region if the model supports it. The larger final radius avoids chasing the negligible precision gains seen in the first local solve.\n**Reason:** The stochastic search has found substantially better regions than the initial local solution. A local model now has a promising new basin to exploit, and prior evidence showed that local gains can be obtained quickly. Pausing CMA preserves the ability to reconsider it without losing adaptation.\n**Next step limit:** 110 additional calls; pause at cumulative evaluation 810.\n**Why this length:** Twenty-one initialization points plus up to 89 refinement calls should reveal most of the local benefit, based on the rapid first local solve, while allowing an earlier review than its 140-call block.\n**Review:** Inspect improvement magnitude and late-block progress, changes in the incumbent coordinates, and formal solver termination. Pause sooner on solver convergence, evaluator error, or nonfinite response. No future continuation or switch is committed.\n"
+  },
+  {
+    "block": 6,
+    "method": "coordinate_scan",
+    "first_eval": 811,
+    "last_eval": 1020,
+    "calls": 210,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "coordinate_scan",
+        "first_eval": 811,
+        "last_eval": 1020
+      }
+    ],
+    "decision_text": "\n## Decision after evaluation 810\n**Budget:** 810 used / 2000 total; 1190 remaining.\n**Evidence:** The second local solve improved -158.9158320192525 to -160.67465606781712, with small changes in every coordinate. The best at evaluation 800 was -160.67463355181292, so the last ten calls gained 2.25e-5; the preceding 20 gained about 0.066. Both local runs have concentrated into narrow neighborhoods, and their attained values differ substantially. This suggests testing moves beyond a single local basin; it does not establish coordinate separability or global optimality.\n**Decision:** Pause and retain both local solvers and CMA. Switch to one sequential conditional coordinate scan, initialized at the best observed point. For each coordinate, evaluate a full-domain jittered grid with all other coordinates fixed at the current accepted point, then retain the best actual observation before scanning the next coordinate. The existing incumbent remains eligible without being reevaluated.\n**Hyperparameters:** Campaign-local adapter using NumPy 2.4.6. Ten coordinates, 21 candidates each: exact endpoints 0 and 1 plus the 19 interior points of a uniform 21-point grid jittered independently by Uniform(-0.015,0.015). Explicit PCG64 seed 20261024. Coordinate order [9,1,6,4,5,0,7,2,8,3], descending absolute rank correlation in the initial Sobol sample; this orders the probe only and is not treated as a structural conclusion. Strict improvement acceptance, one sweep, no repetition or automatic next sweep. Label `coordinate_scan`.\n**Reason:** Simultaneously perturbing ten coordinates can lose favorable local settings. Conditional scans test whether larger moves in individual coordinates can cross into better regions while preserving the others, and explicitly explore bounds rarely hit exactly by the previous methods. Coupled improvements can be missed, so the previous population state is retained.\n**Next step limit:** 210 additional calls; pause at cumulative evaluation 1020.\n**Why this length:** Twenty-one samples per coordinate provide a first view of each full-domain slice at approximately 0.05 spacing. Jitter reduces systematic grid alignment, and a complete sweep allows comparison across all ten coordinates. This is a bounded diagnostic/optimization experiment rather than a presumption of separability.\n**Review:** Inspect per-coordinate gains, attained locations, variation and multiple sampled low regions, and cumulative improvement. Pause on evaluator error/nonfinite response. No subsequent method is chosen in advance.\n"
+  },
+  {
+    "block": 7,
+    "method": "gp_two_coords",
+    "first_eval": 1021,
+    "last_eval": 1068,
+    "calls": 48,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "gp_two_coords",
+        "first_eval": 1021,
+        "last_eval": 1068
+      }
+    ],
+    "decision_text": "\n## Decision after evaluation 1020\n**Budget:** 1020 used / 2000 total; 980 remaining.\n**Evidence:** The conditional sweep improved the best by 0.1360094712880482 to -160.81066553910517 through coordinate 2. Coordinates 0\u20137 produced exactly 2, 2, 4, 4, 8, 8, 16, and 16 distinct observed values across their respective 21-point scans, with contiguous runs of identical values. Coordinates 8 and 9 each returned 21 distinct values and several sampled local minima. These are empirical slice observations, not proof of a global partition or separability. Small moves in the first eight coordinates can therefore spend evaluations on observed flat regions.\n**Decision:** Switch to two-dimensional GP Bayesian optimization in coordinates 8\u20139, keeping coordinates 0\u20137 fixed at the coordinate sweep's accepted incumbent. Reuse only observations whose first eight coordinates exactly match this fixed vector, deduplicating identical two-dimensional inputs. Retain all original data and optimizer states. The dimension reduction is a bounded conditional experiment, not permanent fixation of the other coordinates.\n**Hyperparameters:** Campaign-local adapter using BoTorch 0.18.1, GPyTorch 1.15.2, Torch 2.14.1, and SciPy 1.17.1. Mat\u00e9rn-5/2 kernel with two ARD lengthscales constrained to [0.008,0.5], initial lengthscales 0.10, scale kernel initial outputscale 1.0, constant mean, standardized output, fixed observation variance 1e-6 in standardized units for numerical regularization of deterministic data. Refit kernel/mean every 8 newly incorporated observations, maximum fit iterations 100; retain fitted parameters between refits. Bounds [0,1]^2. Initialization adds 16 scrambled Sobol points with seed 20261025. Then analytic LogExpectedImprovement for minimization, 8 acquisition restarts, 256 raw samples, maximum 100 acquisition iterations. Avoid numerical repeats within 1e-7 by maximizing acquisition over 1024 Sobol candidates at least 1e-5 away. Other fitting/numerical defaults are inherited from the identified package versions. Torch seed 20261025 and one CPU thread. Label `gp_two_coords`.\n**Reason:** Jointly optimizing the two empirically varying coordinates can find improvements missed by conditional one-coordinate scans and avoids repeated motion within observed flat intervals. The Mat\u00e9rn kernel permits more local variation than a very smooth global quadratic approximation. Existing exact-match observations reduce initialization cost.\n**Next step limit:** 96 additional objective calls; pause no later than cumulative evaluation 1116.\n**Why this length:** Sixteen fresh space-filling points plus up to 80 adaptive acquisitions are substantial in two dimensions but consume less than 10% of the remaining budget. Review sooner if, after at least 48 calls, the last 24 calls give no improvement larger than 1e-4.\n**Review:** Inspect actual improvement, sampled locations, learned lengthscales, and the early plateau condition. Surrogate predictions are proposals only and never recorded as objective observations. Stop on evaluator error/nonfinite output. No next method is predetermined.\n"
+  },
+  {
+    "block": 8,
+    "method": "bobyqa_two_coords",
+    "first_eval": 1069,
+    "last_eval": 1113,
+    "calls": 45,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "bobyqa_two_coords",
+        "first_eval": 1069,
+        "last_eval": 1113
+      }
+    ],
+    "decision_text": "\n## Decision after evaluation 1068\n**Budget:** 1068 used / 2000 total; 932 remaining.\n**Evidence:** Two-coordinate GP-BO used 48 of its authorized 96 calls, improving the incumbent from -160.81066553910517 to -168.90223307286217 at evaluation 1039. It triggered the recorded early review condition after at least 48 calls with no >1e-4 improvement in the last 24. The runner-up was -168.33417044345975 at a nearby two-coordinate point. Latest fitted lengthscales were approximately [0.1109,0.2324]. Numerical noise-floor warnings rounded values at approximately 1e-6; no evaluator error occurred. The new best is [0.4615965123,0.2937697803] in the two normalized coordinates, distinct from the previous local point [0.4553965168,0.3454930799].\n**Decision:** Pause and retain the GP and all other states. Start two-coordinate BOBYQA from the best observed full vector, allowing only coordinates 8\u20139 to change. Keep the original harness and all observations.\n**Hyperparameters:** Py-BOBYQA 1.5.0 via a persistent subspace queue adapter; dimension 2, npt=6 (full quadratic interpolation), rhobeg=0.02, rhoend=1e-6, bounds [0,1]^2, maxfun=932 as a solver ceiling. Deterministic, no automatic restarts, no additional scaling; remaining defaults as in the earlier BOBYQA configuration. Label `bobyqa_two_coords`.\n**Reason:** GP exploration located a substantially better two-coordinate pocket. A local quadratic fit in just the varying subspace can efficiently assess its attainable value without wasting interpolation directions inside the first eight observed plateaus. The starting radius matches the observed separation of nearby promising candidates.\n**Next step limit:** 50 additional objective calls; pause no later than cumulative evaluation 1118.\n**Why this length:** Six interpolation points plus up to 44 refinement/model calls is a meaningful local budget in two dimensions. Formal convergence can return control sooner, avoiding unnecessary precision work.\n**Review:** Inspect final objective, two-coordinate displacement, late progress, and solver termination. Pause sooner on convergence or evaluator error/nonfinite response. No later search is preselected.\n"
+  },
+  {
+    "block": 9,
+    "method": "plateau_coordinate_scan",
+    "first_eval": 1114,
+    "last_eval": 1173,
+    "calls": 60,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "plateau_coordinate_scan",
+        "first_eval": 1114,
+        "last_eval": 1173
+      }
+    ],
+    "decision_text": "\n## Decision after evaluation 1113\n**Budget:** 1113 used / 2000 total; 887 remaining.\n**Evidence:** Two-coordinate BOBYQA formally terminated at rhoend after 45 calls (five before the cap). It improved the objective from -168.90223307286217 to -169.39997675302277, at normalized coordinates [0.46159986049906626,0.2963998156357648]. The reported approximate gradient [-28.75,50.05] and Hessian entries of order 1e8 at very small radius caution against interpreting this as smooth stationarity; the radius termination is not a global or local optimality proof. The first eight coordinates have not been reconsidered since the large change in coordinates 8\u20139.\n**Decision:** Run one sequential conditional scan of coordinates 0\u20137 at the current incumbent using representatives of the empirically observed constant-value intervals. Retain all data and previous optimizer states. Test every representative at its new context; no old objective value is reused for a changed point.\n**Hyperparameters:** Campaign-local coordinate scan, no new library defaults. For each contiguous equal-valued group in the recorded 21-point slices, use the mean of that group's sampled coordinate positions as a proposed representative. Group equality tolerance 1e-11 (the observed repeats are exactly equal). Counts [2,2,4,4,8,8,16,16], total 60. Order [6,7,4,5,0,1,3,2], reflecting broad observed conditional variation. Other coordinates stay fixed during each coordinate's scan; accept strict improvements between coordinates. Existing incumbent remains eligible. Label `plateau_coordinate_scan`.\n**Reason:** The data permit a compact way to revisit the first eight coordinates without probing many positions within the same observed interval. The better two-coordinate setting can alter which plateau is favorable, so prior slice rankings are not assumed to transfer unchanged.\n**Next step limit:** 60 additional calls; pause at cumulative evaluation 1173.\n**Why this length:** One complete scan across all 60 observed plateau representatives tests every coordinate in its current context, using only 6.8% of the remaining budget.\n**Review:** Inspect which settings change, their gains, agreement or disagreement with previous rankings, and whether another coordinate became favorable late in the sweep. Stop on evaluator error/nonfinite response. No next step is preselected.\n"
+  },
+  {
+    "block": 10,
+    "method": "paired_plateau_moves",
+    "first_eval": 1174,
+    "last_eval": 1233,
+    "calls": 60,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "paired_plateau_moves",
+        "first_eval": 1174,
+        "last_eval": 1233
+      }
+    ],
+    "decision_text": "\n## Decision after evaluation 1173\n**Budget:** 1173 used / 2000 total; 827 remaining.\n**Evidence:** None of the 60 plateau-representative evaluations improved -169.39997675302277. All eight representatives corresponding to the incumbent intervals reproduced its value in the new context. Best alternative penalties were 6.4105 for coordinate 6, 5.8370 for coordinate 7, 7.8586 for coordinate 5, 12.4318 for coordinate 4, 13.8139 for coordinate 2, and 22.7774 for coordinate 3. Flipping coordinates 0 or 1 alone cost about 73.63 and 70.64. The incumbent is therefore robust to these sampled single-coordinate alternatives; coupled improvements remain untested.\n**Decision:** Test paired plateau moves around the fixed current incumbent. For each pair from coordinates 2\u20137, use the two best non-incumbent representatives in each coordinate's latest scan and evaluate all four combinations. Keep the same fixed baseline throughout this block so joint effects can be compared with the observed single-coordinate effects. Preserve all previous states and observations.\n**Hyperparameters:** Campaign-local finite neighborhood enumeration; 6 eligible coordinates, 2 alternatives per coordinate, all 15 coordinate pairs, 4 combinations per pair, total 60 candidates. Incumbent-valued representatives are excluded with a 1e-8 tolerance. No randomness or library defaults. Coordinates 0\u20131 and 8\u20139 stay fixed for this bounded test. Label `paired_plateau_moves`.\n**Reason:** A conditional optimum need not resist coordinated moves. The observed single-coordinate rankings provide a targeted finite set, while the large penalties for the two binary-like observed slices make them lower priority in this block. This is a search restriction for this experiment, not a claim that those coordinates can never matter.\n**Next step limit:** 60 additional calls; pause at cumulative evaluation 1233.\n**Why this length:** Fully covers the selected paired neighborhood, avoiding partial pair comparisons and making it possible to quantify interactions from actual single and paired observations.\n**Review:** Inspect best pair values and observed interaction differences (joint value minus the two single values plus baseline). Such differences are diagnostic statistics, not fabricated evaluations. Stop on evaluator error/nonfinite response; no subsequent method is committed.\n"
+  },
+  {
+    "block": 11,
+    "method": "cma_plateau_joint",
+    "first_eval": 1234,
+    "last_eval": 1425,
+    "calls": 192,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "cma_plateau_joint",
+        "first_eval": 1234,
+        "last_eval": 1425
+      }
+    ],
+    "decision_text": "\n## Decision after evaluation 1233\n**Budget:** 1233 used / 2000 total; 767 remaining.\n**Evidence:** All 60 selected paired plateau moves were worse than the incumbent -169.39997675302277. The best pair returned -159.7405203842466. Joint effects are not additive: the most negative measured interaction was -22.5004, but it did not overcome the single-move penalties. The conditional neighborhood is fairly robust; moves involving the last two coordinates together with plateau changes have not been adequately explored. This finite neighborhood does not establish a global minimum.\n**Decision:** Start a new joint CMA-ES using the observed plateau representatives as ordered candidate choices for coordinates 0\u20137 and continuous normalized variables for coordinates 8\u20139. All ten choices may change together. Retain original CMA/GP/local states and all observations; the new representation requires a fresh population and covariance. Initialize its mean at the incumbent's nearest observed plateau representatives and its exact last two coordinates.\n**Hyperparameters:** pycma 4.5.0 `CMAEvolutionStrategy`; first eight search variables are integer indices with upper bounds [1,1,3,3,7,7,15,15], mapped to the empirical representative arrays before every real evaluation. Last two variables have bounds [0,1]. `integer_variables=range(8)` uses pycma's supported integer centering and minimum-std defaults; these indices describe our proposal set, not an asserted private objective implementation. CMA_stds=[1,1,3,3,7,7,15,15,1,1], sigma0=0.12, population 16, seed 20261026, full active covariance, verbose=-9, verb_log=0. Other adaptation/boundary/stopping defaults are inherited from pycma 4.5.0. Label `cma_plateau_joint`.\n**Reason:** Empirical interval representatives avoid needless within-plateau proposals, while a joint search can cross barriers that conditional single or paired plateau tests cannot cross when the last two coordinates are fixed. The 0.12 fractional scale explores nearby combinations and multiple continuous pockets without restarting uniformly over the whole box.\n**Next step limit:** 192 additional calls (12 generations); pause at cumulative evaluation 1425.\n**Why this length:** Twelve complete generations give the new representation time to adapt and provide median/diversity evidence, while using only one quarter of the remaining budget. The block is an exploratory test, not a commitment to spend the rest on CMA.\n**Review:** Inspect incumbent progress, generation medians, distinct plateau combinations, adapted scales, and stopping conditions. Pause earlier on CMA termination or evaluator error/nonfinite response. No next method is selected.\n"
+  },
+  {
+    "block": 12,
+    "method": "nelder_mead_pockets",
+    "first_eval": 1426,
+    "last_eval": 1545,
+    "calls": 120,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "nelder_mead_pockets",
+        "first_eval": 1426,
+        "last_eval": 1545
+      }
+    ],
+    "decision_text": "\n## Decision after evaluation 1425\n**Budget:** 1425 used / 2000 total; 575 remaining.\n**Evidence:** Joint plateau CMA tested 104 distinct plateau combinations over 192 calls. Its generation median improved from -128.5659 to -156.9737 and sigma decreased to 0.0492181, but its best -164.60320518619312 did not beat -169.39997675302277. The best mixed-search combination matched the incumbent's observed plateau indices [1,1,1,2,5,1,15,3]. Data review identified promising two-coordinate starts separated by more than 0.04 from the incumbent and one another: evaluation 1316 (-164.6032052, [0.49875170,0.32757175]), evaluation 962 (-160.8106655, [0.45539652,0.34549308]), and evaluation 1037 (-160.6924105, [0.42088915,0.24452850]). Separation does not prove distinct basins.\n**Decision:** Pause and retain mixed CMA. Run one bounded multistart Nelder\u2013Mead block in coordinates 8\u20139 from those three observed points, keeping each start's exact first eight coordinates fixed. Maintain a persistent solver for each start and all campaign observations.\n**Hyperparameters:** SciPy 1.17.1 `minimize(method='Nelder-Mead')`, dimension 2, bounds [0,1]^2, initial simplex at the observed point plus a positive 0.012 coordinate displacement in each axis (negative only if needed to stay in bounds), xatol=1e-6, fatol=1e-6, adaptive=False, disp=False. Standard SciPy 1.17.1 reflection/expansion/contraction/shrink coefficients are inherited. Each solver's internal maxfev/maxiter ceiling is the remaining campaign budget when created, but the queue gate authorizes at most 40 actual calls per start in this block. Label `nelder_mead_pockets`.\n**Reason:** Several nearby low regions remain unrefined, and the sharp small-scale behavior seen in the last BOBYQA model favors testing a method without a smooth quadratic assumption. Different first-eight coordinate representations are kept exact rather than pooling their objective values under an unverified equivalence assumption.\n**Next step limit:** 120 additional calls (at most 40 per each of 3 starts); pause no later than cumulative evaluation 1545.\n**Why this length:** Forty evaluations per two-dimensional simplex allows a meaningful initial refinement while comparing three observed pockets. This is enough to identify whether any warrants more attention, without spending the remaining budget on one selected point.\n**Review:** Compare each start's improvement, endpoint, convergence status, and whether separate starts coalesce. Return sooner if any solver finishes before its allowance; no automatic replacement starts. Stop on evaluator error/nonfinite response. No later method is preselected.\n"
+  },
+  {
+    "block": 13,
+    "method": "nelder_alternate_states",
+    "first_eval": 1546,
+    "last_eval": 1665,
+    "calls": 120,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "nelder_alternate_states",
+        "first_eval": 1546,
+        "last_eval": 1665
+      }
+    ],
+    "decision_text": "\n## Decision after evaluation 1545\n**Budget:** 1545 used / 2000 total; 455 remaining.\n**Evidence:** The three 40-call Nelder\u2013Mead refinements reached -164.88300301768845, -169.39461576753382, and -164.01201954413906. The second moved near the incumbent [0.4616,0.2964], improving its own start by 8.584, but none beat -169.39997675302277. None had formally converged at its cap. The mixed CMA block also produced promising alternative plateau combinations whose last-two-coordinate settings have not been locally refined.\n**Decision:** Retain the three paused simplex states. Start a bounded multistart Nelder\u2013Mead comparison for the three best distinct non-incumbent plateau combinations from the mixed-CMA data: indices [1,1,1,2,5,1,14,3], [1,1,1,2,5,1,15,2], and [1,1,1,2,5,1,14,2]. Initialize each from its best actually observed full vector and keep that exact first-eight prefix fixed. Preserve all observations and the single harness.\n**Hyperparameters:** Same SciPy 1.17.1 two-coordinate Nelder\u2013Mead configuration as the decision at 1425: initial simplex offsets 0.012, xatol=fatol=1e-6, adaptive=False, normalized bounds, standard coefficients. New independent simplex states because their fixed coordinate contexts differ. No resampling of previous starts. Label `nelder_alternate_states`.\n**Reason:** The previous block showed that 40 calls can reveal large improvements in a promising pocket. Conditional comparisons at a fixed last-two-coordinate value may underrate a different plateau combination, so refining the strongest observed alternatives tests that unresolved possibility directly.\n**Next step limit:** 120 additional objective calls, at most 40 per start; pause no later than cumulative evaluation 1665.\n**Why this length:** Retaining 40 per start is supported by the observed 8.584 improvement within that allowance and permits a fair initial comparison across three different contexts. This consumes 26.4% of the remaining budget while leaving room to reassess the outcome.\n**Review:** Compare each alternative's attained value and progress against the incumbent, and inspect convergence. Return earlier for completed solvers without replacement starts. Stop on evaluator error/nonfinite response. No later method is predetermined.\n"
+  },
+  {
+    "block": 14,
+    "method": "nelder_precision",
+    "first_eval": 1666,
+    "last_eval": 1745,
+    "calls": 80,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "nelder_precision",
+        "first_eval": 1666,
+        "last_eval": 1745
+      }
+    ],
+    "decision_text": "\n## Decision after evaluation 1665\n**Budget:** 1665 used / 2000 total; 335 remaining.\n**Evidence:** Refining the three best alternative plateau combinations reached -164.6281936752914, -164.89673592872276, and -163.24942417740994, all above the incumbent -169.39997675302277. Several joint and conditional searches have now failed to beat this incumbent, while one independent simplex approached the same two-coordinate pocket. This supports robustness within the tested neighborhoods, not global optimality. Its original local refinement stopped at coordinate radius 1e-6 and retained measurable small-scale value changes.\n**Decision:** Start a small-simplex Nelder\u2013Mead refinement at the exact best observed full vector, changing coordinates 8\u20139 only. Retain all other states and observations. A fresh simplex is needed because this is a different starting point and scale from the paused alternative runs.\n**Hyperparameters:** SciPy 1.17.1 Nelder\u2013Mead subspace adapter, same standard coefficients and normalized bounds as at 1425; initial coordinate offsets reduced from 0.012 to 1e-5, xatol=1e-10, fatol=1e-9, adaptive=False, maxfev/maxiter=335 as an internal ceiling. Actual block cap remains separate. Label `nelder_precision`.\n**Reason:** With multiple plausible competitors tested, a modest expenditure on final local precision is now justified. The much smaller simplex targets the sharp incumbent pocket rather than reexploring a broad neighborhood. Tighter tolerances use the declared determinism and do not assert a known optimum.\n**Next step limit:** 80 additional calls; pause no later than cumulative evaluation 1745.\n**Why this length:** In two dimensions, 80 calls permit many contraction/reflection updates over several orders of magnitude of simplex size, yet use less than a quarter of the remaining budget. Solver convergence can end the block earlier.\n**Review:** Inspect gained precision, remaining objective changes, simplex termination, and actual calls used. Stop on evaluator error/nonfinite output. No subsequent action is preselected.\n"
+  },
+  {
+    "block": 15,
+    "method": "gp_two_coords_rough",
+    "first_eval": 1746,
+    "last_eval": 1841,
+    "calls": 96,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "gp_two_coords_rough",
+        "first_eval": 1746,
+        "last_eval": 1841
+      }
+    ],
+    "decision_text": "\n## Decision after evaluation 1745\n**Budget:** 1745 used / 2000 total; 255 remaining.\n**Evidence:** Small-simplex refinement improved -169.39997675302277 to -169.39999999688484 at evaluation 1744. Its normalized last-two coordinates are [0.46159999999984025,0.2964000000233679]. Bests at evaluations 1705 and 1725 were -169.3999979573411 and -169.39999964726059, so remaining changes are very small. The simplex has not formally terminated. These numerical values are observations, not a known optimum or global certificate.\n**Decision:** Pause and retain the precision simplex. Start a revised GP search over the full [0,1]^2 last-coordinate box, holding the first eight coordinates at the original accepted prefix. Reuse all exact-prefix observations as the training source, but select the lowest actually observed point per 0.001 rounding bin for numerical conditioning. All observations remain in the campaign trace. Retain the old GP separately; refit the revised kernel from scratch because kernel smoothness and training selection change.\n**Hyperparameters:** Same BoTorch 0.18.1/GPyTorch 1.15.2/Torch 2.14.1/SciPy 1.17.1 adapter framework as at 1020, changed to Mat\u00e9rn-3/2 (rougher) with ARD lengthscales in [0.002,0.5], initial 0.06; scaled deterministic numerical variance 1.1e-6, just above the library's 1e-6 floor. Refit every 12 new observations, max fit iterations 100. Analytic LogEI, 12 restarts, 512 raw acquisition samples, max acquisition iterations 100. No new initialization design is needed; all training values are real previous evaluations. Seed 20261027, one Torch thread, same repeat-avoidance rule. Label `gp_two_coords_rough`.\n**Reason:** Global conditional uncertainty remains despite strong local convergence and nearby competitors. The rougher kernel and larger acquisition search address the sharp observed response, while thinning near-duplicate local samples prevents an overconcentration of model effort at the incumbent. The full box is retained rather than assuming untested regions are irrelevant.\n**Next step limit:** 96 additional objective calls; pause at cumulative evaluation 1841.\n**Why this length:** Ninety-six acquisitions allow eight hyperparameter-refit windows and a substantial broad conditional challenge, while preserving 159 calls for a fresh subsequent decision. No later method is assigned that remainder.\n**Review:** Inspect actual new bests, best challenger values, acquisition locations, fitted scales, and any model failure. Only actual evaluate() outputs enter the trace. Stop on evaluator error/nonfinite response; no future method is committed.\n"
+  },
+  {
+    "block": 16,
+    "method": "surrogate_triple_moves",
+    "first_eval": 1842,
+    "last_eval": 1889,
+    "calls": 48,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "surrogate_triple_moves",
+        "first_eval": 1842,
+        "last_eval": 1889
+      }
+    ],
+    "decision_text": "\n## Decision after evaluation 1841\n**Budget:** 1841 used / 2000 total; 159 remaining.\n**Evidence:** The revised GP used 141 thinned training observations from 275 exact-prefix observations and added 96 actual calls without beating -169.39999999688484. Its best new value was -165.41280505173472. Fitted lengthscales ended near [0.1350,0.1097]. One acquisition-optimizer numerical warning triggered its library-internal restart; this was not an evaluator error or repeated unknown evaluation. Review of the existing single/pair plateau measurements gives a new diagnostic: a pair-interaction surrogate ranks 160 possible three-coordinate moves, with predicted minimum -171.0289852 and second-best -169.9658274. These are unverified predictions, not observations; ignored higher-order interactions may invalidate them.\n**Decision:** Evaluate the 48 best-predicted three-coordinate candidates around the current incumbent. Coordinates are chosen from 2\u20137, using the same two alternative representatives per coordinate as the paired experiment. Keep other coordinates fixed at the current precise incumbent. Preserve all observations and optimizer states.\n**Hyperparameters:** Campaign-local pair-interaction surrogate: prediction = old measured baseline + sum of measured single-change increments + sum of measured pair-interaction differences. Enumerate exactly three changed coordinates, all C(6,3)*2^3=160 possibilities, sort ascending by prediction, evaluate the first 48. No fitting, randomized hyperparameters, or library defaults. The surrogate uses the comparison context at evaluation 1113; the last-two-coordinate refinement since then is tiny but is another uncertainty. Label `surrogate_triple_moves`.\n**Reason:** Earlier experiments measured substantial interactions. Their combination gives a concrete data-based set of untested coupled moves, including two predicted to beat the incumbent. Testing actual values can reveal both better points and whether ignoring three-way interactions is too optimistic.\n**Next step limit:** 48 additional objective calls; pause at cumulative evaluation 1889.\n**Why this length:** Covers the best-ranked 30% of the 160 triples, including both predicted improvements, and provides enough outcomes to assess calibration and ranking before deciding whether further extrapolation is worthwhile.\n**Review:** Compare actual challenger values with the incumbent, prediction residuals, and rank correlation. Predictions never enter the trace as evaluations. Stop on evaluator error/nonfinite response. No following method is preselected.\n"
+  },
+  {
+    "block": 17,
+    "method": "precision_finish",
+    "first_eval": 1890,
+    "last_eval": 1901,
+    "calls": 12,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "precision_finish",
+        "first_eval": 1890,
+        "last_eval": 1901
+      }
+    ],
+    "decision_text": "\n## Decision after evaluation 1889\n**Budget:** 1889 used / 2000 total; 111 remaining.\n**Evidence:** The 48 triples produced no improvement; best actual value was -158.9617967699248. Prediction residual median was +13.0393, range [-1.2803,30.0523], and rank correlation only 0.0441. The first two predicted improvements actually returned -149.5843 and -141.2864. Pairwise extrapolation is therefore not reliable for ranking these triples. The incumbent remains -169.39999999688484, and its paused precision simplex has already narrowed to coordinate differences around 1e-10 but has not formally reported convergence.\n**Decision:** Retire the pairwise triple proposal model. Run a bounded precision-completion step: evaluate the incumbent with only its last two normalized coordinates rounded to 8 decimal places, then resume the existing precision Nelder\u2013Mead state without restarting it. Retain all real observations and optimizer states. The rounded candidate is a new actual evaluation; its value is not presumed from the prior point or injected into the paused solver.\n**Hyperparameters:** Rounding grid 1e-8 in coordinates 8\u20139 only; first eight coordinates unchanged. Continued simplex settings are exactly those recorded at 1665 (SciPy 1.17.1, xatol=1e-10, fatol=1e-9, standard coefficients); preserve its live simplex and internal counters. Label `precision_finish` for this combined numerical refinement step.\n**Reason:** Strong negative results across global conditional search and coordinated plateau challengers leave numerical finishing as a concrete remaining opportunity. Rounding checks whether the tiny observed displacement from a nearby simple coordinate representation matters, without assuming any private objective structure.\n**Next step limit:** 25 additional calls: 1 rounded candidate and at most 24 resumed simplex calls; pause no later than cumulative evaluation 1914.\n**Why this length:** The paused simplex is already very small, so a short continuation can resolve formal convergence without a new initialization cost. Most of the remaining budget is held for a fresh decision rather than automatically used for microscopic changes.\n**Review:** Compare the actual rounded value, convergence status, value spread, and remaining budget. Return sooner if the simplex terminates. Stop on evaluator error/nonfinite output; no following method is predetermined.\n"
+  }
+]

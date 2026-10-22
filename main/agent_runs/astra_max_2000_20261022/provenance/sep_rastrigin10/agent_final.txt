@@ -1,0 +1,5 @@
+Best observed value: **−462.08999999999827**, using **1,964 / 2,000 evaluations**.
+
+Stopped with 36 calls unused after numerical convergence and six unsuccessful alternative-valley checks. Global optimality is not certified.
+
+Saved and verified exactly the four required files in `results/agent_run/`: `roadmap_initial.md`, `changelog.md`, `trace.csv`, and `meta.json`.

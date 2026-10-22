@@ -1,0 +1,98 @@
+[
+  {
+    "block": 1,
+    "method": "sobol_axial_design",
+    "first_eval": 1,
+    "last_eval": 53,
+    "calls": 53,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "sobol_axial_design",
+        "first_eval": 1,
+        "last_eval": 53
+      }
+    ],
+    "decision_text": "# First decision: structured initial design\n\nMinimize a deterministic scalar objective in 10 dimensions, each in [-10, 10], with eight black-box inequalities. Feasibility requires every returned constraint <= 1e-10. The hard total budget is 2,000 calls, including infeasible points and any repeats. There are no prior observations. Objective and constraints remain sealed; smoothness, convexity, and the size or connectivity of the feasible region are unknown. All final results will be actual harness observations.\n\n## Current step only\nUse an initial space-filling and coordinate design, labeled `sobol_axial_design`: evaluate the center x=0, then both +/-2 displacements along each coordinate (20 points), then 32 scrambled Sobol points spanning the full bounds. Coordinate displacements are 10% of the box width; paired probes can expose local curvature and constraint sensitivity. The full-domain points give a modest initial assessment of feasible-region prevalence and objective variation without assuming a useful center.\n\nImplementation: campaign adapter in work/campaign.py using the provided src.optimizers.sobol_search.SobolSearch wrapper and SciPy 1.17.1 qmc.Sobol. Seed=173, dimension=10, scramble=True, inherited bits=None (effective 30), optimization=None, float64 output. Exactly 32 Sobol samples preserve the power-of-two balance property. NumPy version 2.4.6. No additional dependency is needed. The same live harness, all observations, and sampler state will be retained.\n\n## Evaluation limit and checkpoint\nMaximum 53 additional objective calls; pause at cumulative evaluation 53. This is 2.65% of the total budget: 21 observations give paired local sensitivity information, and 32 cover the full domain while leaving most of the budget available for decisions informed by data. The call gate enforces both this block limit and the remaining harness budget. Pause sooner for a nonfinite returned value or an evaluator error; on evaluator error stop without retrying an unknown evaluation.\n\nAt the checkpoint inspect feasibility counts, the best feasible observation (if any), least constraint violation, objective and constraint ranges, paired coordinate responses, and whether local variation suggests usable smoothness. These observations will determine the next decision; no later method or budget allocation is selected now. Save the harness output at this checkpoint.\n"
+  },
+  {
+    "block": 2,
+    "method": "slsqp_scaled",
+    "first_eval": 54,
+    "last_eval": 184,
+    "calls": 131,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "slsqp_scaled",
+        "first_eval": 54,
+        "last_eval": 184
+      }
+    ],
+    "decision_text": "## Decision after evaluation 53\n**Budget:** 53 used / 2000 total; 1947 remaining.\n**Evidence:** No feasible point among 53. Objective values range 581.699082962 to 3896.863122854. The center has objective 1352 and positive constraints 8, 34, and 768. Paired coordinate probes show consistent finite directional changes and curvature; smoothness away from those probes remains unproven. Point 19 (only coordinate 9 = 2) has objective 1280 and the smallest normalized positive-violation L2 norm, 0.6791706133. Its largest raw violation is 432. Raw least-total-violation point 44 has objective 659.312687484 but multiple appreciable violations.\n**Decision:** Switch to constrained finite-difference SLSQP, initialized at point 19. Keep the same harness and all observations. Use exact-point caching of real deterministic observations to share each joint evaluation between objective and constraint callbacks. A queue-serviced worker preserves native solver state at a call checkpoint; the main thread alone evaluates the objective.\n**Hyperparameters:** SciPy 1.17.1 minimize(method='SLSQP'); normalized variables z=x/10 in [-1,1]. Forward-difference eps=1e-6 in z (1e-5 physical units); ftol=1e-11; maxiter=300; analytic Jacobians not supplied. Objective divided by observed standard deviation 766.8725299992177. Constraint divisors are max(1, median absolute values over the 32 Sobol observations): [118.19536196067929,95.64063426107168,31.490433068946004,176.90990441240655,192.28664986466504,102.34704454648575,190.656864363914,663.9392197063444]. Ask the solver for raw g <= -1e-7 to allow a small feasibility margin relative to the public tolerance. Remaining defaults inherited from SciPy 1.17.1; no parallel finite differences.\n**Reason:** Feasibility is the current obstacle. Joint objective/constraint observations and apparently smooth coordinate responses support a local constrained method. Scaling mitigates the observed disparate constraint magnitudes; it does not change the feasibility definition. Finite differences avoid assuming a global function form.\n**Next step limit:** At most 220 additional objective calls; pause at cumulative evaluation 273, or earlier if the solver terminates.\n**Why this length:** Roughly 20 full ten-coordinate forward-gradient sweeps, including room for line-search evaluations, should show whether SLSQP restores feasibility and makes sustained progress while retaining most of the budget.\n**Review:** Inspect feasibility, best feasible objective, solver iterations, constraint margins, convergence status, and improvement rate. Pause sooner on solver termination, a nonfinite result, or evaluator error. An evaluator error ends the campaign without retrying the unknown call. Do not infer global optimality from a local solve.\n"
+  },
+  {
+    "block": 3,
+    "method": "slsqp_remote",
+    "first_eval": 185,
+    "last_eval": 404,
+    "calls": 220,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "slsqp_remote",
+        "first_eval": 185,
+        "last_eval": 404
+      }
+    ],
+    "decision_text": "\n## Decision after evaluation 184\n**Budget:** 184 used / 2000 total; 1816 remaining.\n**Evidence:** The SLSQP block ended early after 131 new calls because the solver reported successful convergence in 12 iterations. Ten observations were feasible. Best feasible objective is 24.30620948926075 at evaluation 174, versus no feasible incumbent before this block. Constraints 1-6 are approximately -1e-7; constraints 7 and 8 are -6.148450685 and -50.023934495. Late iterates moved from slight infeasibility (maximum violation 5.27e-6 at iteration 9) to feasibility. The initial best-objective Sobol point 48 has objective 581.699082962, is infeasible, and lies 13.050737 units from the incumbent.\n**Decision:** Restart constrained SLSQP at observed point 48 to test a substantially different initial region. Reset the local quasi-Newton state because the previous solve terminated; retain every real observation in the exact-point cache and keep the same harness counter.\n**Hyperparameters:** Unchanged from the decision after evaluation 53: SciPy 1.17.1 SLSQP, x/10 normalization, eps=1e-6, ftol=1e-11, maxiter=300, raw constraint margin=1e-7, and the same observed objective/constraint scales. The settings restored feasibility and converged quickly, so retain them to make starting-region differences interpretable.\n**Reason:** A single successful local run does not show whether another basin offers a lower feasible value. Point 48 is the most promising objective observation from the full-domain initial design and is spatially distant from the incumbent.\n**Next step limit:** At most 220 additional objective calls; pause at cumulative evaluation 404, or sooner on solver termination.\n**Why this length:** The first local run needed 131 calls. A 220-call cap allows a harder remote start and line searches without spending a large part of the remaining budget before review. This is reconsidered from the observed first-run cost rather than an automatic campaign schedule.\n**Review:** Compare attained feasibility, objective, coordinates and active constraints with the incumbent; inspect convergence and progress. Pause on solver termination, nonfinite values, or evaluator error. Any evaluator error stops the campaign without retry.\n"
+  },
+  {
+    "block": 4,
+    "method": "slsqp_central_refine",
+    "first_eval": 405,
+    "last_eval": 437,
+    "calls": 33,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "slsqp_central_refine",
+        "first_eval": 405,
+        "last_eval": 437
+      }
+    ],
+    "decision_text": "\n## Decision after evaluation 404\n**Budget:** 404 used / 2000 total; 1596 remaining.\n**Evidence:** The remote SLSQP block used its full 220-call cap and remains suspended, with 16 completed iterations. It produced 66 feasible observations. Best feasible objective 24.30620948658782 at evaluation 305 improves the incumbent by only 2.67293e-9. The same six constraints are near -1e-7 and the final coordinates are very close to the first solution. Iterations 12-16 change the objective at about 1e-12 to 1e-11 without useful improvement. This is consistent with forward-difference truncation and line-search precision effects, rather than evidence of an unpromising basin. Two distinct starts agree closely but do not establish global optimality.\n**Decision:** Adjust and restart local SLSQP at best feasible point 305, using explicitly computed central-difference Jacobians for objective and all constraints. Cancel the paused previous local worker without evaluating its pending request. Reset its quasi-Newton state; retain all actual observations and the same harness. This changes numerical precision, so rebuilding the local solver is justified.\n**Hyperparameters:** SciPy 1.17.1 SLSQP via a campaign-local adapter. Keep x/10 normalization and the objective and constraint divisors from evaluation 53. Central-difference absolute step=1e-6 in z, or 1e-5 physical units; use second-order one-sided differences only at box edges. Joint finite differences are cached and shared across objective and constraint Jacobians. Reduce raw constraint margin from 1e-7 to 1e-9 and ftol from 1e-11 to 1e-13. maxiter=100. Other defaults inherited from SciPy 1.17.1.\n**Reason:** The distant run corroborates the basin. Central differences reduce derivative bias, and reducing the margin removes a small intentional inward offset while still targeting strictly feasible observations. The observed plateau justifies this numerical adjustment, not a claim of global convergence.\n**Next step limit:** At most 168 additional objective calls; pause at cumulative evaluation 572 or earlier on solver termination.\n**Why this length:** About eight 20-probe central Jacobian sweeps plus base/line-search evaluations are enough to inspect local refinement from an already close solution, with a conservative cap if numerical convergence is difficult.\n**Review:** Check real feasible objective improvement, constraint margins, convergence, step sizes, and whether numerical precision has stabilized. Pause on solver termination, nonfinite results, or evaluator error; do not retry evaluator errors.\n"
+  },
+  {
+    "block": 5,
+    "method": "quadratic_validation",
+    "first_eval": 438,
+    "last_eval": 533,
+    "calls": 96,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "quadratic_validation",
+        "first_eval": 438,
+        "last_eval": 533
+      }
+    ],
+    "decision_text": "\n## Decision after evaluation 437\n**Budget:** 437 used / 2000 total; 1563 remaining.\n**Evidence:** Central-difference refinement converged in 2 iterations and 33 new calls, an early checkpoint. Fourteen new observations were feasible. Best feasible objective is 24.306209072388743 at evaluation 437, an improvement of 4.14199e-7; all six near-active constraints are approximately -1e-9. A diagnostic full quadratic response surface fitted solely to observed data (429 training points, 8 withheld initial Sobol points) has full rank 66. Across objective and constraints, training maximum absolute error is <=3.67e-11 and withheld error <=2.64e-7. Its condition number is 1.12646e8, so poor global numerical conditioning limits interpretation. The fitted objective Hessian is positive definite (eigenvalues approximately 100 to 1400 in z coordinates); fitted constraint Hessians are positive semidefinite within small fitting errors. These are empirical surrogate properties, not a proof about the sealed function.\n**Decision:** Switch to an independent space-filling validation block for the frozen empirical quadratic model. Continue the existing scrambled Sobol sampler with its state after 32 points. Evaluate 96 new full-domain points and compare their actual values with the frozen predictions. Retain all observations, the same harness, the completed local-solver results, and the frozen model. No model prediction enters the objective trace or counts as an observed result.\n**Hyperparameters:** SobolSearch with the initial configuration (seed=173, scramble=True, SciPy 1.17.1 defaults); 96 new points bring cumulative Sobol sampling to 128, a power of two. The frozen diagnostic model uses 66 full degree-two features [1,z_i,z_i*z_j for i<=j], z=x/10, separate linear least-squares fits to the objective and eight constraints, no regularization, NumPy 2.4.6 lstsq rcond=None. Training is the existing 437 observations except indices 21,25,29,33,37,41,45,49 (zero-based), with the eight removed points used only for the reported holdout errors. Freeze this fit throughout the block.\n**Reason:** Two local initializations agree and numerical refinement is already very close. Independent global observations can challenge the apparently simple response surface, reveal unmodeled behavior, and substantially improve the spread of the data. This addresses a different uncertainty from repeating local optimization.\n**Next step limit:** At most 96 additional objective calls; pause at cumulative evaluation 533.\n**Why this length:** Ninety-six points extend the initial 32-point Sobol sequence to a balanced 128-point design. This provides nearly twice the 66 observations needed to determine a full quadratic model using global points alone, while spending less than 5% of the total budget on the independent audit.\n**Review:** Inspect frozen-model prediction errors separately for each output, feasible rate, any new incumbent, and conditioning of a fit with the enlarged global design. Pause sooner if any absolute frozen-model error exceeds 1e-3, a nonfinite value appears, or the evaluator fails. The error threshold is orders of magnitude above the previous holdout error and is a reconsideration trigger, not a validity guarantee. Any evaluator error ends the campaign without retry.\n"
+  },
+  {
+    "block": 6,
+    "method": "quadratic_kkt_verify",
+    "first_eval": 534,
+    "last_eval": 556,
+    "calls": 23,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "quadratic_kkt_verify",
+        "first_eval": 534,
+        "last_eval": 556
+      }
+    ],
+    "decision_text": "\n## Decision after evaluation 533\n**Budget:** 533 used / 2000 total; 1467 remaining.\n**Evidence:** The 96-point independent Sobol validation block completed without triggering the 1e-3 discrepancy threshold. No new point was feasible; the incumbent remains 24.306209072388743. Frozen-model maximum absolute errors were 1.89036e-7 for the objective and <=1.41773e-7 for all constraints. Refitting the full quadratic surrogate on all 533 actual observations yields rank 66, condition number 51.06566 (previously 1.12646e8), and maximum absolute residual 1.26193e-11 over all outputs. Its objective Hessian eigenvalues in z are 100 to 1400, and constraint Hessians are positive semidefinite to fitting roundoff (smallest fitted eigenvalue >=-5.89e-12). Solving the fitted-model first-order conditions with the six observed near-active constraints gives positive multipliers and a predicted zero-margin objective 24.306209068172166. This is a prediction, not an observed result or a proof of global black-box optimality.\n**Decision:** Switch to empirical-quadratic candidate refinement and real local derivative verification. Use the well-conditioned model to propose three solutions with raw active-constraint margins 1e-9, 1e-10, and 0. Evaluate all three through the harness. Then evaluate +/-1e-4 physical-unit displacements in each coordinate around the zero-margin model candidate to check the actual objective and constraint derivatives. Keep all observations and the same harness.\n**Hyperparameters:** The quadratic feature map and NumPy 2.4.6 least-squares defaults are as recorded after evaluation 437; refit now includes all 533 observations. Candidate generation uses SciPy 1.17.1 root(method='hybr'), analytic surrogate Jacobian, xtol=1e-11, maxfev=1000, with other inherited defaults. Initialize the primal variables at observation 437 and multipliers by least squares; use the six constraints with abs(g)<1e-5 there as the active set. All three surrogate root residuals are below 2e-13, with positive multipliers; all candidates are within the box and satisfy the other model inequalities. These root-function calls use predictions only and are not objective evaluations. Verification uses central differences with physical step 1e-4, sharing each joint harness observation across all nine outputs.\n**Reason:** Independent global validation and the well-conditioned fit justify testing its slightly improved candidate. Positive multipliers and fitted convexity motivate the candidate, while actual evaluations and nearby derivative probes test its feasibility and first-order optimality directly. The zero-margin proposal is judged strictly by the public <=1e-10 feasibility tolerance, without substituting a prediction for a measurement.\n**Next step limit:** At most 23 additional objective calls; pause at cumulative evaluation 556.\n**Why this length:** Three candidate observations assess boundary precision; 20 paired probes are exactly one central-difference sweep for all 10 coordinates and nine outputs. More calls are not needed to answer this local validation question before reconsideration.\n**Review:** Inspect observed objective improvement, all raw constraints, surrogate discrepancy at each test point, empirical derivative agreement, positive multipliers, and the stationarity residual. Pause sooner if any candidate has a maximum raw constraint above 1e-8, any observed/predicted absolute discrepancy exceeds 1e-7, a nonfinite value appears, or the evaluator fails. An evaluator error ends the campaign without retry. Decide further work only from this checkpoint's evidence.\n"
+  }
+]

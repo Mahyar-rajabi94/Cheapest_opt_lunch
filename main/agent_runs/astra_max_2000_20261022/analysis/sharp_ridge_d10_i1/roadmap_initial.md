@@ -1,0 +1,10 @@
+# Initial decision
+
+Minimize the deterministic scalar black-box objective in 10 dimensions, with each coordinate in [-5, 5], no additional constraints, and no prior observations. The total hard budget is 2,000 real objective evaluations. Treat the objective as sealed: no assumed formula, smoothness, optimum, or separability. Determinism makes replication unnecessary at this stage.
+
+## First block only
+Use full-covariance CMA-ES through cma.CMAEvolutionStrategy, cma 4.5.0 (NumPy 2.4.6). Initialize the mean at the box midpoint, x0 = [0]*10, with sigma0 = 2.5 (one quarter of the coordinate width), population size 12, random seed 20261022, bounds [-5, 5] in every coordinate, CMA_active=True, and CMA_diagonal=False. Keep all other search, recombination, covariance-learning, boundary-transform, and stopping defaults of cma 4.5.0. Set verbose=-9 and verb_log=0 to avoid auxiliary output files. This offers broad initial coverage and learns correlated directions without requiring derivatives or assuming smoothness. A population of 12 provides slightly more ranking information per update than the dimension-based default while keeping adaptation frequent.
+
+Allow at most 240 additional objective calls, pausing at cumulative evaluation 240: 20 complete generations of 12. This is enough to inspect initial adaptation in 10 dimensions while leaving most of the budget uncommitted. A guard checks both the block ceiling and the harness remaining count before every evaluation; no future method is scheduled.
+
+Inspect best and population-median values by generation, improvement timing, sigma, coordinate standard deviations, covariance axis ratio, and the location of the best point relative to the bounds. Pause earlier if CMA-ES signals termination, a nonfinite value is returned, or an evaluator error occurs. An evaluator error ends execution without retrying an unknown call. All evaluations are tagged cma_es; the same harness, optimizer state, and observations are retained across checkpoints. Save the harness output at the checkpoint.

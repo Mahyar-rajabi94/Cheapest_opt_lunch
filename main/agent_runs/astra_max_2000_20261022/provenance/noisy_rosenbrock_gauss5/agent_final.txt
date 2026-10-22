@@ -1,0 +1,7 @@
+Completed **2,000/2,000 evaluations** across 14 reviewed blocks; stopped at the hard budget.
+
+Best observed noisy value: **149.28230524**
+
+`x = [-0.42536561, -0.97920600, -0.78072663, 0.88000926, -3.76448638]`
+
+Saved and verified exactly four files in `results/agent_run`: `roadmap_initial.md`, `changelog.md`, `trace.csv`, and `meta.json`. The noise-free score remains private.

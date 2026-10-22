@@ -1,0 +1,7 @@
+Completed **2,000/2,000 evaluations** across 11 reviewed blocks.
+
+Best observed noisy value: **149.5213759652**, at:
+
+`[-1.97852751, -0.30476234, -0.00341499, 1.73796287, -3.18208619]`
+
+Saved and verified exactly four files in [results/agent_run](/Users/iamthomaspruyn/Documents/PhD/Projects/OSI_Hackathon/Cheapest_opt_lunch/runs/paper-2000-20261022/campaigns/run-6f48af0d6688/workspace/results/agent_run): `roadmap_initial.md`, `changelog.md`, `trace.csv`, and `meta.json`. Stopped at budget exhaustion; the noise-free score remains private.

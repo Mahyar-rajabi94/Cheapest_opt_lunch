@@ -1,0 +1,3 @@
+Best observed objective: **602.0831809023**, down from **631.0506722347**. Used **2,000/2,000 evaluations** and stopped at the budget limit.
+
+All four required files were saved and validated in `results/agent_run/`: `roadmap_initial.md`, `changelog.md`, `trace.csv`, and `meta.json`. The metadata includes the best 50-dimensional point.

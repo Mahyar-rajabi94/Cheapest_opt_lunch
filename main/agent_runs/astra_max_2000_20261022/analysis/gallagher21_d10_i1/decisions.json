@@ -1,0 +1,258 @@
+[
+  {
+    "block": 1,
+    "method": "cma_es",
+    "first_eval": 1,
+    "last_eval": 160,
+    "calls": 160,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "cma_es",
+        "first_eval": 1,
+        "last_eval": 160
+      }
+    ],
+    "decision_text": "# Initial decision: one CMA-ES block\n\nThe objective is a sealed, deterministic scalar black box to minimize in 10 real coordinates, each in [-5, 5], with no further constraints and no prior observations. The hard campaign budget is 2,000 objective calls, including any repeated points or numerical probes. The optimum and objective identity are unknown and will not be investigated. No smoothness or convexity is assumed.\n\nUse the installed pycma 4.5.0 implementation directly so the population and initialization are explicit. Initialize the mean at the box midpoint (all zeros), sigma at 2.5 (one quarter of the box width), population size 16, and random seed 20261022. Use full covariance adaptation (CMA_diagonal=0), active covariance updates (CMA_active=True), and pycma's bounds transformation for [-5,5]. Recombination weights, learning rates, damping, and termination tolerances inherit pycma 4.5.0 defaults. Suppress console and file logging with verbose=-9 and verb_log=0. The midpoint gives a neutral starting location; the broad initial distribution and moderately enlarged population support exploration and covariance learning without assuming derivatives or a specific landscape.\n\nThe first step allows at most 160 additional objective evaluations, pausing at cumulative evaluation 160: ten complete generations of 16. Ten generations allow initial adaptation and a comparison of early and late populations while using only 8% of the budget. There is no commitment to another method or block after this step.\n\nAt the checkpoint inspect best observed value and its location, generation minima and medians, objective range, sigma, covariance axis ratio, coordinate sampling scales, and any native termination flag. Assess whether progress and concentration support continued search; a short plateau is not conclusive. Pause sooner for a native optimizer stopping condition; stop immediately and report an evaluator error or a nonfinite result, without retrying an unknown evaluation. Every call is guarded by the step and total limits, and all results come exclusively from the same harness.evaluate method. Preserve the live optimizer and harness across checkpoints and call harness.save at each checkpoint.\n"
+  },
+  {
+    "block": 2,
+    "method": "cma_es",
+    "first_eval": 161,
+    "last_eval": 400,
+    "calls": 240,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "cma_es",
+        "first_eval": 161,
+        "last_eval": 400
+      }
+    ],
+    "decision_text": "## Decision after evaluation 160\n**Budget:** 160 used / 2000 total; 1840 remaining.\n**Evidence:** Ten CMA-ES generations produced best y=-984.5794816955481 at evaluation 144. The first and last generation medians were -915.7631929662573 and -940.5299719506504; generation minima improved from -924.8830875608461 to values below -974 in the last three generations. Sigma adapted from 2.5 to 1.652663309858343, covariance axis ratio is 1.514, and no native stopping flag is present. The objective is deterministic; stochastic sampling still makes short-term progress variable.\n**Decision:** Continue the same live CMA-ES instance, retaining its mean, covariance, evolution paths, random state, and all observations. Retain the same harness and counter.\n**Hyperparameters:** Unchanged from roadmap_initial.md: pycma 4.5.0, population 16, active full covariance, bounded sampling, same inherited defaults. Sigma and covariance continue their ordinary internal adaptation. The improving medians do not justify an externally imposed scale change or restart.\n**Reason:** Both extreme and typical candidates improved, supporting more adaptation in the current region. The search remains broad (coordinate standard deviations about 1.33-1.62), and the current data do not indicate stagnation.\n**Next step limit:** 240 additional objective calls; pause at cumulative evaluation 400.\n**Why this length:** Fifteen full generations provide a longer trend after initial adaptation while using only 13% of the remaining budget. This is enough to assess whether the improving population follows the promising low-valued candidates.\n**Review:** Inspect best improvement and when it occurred, generation medians, sigma, axis ratio, proximity to bounds, and native termination flags. Pause sooner for native termination. Any evaluator error or nonfinite result ends evaluation without retry.\n"
+  },
+  {
+    "block": 3,
+    "method": "bobyqa_local",
+    "first_eval": 401,
+    "last_eval": 550,
+    "calls": 150,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "bobyqa_local",
+        "first_eval": 401,
+        "last_eval": 550
+      }
+    ],
+    "decision_text": "## Decision after evaluation 400\n**Budget:** 400 used / 2000 total; 1600 remaining.\n**Evidence:** The 240-call block improved best y from -984.5794816955481 to -995.1777883783719 at evaluation 367. Generation 25 median is -990.4975106637153, compared with -940.5299719506504 at the preceding checkpoint. Sigma is 0.7697765126119214 and coordinate sampling scales are 0.47-0.75. No native CMA stopping condition occurred. Several recent generation minima are close to -994; this is concentration with ongoing improvement, not evidence of failure. CMA's reported internal mean is before its bound transformation and must not be interpreted as an out-of-bounds evaluation.\n**Decision:** Switch the active block to a new local BOBYQA instance initialized at the best observed point (evaluation 367). Retain the paused CMA-ES instance and all observations; preserve the same harness and budget. BOBYQA starts its own interpolation model and does not claim to import the CMA covariance.\n**Hyperparameters:** Py-BOBYQA 1.5.0 via its supported solve API and a campaign-local queue adapter. Use npt=21 (2d+1), rhobeg=0.75, rhoend=1e-7 in original coordinates, scaling_within_bounds=False, bounds [-5,5], objfun_has_noise=False, seek_global_minimum=False, and restarts.use_restarts=False. maxfun=2000 is a solver ceiling; the main-thread per-call block guard is the stricter budget authority. Other trust-region, interpolation, geometry, and convergence parameters inherit Py-BOBYQA 1.5.0 deterministic defaults; one observation per candidate. Disable logging and progress printing. A radius of 0.75 matches the current CMA sampling scales; 21 model points balance local curvature information and initialization cost.\n**Reason:** The sampled population has concentrated around good values. A local quadratic interpolation method can test whether this region admits more efficient deterministic refinement without paying d+1 evaluations for every gradient. This is a test of local regularity, not an assumption of global convexity or known smoothness.\n**Next step limit:** 150 additional objective calls; pause at cumulative evaluation 550.\n**Why this length:** This pays for 21 interpolation points and permits about 129 subsequent model or geometry evaluations, enough to measure local progress without committing most of the remaining budget.\n**Review:** Inspect best improvement, progress by groups of 25 calls, model/solver termination and the spatial scale of recent points. Pause sooner if the solver returns; stop on an evaluator error or nonfinite result without retry. The callback can request a point while paused, but only the guarded main thread may evaluate it.\n"
+  },
+  {
+    "block": 4,
+    "method": "bobyqa_local",
+    "first_eval": 551,
+    "last_eval": 650,
+    "calls": 100,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "bobyqa_local",
+        "first_eval": 551,
+        "last_eval": 650
+      }
+    ],
+    "decision_text": "## Decision after evaluation 550\n**Budget:** 550 used / 2000 total; 1450 remaining.\n**Evidence:** BOBYQA improved best y from -995.1777883783719 to -998.044667559785, with the best on the final call. It reached -998.0199356412237 after 25 local calls, then -998.035251952458, -998.0410064932502, -998.0434453969985, -998.0443381006833, and -998.044667559785 at 25-call intervals. The last 20 candidates span 0.0061-0.0174 per coordinate. The solver remains active without an error or termination result. Improvements are reproducible objective differences because the problem is deterministic, though local convergence does not imply global optimality.\n**Decision:** Continue the same BOBYQA instance, preserving its interpolation model, trust region, pending request, and all observations. CMA-ES remains paused and the harness is unchanged.\n**Hyperparameters:** Unchanged from the decision at 400 (Py-BOBYQA 1.5.0, npt=21, initial radius 0.75, final radius 1e-7, no restarts). The trust radius continues adapting internally; do not reset it to the initial radius.\n**Reason:** Every 25-call segment still improved the incumbent, so immediate abandonment would discard productive local state. The diminishing gain and small spatial scale justify a shorter checkpoint interval.\n**Next step limit:** 100 additional objective calls; pause at cumulative evaluation 650.\n**Why this length:** Four more 25-call segments are sufficient to assess the diminishing progress and possible native convergence, while only spending 6.9% of the remaining budget.\n**Review:** Compare successive best improvements, recent point spans, and solver termination. Pause sooner if BOBYQA returns. Stop immediately on an evaluator error or nonfinite value without retry; make no claim of global optimality from a local stopping condition.\n"
+  },
+  {
+    "block": 5,
+    "method": "sobol_global",
+    "first_eval": 651,
+    "last_eval": 778,
+    "calls": 128,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "sobol_global",
+        "first_eval": 651,
+        "last_eval": 778
+      }
+    ],
+    "decision_text": "## Decision after evaluation 650\n**Budget:** 650 used / 2000 total; 1350 remaining.\n**Evidence:** The 100-call continuation improved best y by 0.0003253735863 to -998.0449929333713. At evaluations 575, 600, 625, and 650 the best values were -998.0448796160754, -998.0449422861842, -998.0449836305426, and -998.0449929333713. The last 25 calls gained only 0.0000093028287. Recent coordinate spans are about 0.00064-0.00408. The local solver has not terminated, but the observed gain per call has diminished substantially. The campaign has mostly adapted into one region, so these data do not establish global optimality.\n**Decision:** Pause the live local BOBYQA solver and switch this block to a new full-domain scrambled Sobol sample. Keep both paused optimizers and all observations in memory; use the same harness and incumbent.\n**Hyperparameters:** Use the supplied SobolSearch ask/tell wrapper with scipy 1.17.1 qmc.Sobol, dimension 10, scramble=True, seed=20261023, scaling to [-5,5]^10. Use 128 points (2^7) to retain Sobol balance. Other Sobol sequence defaults inherit scipy 1.17.1; no optimization of the design or objective-based filtering of candidate evaluations.\n**Reason:** Broadening observed coverage is a more informative use of the next calls than continuing tiny local improvements in a single region. This screen can reveal other promising locations but cannot certify that unsampled regions are worse.\n**Next step limit:** 128 additional objective calls; pause at cumulative evaluation 778.\n**Why this length:** A balanced 128-point design offers wider 10-dimensional coverage at under 10% of the remaining budget. It is a screen, not an attempt at dense coverage of the box.\n**Review:** Inspect the global sample's distribution and best candidates, their distances from the incumbent and earlier observations, and whether values cluster by region. There is no requirement that a raw global point beat a refined local result. Pause early only for an evaluator error or nonfinite result; do not retry an unknown evaluation.\n"
+  },
+  {
+    "block": 6,
+    "method": "lbfgsb_restart",
+    "first_eval": 779,
+    "last_eval": 954,
+    "calls": 176,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "lbfgsb_restart",
+        "first_eval": 779,
+        "last_eval": 954
+      }
+    ],
+    "decision_text": "## Decision after evaluation 778\n**Budget:** 778 used / 2000 total; 1222 remaining.\n**Evidence:** The 128 full-box Sobol values ranged from -937.6236338630572 to -913.4625256024343, with median -915.1523483824285. The best sample (evaluation 767) lies 11.313 units from the incumbent and 5.773 from the closest earlier point. The second-best sample is -934.4593976638365 at evaluation 724, 12.766 units from the incumbent. The best observed campaign value remains -998.0449929333713. Raw screen values cannot be compared to locally refined values as evidence that these other regions are inferior.\n**Decision:** Switch this block to a fresh L-BFGS-B instance starting exactly at the best Sobol sample, evaluation 767. Its inverse-Hessian history starts empty. Preserve all observations and paused CMA-ES/BOBYQA instances, with the same harness and counter.\n**Hyperparameters:** scipy 1.17.1 optimize.minimize(method='L-BFGS-B'), bounds [-5,5]^10, jac=None (forward finite differences), eps=1e-6 in physical coordinates, ftol=1e-11, gtol=1e-5, maxcor=10, maxls=20, maxfun=2000, maxiter=2000. Other implementation behavior inherits scipy 1.17.1. The queue adapter yields every actual objective call, so initial evaluations, gradients, and line searches all count toward the block guard. No analytical or surrogate-derived objective values are supplied.\n**Reason:** The screen identified a promising and spatially distinct starting point. The successful deterministic local refinement observed so far supports testing another local solver; finite differences offer explicit directional information without needing objective internals. Smoothness at the new point is not guaranteed. The 1e-6 probe is large enough to reduce cancellation for values around magnitude 1000 while remaining local relative to box width 10. The tolerances seek useful local convergence without chasing machine precision.\n**Next step limit:** 176 additional objective calls; pause at cumulative evaluation 954.\n**Why this length:** This permits about sixteen d+1 finite-difference groups, including line-search trial groups, enough to assess directional progress. It spends 14.4% of the remaining budget and does not commit to convergence or another start.\n**Review:** Inspect the new run's best value, distance from the incumbent and its starting point, progress per 22 calls, and any convergence or line-search failure. Pause sooner if scipy returns. Stop on an evaluator error or nonfinite value without retry.\n"
+  },
+  {
+    "block": 7,
+    "method": "lbfgsb_restart",
+    "first_eval": 955,
+    "last_eval": 1064,
+    "calls": 110,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "lbfgsb_restart",
+        "first_eval": 955,
+        "last_eval": 1064
+      }
+    ],
+    "decision_text": "## Decision after evaluation 954\n**Budget:** 954 used / 2000 total; 1046 remaining.\n**Evidence:** Starting from the best Sobol point, L-BFGS-B reached a run best of -996.1396217317966 at evaluation 949. Best values at successive 22-call checkpoints were -937.623641718204, -961.5508390010162, -966.4845490592365, -982.5077593183784, -991.6296060457001, -995.2284830335003, -995.6928956820125, and -996.1396217317966. The run's best point is 6.061 units from its start and 8.775 units from the incumbent region. The last 22 calls improved the run by 0.4467260497841. No solver termination or error is present; global best remains -998.0449929333713.\n**Decision:** Continue this same L-BFGS-B instance, including its pending request, finite-difference/line-search state, and inverse-Hessian history. Preserve all observations and other paused optimizers; do not restart from its current best.\n**Hyperparameters:** Unchanged scipy 1.17.1 configuration from evaluation 778: eps=1e-6, ftol=1e-11, gtol=1e-5, maxcor=10, maxls=20, bounded forward finite differences. The observed consistent descent provides no evidence that probe size or line-search settings require adjustment.\n**Reason:** The spatially distinct run is still improving materially. A short continuation can establish its local potential before deciding whether another region deserves evaluations.\n**Next step limit:** 110 additional objective calls; pause at cumulative evaluation 1064.\n**Why this length:** Ten d+1 groups provide a meaningful continuation but shorten the review interval as progress slows and the remaining budget falls. This uses about 10.5% of the remaining budget.\n**Review:** Inspect best improvement in this run, any change in campaign incumbent, native convergence or line-search termination, and whether run progress is diminishing. Pause sooner if the solver returns; stop on an evaluator error or nonfinite value without retry.\n"
+  },
+  {
+    "block": 8,
+    "method": "lbfgsb_restart2",
+    "first_eval": 1065,
+    "last_eval": 1240,
+    "calls": 176,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "lbfgsb_restart2",
+        "first_eval": 1065,
+        "last_eval": 1240
+      }
+    ],
+    "decision_text": "## Decision after evaluation 1064\n**Budget:** 1064 used / 2000 total; 936 remaining.\n**Evidence:** The 110-call L-BFGS-B continuation improved that run from -996.1396217317966 to -997.408842223441. Successive 22-call best values were -997.0959632717803, -997.2933743747744, -997.3814173771578, -997.4052807014571, and -997.408842223441. The last group gained only 0.0035615219839; the run remains 0.6361507099303 above the campaign incumbent. Its best point is 9.287 units from the incumbent region. No native stopping result is present, so the diminishing trend supports reprioritization but does not prove the run cannot improve further.\n**Decision:** Pause the current L-BFGS-B instance and initialize a second one at evaluation 724, the second-best full-domain Sobol point (y=-934.4593976638365). Keep the first local run, CMA-ES, BOBYQA, observations, and harness unchanged. The new solver starts with empty curvature history.\n**Hyperparameters:** Reuse the scipy 1.17.1 configuration documented at evaluation 778: forward differences with eps=1e-6, ftol=1e-11, gtol=1e-5, maxcor=10, maxls=20, maxfun/maxiter=2000, bounds [-5,5]^10. The previous run demonstrated useful descent with these settings; no evidence warrants changing them for this new starting point.\n**Reason:** The alternative run's gain per call is falling while a spatially distinct screened candidate remains unexplored locally. Starting another region is justified by the incumbent gap and available budget, with uncertainty about the attainable depth of either region.\n**Next step limit:** 176 additional objective calls; pause at cumulative evaluation 1240.\n**Why this length:** The earlier distinct-region trial made substantial progress in sixteen d+1 groups. Reusing that length here provides a comparable test of a fresh starting point without spending the whole remaining budget. The length is chosen for fresh initialization, not mechanically for every continuation.\n**Review:** Inspect the new run's descent, location, best value relative to the incumbent, and native solver status. Pause sooner for solver termination; stop on an evaluator error or nonfinite value without retry.\n"
+  },
+  {
+    "block": 9,
+    "method": "lbfgsb_restart2",
+    "first_eval": 1241,
+    "last_eval": 1350,
+    "calls": 110,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "lbfgsb_restart2",
+        "first_eval": 1241,
+        "last_eval": 1350
+      }
+    ],
+    "decision_text": "## Decision after evaluation 1240\n**Budget:** 1240 used / 2000 total; 760 remaining.\n**Evidence:** The second L-BFGS-B start improved from -934.4593976638365 to -988.0889612037167. Its final four 22-call checkpoints were -978.1001548547932, -982.3498361702395, -986.1987228712325, and -988.0889612037167. The last segment improved by 1.8902383324842. The best point is 14.719 units from the incumbent, with its first coordinate at -5 and all evaluations feasible. No termination or error is present. Best campaign value remains -998.0449929333713.\n**Decision:** Continue the same second L-BFGS-B instance with full live state and the same harness. Other optimizers remain paused; all observed data are retained.\n**Hyperparameters:** Unchanged scipy 1.17.1 settings from evaluation 778. L-BFGS-B already handles active box constraints through its supported bounded algorithm; no manual clipping or coordinate freezing is added. Retain eps=1e-6 and the recorded tolerances and memory size because progress remains substantial.\n**Reason:** This distinct run still makes large improvements per gradient group. Its boundary contact and continuing descent warrant observing the constrained local behavior before replacing it.\n**Next step limit:** 110 additional objective calls; pause at cumulative evaluation 1350.\n**Why this length:** Ten gradient/line-search groups allow meaningful further adaptation while using 14.5% of the remaining budget. The earlier run needed more than its initialization block to expose diminishing gains; current gains are larger and support this bounded continuation.\n**Review:** Inspect progress, boundary activity, gap to the incumbent, and native solver result. Pause sooner on solver termination. Stop on an evaluator error or nonfinite result without retry.\n"
+  },
+  {
+    "block": 10,
+    "method": "lbfgsb_multistart",
+    "first_eval": 1351,
+    "last_eval": 1416,
+    "calls": 66,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "lbfgsb_multistart",
+        "first_eval": 1351,
+        "last_eval": 1416
+      }
+    ],
+    "decision_text": "## Decision after evaluation 1350\n**Budget:** 1350 used / 2000 total; 650 remaining.\n**Evidence:** The second alternative run reached -988.8706478016971. Its last five 22-call best values were -988.4517009209263, -988.6311368562745, -988.8398410969716, -988.8686040790825, and -988.8706478016971. The final group gained 0.0020437226146; this run remains 9.1743451316742 above the incumbent. Its best point has moved off the boundary and is 15.041 units from the incumbent. The first alternative run was also slowing above the incumbent. Neither proves that further search cannot help.\n**Decision:** Pause the second alternative solver. Execute one two-start L-BFGS-B screening block from Sobol observations 746 and 679, with at most 132 calls per new solver. These start at y=-930.5363427783687 and -927.7422009454074, respectively, and are 10.848 and 10.129 units from the incumbent. Higher-ranked Sobol points 663 and 773 are much nearer the already refined incumbent region (5.792 and 5.317 units), so prioritize geographic diversity among good samples. Each new solver starts with empty history; retain all earlier state and the same harness.\n**Hyperparameters:** Both fresh solvers use the scipy 1.17.1 L-BFGS-B settings from evaluation 778 unchanged: eps=1e-6, ftol=1e-11, gtol=1e-5, maxcor=10, maxls=20, maxfun/maxiter=2000, box bounds, forward differences. Use equal per-start caps of 132 actual calls. The method label is lbfgsb_multistart for both; the execution report identifies each start and its evaluated interval. Queue callbacks cannot evaluate independently of the block guard.\n**Reason:** Diminishing local returns and a large incumbent gap support testing additional basins. Two bounded trials compare promising separated starts while retaining the option to reconsider from actual evidence. There is no commitment to continue either trial after this block.\n**Next step limit:** 264 additional objective calls total, at most 132 per solver; pause at cumulative evaluation 1614.\n**Why this length:** Twelve d+1 groups per start provide initial descent and a comparative progress signal. Shorter per-start trials reflect the 650-call remaining budget; the 264-call combined block is enough to compare two trajectories before another decision.\n**Review:** Inspect each run's best value and final-segment progress, geographic separation, line-search behavior, and the campaign incumbent. Pause sooner if either solver terminates; do not automatically spend its unused allocation on the other. Stop on an evaluator error or nonfinite result without retry.\n"
+  },
+  {
+    "block": 11,
+    "method": "lbfgsb_restart4",
+    "first_eval": 1417,
+    "last_eval": 1537,
+    "calls": 121,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "lbfgsb_restart4",
+        "first_eval": 1417,
+        "last_eval": 1537
+      }
+    ],
+    "decision_text": "## Decision after evaluation 1416\n**Budget:** 1416 used / 2000 total; 584 remaining.\n**Evidence:** The two-start screening block paused early after only 66 actual calls, because its first solver (start at evaluation 746) returned native convergence: NORM OF PROJECTED GRADIENT <= PGTOL. Its best value is -985.4151584709851 at evaluation 1406, with final numerical gradient components all zero at eps=1e-6. Progress at 22-call intervals was -984.147942535295, -985.4112716789169, and -985.4151584709851. This result may reflect local flatness or numerical resolution and is not global evidence. In accordance with the early-pause rule, the solver at candidate 679 was not launched and no unused calls were reassigned automatically.\n**Decision:** Start the previously untested Sobol candidate at evaluation 679 in a fresh L-BFGS-B instance. This is a new checkpoint decision, not automatic continuation of the preceding allocation. Retain the converged result and all other paused solver state, observations, and the same harness.\n**Hyperparameters:** Retain the scipy 1.17.1 settings from evaluation 778, including eps=1e-6 and gtol=1e-5. The zero numerical gradient occurred at a clearly inferior point and does not justify globally enlarging probes for a new region; the same settings produced sustained descent at the earlier starts. Empty inverse-Hessian history and exact start at observation 679.\n**Reason:** Candidate 679 remains an untested good full-domain sample, spatially distinct from the incumbent. The early convergence saved calls, while its outcome does not establish the potential of this next region.\n**Next step limit:** 132 additional objective calls; pause at cumulative evaluation 1548.\n**Why this length:** Twelve d+1 groups are sufficient for a comparable initial trial and use 22.6% of the remaining budget. Keep the checkpoint short enough to distinguish sustained descent from another quick local stop.\n**Review:** Inspect descent trajectory, native termination, numerical-gradient reliability if a stopping result appears, and distance to the incumbent. Pause sooner if the solver returns; stop on an evaluator error or nonfinite value without retry.\n"
+  },
+  {
+    "block": 12,
+    "method": "lbfgsb_restart5",
+    "first_eval": 1538,
+    "last_eval": 1691,
+    "calls": 154,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "lbfgsb_restart5",
+        "first_eval": 1538,
+        "last_eval": 1691
+      }
+    ],
+    "decision_text": "## Decision after evaluation 1537\n**Budget:** 1537 used / 2000 total; 463 remaining.\n**Evidence:** The trial starting at Sobol observation 679 terminated after 121 calls (11 fewer than its cap), with projected-gradient convergence. Its best observed value is -981.7117075507339, and the returned numerical gradient components have magnitudes at most 3.30e-6. Best values at calls 22, 44, 66, 88, and 110 of the trial were -981.0396722416742, -981.6228707488965, -981.6880848093757, -981.7117037466322, and -981.7117075505498. Its final point is 9.782 units from the incumbent. Multiple starts have now exposed distinct inferior locally stationary regions, while the campaign best remains -998.0449929333713.\n**Decision:** Initialize a fresh L-BFGS-B run at Sobol observation 765 (y=-926.289209475666), retaining all prior state, observations, and the original harness. This candidate is 14.413 units from the incumbent and 6.900 from its nearest pre-screen observation. Prefer it over the slightly better raw sample 763 because 763 lies much nearer the already refined incumbent region (6.436 units).\n**Hyperparameters:** Reuse the scipy 1.17.1 bounded L-BFGS-B configuration from evaluation 778 unchanged, including eps=1e-6, ftol=1e-11, gtol=1e-5, maxcor=10, maxls=20. Start with empty curvature history. The recent trial's small nonzero numerical gradient and native convergence support keeping these settings for exploration.\n**Reason:** The current incumbent has survived several spatially distinct local trials. Another good, distant screen point can still reveal a better basin; the stationary inferior results do not bound its potential. The remaining budget supports a bounded trial without requiring immediate campaign termination.\n**Next step limit:** 154 additional objective calls; pause at cumulative evaluation 1691.\n**Why this length:** Fourteen d+1 groups lie between the recent short convergent trials (6 and 11 groups) and the earlier longer 16-group initial runs. This offers a useful descent test while preserving 309 evaluations for a fresh decision at the checkpoint.\n**Review:** Inspect best value, progress per 22 calls, spatial location, and native convergence. Pause sooner if the solver returns. Stop on an evaluator error or nonfinite value without retry.\n"
+  },
+  {
+    "block": 13,
+    "method": "lbfgsb_restart5",
+    "first_eval": 1692,
+    "last_eval": 1801,
+    "calls": 110,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "lbfgsb_restart5",
+        "first_eval": 1692,
+        "last_eval": 1801
+      }
+    ],
+    "decision_text": "## Decision after evaluation 1691\n**Budget:** 1691 used / 2000 total; 309 remaining.\n**Evidence:** The fresh run from Sobol observation 765 produced a new campaign incumbent of -998.0500038048735 at evaluation 1682, improving the prior incumbent by 0.0050108715022. Its last three 22-call best values were -991.6758833716705, -997.8920556548978, and -998.0500038048735; the final segment gained 0.1579481499757. The new best point is 14.551 units from the old incumbent region and 5.787 from its starting point. No native stopping condition or error has occurred.\n**Decision:** Continue the same fifth-restart L-BFGS-B instance with its complete live line-search, finite-difference, and curvature state. Retain the new global incumbent, all observations, and the same harness.\n**Hyperparameters:** Unchanged scipy 1.17.1 configuration from evaluation 778: eps=1e-6, ftol=1e-11, gtol=1e-5, maxcor=10, maxls=20, bounded forward differences. No restart, probe-size change, or tolerance tightening is warranted while the new incumbent is still improving materially.\n**Reason:** This spatially distinct region has overtaken the prior best and continues to improve. Its observed progress makes further refinement a strong use of the remaining budget.\n**Next step limit:** 110 additional objective calls; pause at cumulative evaluation 1801.\n**Why this length:** Ten d+1 groups can reveal whether the new region is approaching local convergence, while leaving a substantial fraction of the 309 remaining calls for reassessment. Earlier continuations showed diminishing trends over this span.\n**Review:** Inspect new best improvement, final-segment gains, native convergence, and location. Pause sooner if the solver returns. Stop on an evaluator error or nonfinite result without retry.\n"
+  },
+  {
+    "block": 14,
+    "method": "lbfgsb_restart5",
+    "first_eval": 1802,
+    "last_eval": 1889,
+    "calls": 88,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "lbfgsb_restart5",
+        "first_eval": 1802,
+        "last_eval": 1889
+      }
+    ],
+    "decision_text": "## Decision after evaluation 1801\n**Budget:** 1801 used / 2000 total; 199 remaining.\n**Evidence:** Continuing the new incumbent region improved best y by 1.2571897418723, from -998.0500038048735 to -999.3071935467458. Best values at five 22-call checkpoints were -998.2617906933418, -998.28379178722, -999.045297430765, -999.2835174392014, and -999.3071935467458. The last segment gained 0.0236761075444. The best point remains interior and the solver is active without a termination flag or error. The temporary slower progress before evaluation 1735 did not predict the later improvement, illustrating uncertainty in short plateaus.\n**Decision:** Continue the same fifth-restart L-BFGS-B instance, retaining all current solver state, observations, and the original harness.\n**Hyperparameters:** Unchanged scipy 1.17.1 configuration from evaluation 778. Keep the finite-difference step and tolerances because the current configuration continues to deliver meaningful improvement; preserve curvature memory and line-search state.\n**Reason:** This run is improving the campaign best and has not established local convergence. With 199 calls left, a shorter continuation is justified by the observed final-segment gain and the cost of initializing another region.\n**Next step limit:** 88 additional objective calls; pause at cumulative evaluation 1889.\n**Why this length:** Eight d+1 groups are enough to inspect another convergence trend while retaining 111 calls for reassessment, rather than consuming the entire remainder at once.\n**Review:** Inspect best improvement, last-segment trend, and solver termination. Pause sooner if the solver returns. Stop on an evaluator error or nonfinite result without retry.\n"
+  },
+  {
+    "block": 15,
+    "method": "lbfgsb_restart5",
+    "first_eval": 1890,
+    "last_eval": 1911,
+    "calls": 22,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "lbfgsb_restart5",
+        "first_eval": 1890,
+        "last_eval": 1911
+      }
+    ],
+    "decision_text": "## Decision after evaluation 1889\n**Budget:** 1889 used / 2000 total; 111 remaining.\n**Evidence:** The 88-call continuation improved best y to -999.3081430421586 at evaluation 1885, a gain of 0.0009494954128. The last four 22-call best values were -999.3080736121047, -999.3081276548781, -999.3081423917778, and -999.3081430421586. The last group gained 6.503808e-7; recent coordinate spans are roughly 2.8e-6 to 1.4e-4. The solver remains active without an error, so the evidence suggests proximity to local convergence but has not yet produced a stopping result.\n**Decision:** Continue the same fifth-restart L-BFGS-B instance for a short convergence check, retaining all state and the original harness. Do not change the current tolerances or restart the model.\n**Hyperparameters:** Unchanged scipy 1.17.1 configuration from evaluation 778, including ftol=1e-11 and gtol=1e-5. Reassessed the diminishing gains: tightening tolerances would emphasize tiny numerical improvements, and enlarging the block would delay a useful terminal review.\n**Reason:** A brief continuation can establish whether the active run satisfies its own local criterion. The remaining 111 calls do not need to be consumed in one unreconsidered block.\n**Next step limit:** 33 additional objective calls; pause at cumulative evaluation 1922.\n**Why this length:** Three d+1 groups suffice for a short near-convergence check, reflecting the much smaller recent improvement and leaving at least 78 calls for another decision.\n**Review:** Inspect native stopping status and best improvement. Pause sooner if the solver returns. Stop on an evaluator error or nonfinite value without retry. A local stopping result will not be treated as proof of global optimality.\n"
+  },
+  {
+    "block": 16,
+    "method": "bobyqa_final_restart",
+    "first_eval": 1912,
+    "last_eval": 2000,
+    "calls": 89,
+    "boundary_source": "prospective document snapshot",
+    "method_segments": [
+      {
+        "method": "bobyqa_final_restart",
+        "first_eval": 1912,
+        "last_eval": 2000
+      }
+    ],
+    "decision_text": "## Decision after evaluation 1911\n**Budget:** 1911 used / 2000 total; 89 remaining.\n**Evidence:** The near-convergence check stopped after 22 of its 33 allowed calls because L-BFGS-B returned projected-gradient convergence. Best observed y is -999.3081430887647 at evaluation 1906, improving the preceding checkpoint by 4.66061e-8. The returned point has numerical-gradient infinity norm about 9.66e-6, below gtol=1e-5. This run used 374 evaluations in total and 24 accepted iterations. The best trace value is from an actual finite-difference probe and is slightly lower than the solver's returned base-point value; report the trace incumbent. Local convergence is not a global optimality certificate.\n**Decision:** Start one fresh BOBYQA trial at the untried Sobol observation 687 (y=-926.1930242510407), using the same harness and retaining all earlier observations and solver results. The starting point is spatially distant from both incumbent regions. Its local interpolation model starts fresh; do not continue numerical polishing of the converged incumbent.\n**Hyperparameters:** Py-BOBYQA 1.5.0 supported solve API with npt=21, rhobeg=1.0, rhoend=1e-6 in original coordinates, scaling_within_bounds=False, bounds [-5,5]^10, maxfun=89, objfun_has_noise=False, seek_global_minimum=False, restarts.use_restarts=False. Other deterministic defaults are as documented for the first BOBYQA block at evaluation 400. Increase the initial radius from 0.75 to 1.0 because this is a coarse full-domain starting point rather than a CMA-refined candidate. Use a final radius of 1e-6 because this short exploratory trial is not intended to chase numerical precision. All evaluator calls remain behind the main-thread guard.\n**Reason:** The best run has reached native local convergence, while an untested promising remote sample remains. With only 89 evaluations, derivative-free interpolation provides many more model steps after initialization than repeated 11-call finite-difference groups. The earlier BOBYQA trial showed efficient initial improvement. This is a final opportunity to improve the incumbent, not evidence that the sampled point will do so.\n**Next step limit:** 89 additional objective calls; pause at cumulative evaluation 2000, or sooner for native termination.\n**Why this length:** The full remainder permits exactly 21 initial interpolation evaluations plus up to 68 model/geometry evaluations. A smaller block would spend the same initialization cost while sharply reducing refinement, and the campaign is already at a native local stopping point. Spending the remainder is specifically justified by this short fresh trial rather than by a default rule to exhaust the budget.\n**Review:** Compare the new trial's best value and progress to the incumbent; stop at total budget exhaustion or earlier native termination. Stop on an evaluator error or nonfinite result without retry. At the terminal checkpoint, append the outcome, call harness.save, and verify the four required files.\n"
+  }
+]

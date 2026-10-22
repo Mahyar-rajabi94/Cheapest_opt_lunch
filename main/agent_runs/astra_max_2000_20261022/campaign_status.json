@@ -1,0 +1,247 @@
+{
+  "updated_at": "2026-10-22T19:35:31.979672+00:00",
+  "done": true,
+  "paused": false,
+  "campaigns": [
+    {
+      "task": "rosenbrock10",
+      "status": "completed_early",
+      "evaluations": 1859,
+      "budget": 2000,
+      "agent_regret": 0.0,
+      "figures_ready": true
+    },
+    {
+      "task": "pymoo_g04",
+      "status": "completed_early",
+      "evaluations": 499,
+      "budget": 2000,
+      "agent_regret": 1.2126911315135658e-06,
+      "figures_ready": true
+    },
+    {
+      "task": "noisy_rosenbrock_gauss5",
+      "status": "complete",
+      "evaluations": 2000,
+      "budget": 2000,
+      "agent_regret": 2.406742421728808,
+      "figures_ready": true
+    },
+    {
+      "task": "mixint_rosenbrock10",
+      "status": "completed_early",
+      "evaluations": 1986,
+      "budget": 2000,
+      "agent_regret": 0.0,
+      "figures_ready": true
+    },
+    {
+      "task": "rosenbrock20",
+      "status": "complete",
+      "evaluations": 2000,
+      "budget": 2000,
+      "agent_regret": 23.63787352809379,
+      "figures_ready": true
+    },
+    {
+      "task": "rosenbrock40",
+      "status": "complete",
+      "evaluations": 2000,
+      "budget": 2000,
+      "agent_regret": 74.07660678669748,
+      "figures_ready": true
+    },
+    {
+      "task": "rastrigin10",
+      "status": "complete",
+      "evaluations": 2000,
+      "budget": 2000,
+      "agent_regret": 15.919330849370567,
+      "figures_ready": true
+    },
+    {
+      "task": "bent_cigar10",
+      "status": "complete",
+      "evaluations": 2000,
+      "budget": 2000,
+      "agent_regret": 0.00021911866156187898,
+      "figures_ready": true
+    },
+    {
+      "task": "sphere10",
+      "status": "completed_early",
+      "evaluations": 261,
+      "budget": 2000,
+      "agent_regret": 0.0,
+      "figures_ready": true
+    },
+    {
+      "task": "step_ellipsoid10",
+      "status": "complete",
+      "evaluations": 2000,
+      "budget": 2000,
+      "agent_regret": 0.012701368428309934,
+      "figures_ready": true
+    },
+    {
+      "task": "sharp_ridge10",
+      "status": "complete",
+      "evaluations": 2000,
+      "budget": 2000,
+      "agent_regret": 3.730750519537196e-05,
+      "figures_ready": true
+    },
+    {
+      "task": "weierstrass10",
+      "status": "complete",
+      "evaluations": 2000,
+      "budget": 2000,
+      "agent_regret": 0.007165388122700733,
+      "figures_ready": true
+    },
+    {
+      "task": "sep_rastrigin10",
+      "status": "completed_early",
+      "evaluations": 1964,
+      "budget": 2000,
+      "agent_regret": 1.7053025658242404e-12,
+      "figures_ready": true
+    },
+    {
+      "task": "schwefel10",
+      "status": "complete",
+      "evaluations": 2000,
+      "budget": 2000,
+      "agent_regret": 0.23687679397085049,
+      "figures_ready": true
+    },
+    {
+      "task": "gallagher101_10",
+      "status": "complete",
+      "evaluations": 2000,
+      "budget": 2000,
+      "agent_regret": 2.0436835326538585,
+      "figures_ready": true
+    },
+    {
+      "task": "gallagher21_10",
+      "status": "complete",
+      "evaluations": 2000,
+      "budget": 2000,
+      "agent_regret": 0.691856911235277,
+      "figures_ready": true
+    },
+    {
+      "task": "schaffer30",
+      "status": "complete",
+      "evaluations": 2000,
+      "budget": 2000,
+      "agent_regret": 0.9849930053962908,
+      "figures_ready": true
+    },
+    {
+      "task": "schaffer50",
+      "status": "complete",
+      "evaluations": 2000,
+      "budget": 2000,
+      "agent_regret": 2.0831809022872676,
+      "figures_ready": true
+    },
+    {
+      "task": "cec_rastrigin30",
+      "status": "complete",
+      "evaluations": 2000,
+      "budget": 2000,
+      "agent_regret": 200.98070618972042,
+      "figures_ready": true
+    },
+    {
+      "task": "noncont_rastrigin30",
+      "status": "complete",
+      "evaluations": 2000,
+      "budget": 2000,
+      "agent_regret": 87.0919781863197,
+      "figures_ready": true
+    },
+    {
+      "task": "pymoo_g07",
+      "status": "completed_early",
+      "evaluations": 556,
+      "budget": 2000,
+      "agent_regret": -7.459100004325592e-10,
+      "figures_ready": true
+    },
+    {
+      "task": "constrained_ellipsoid10",
+      "status": "execution_failure",
+      "evaluations": 735,
+      "budget": 2000,
+      "agent_regret": 6.19196692671585,
+      "figures_ready": true
+    },
+    {
+      "task": "constrained_diffpowers10",
+      "status": "complete",
+      "evaluations": 2000,
+      "budget": 2000,
+      "agent_regret": 5.7784745877142996e-09,
+      "figures_ready": true
+    },
+    {
+      "task": "constrained_rastrigin10",
+      "status": "complete",
+      "evaluations": 2000,
+      "budget": 2000,
+      "agent_regret": 1.8818809621734545e-08,
+      "figures_ready": true
+    },
+    {
+      "task": "noisy_rosenbrock_unif5",
+      "status": "complete",
+      "evaluations": 2000,
+      "budget": 2000,
+      "agent_regret": 16.732180811155217,
+      "figures_ready": true
+    },
+    {
+      "task": "noisy_rosenbrock_cauchy5",
+      "status": "complete",
+      "evaluations": 2000,
+      "budget": 2000,
+      "agent_regret": 0.04632600430414868,
+      "figures_ready": true
+    },
+    {
+      "task": "ng_noisy_rosenbrock20",
+      "status": "complete",
+      "evaluations": 2000,
+      "budget": 2000,
+      "agent_regret": 820.6634603056127,
+      "figures_ready": true
+    },
+    {
+      "task": "ng_noisy_cigar20",
+      "status": "complete",
+      "evaluations": 2000,
+      "budget": 2000,
+      "agent_regret": 9993.647396304477,
+      "figures_ready": true
+    },
+    {
+      "task": "mixint_rastrigin10",
+      "status": "complete",
+      "evaluations": 2000,
+      "budget": 2000,
+      "agent_regret": 5.012920063427401,
+      "figures_ready": true
+    },
+    {
+      "task": "mixint_schaffer10",
+      "status": "completed_early",
+      "evaluations": 1901,
+      "budget": 2000,
+      "agent_regret": 0.0,
+      "figures_ready": true
+    }
+  ]
+}

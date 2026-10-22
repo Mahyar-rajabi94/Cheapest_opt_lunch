@@ -1,0 +1,8 @@
+{
+  "task": "schaffer50",
+  "task_name": "cec2017_f6_d50_b5",
+  "f_opt": 600.0,
+  "noisy": false,
+  "n_constraints": 0,
+  "seed": 0
+}

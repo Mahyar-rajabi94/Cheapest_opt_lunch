@@ -1,0 +1,65 @@
+{
+  "task": "pymoo_g04",
+  "task_name": "pymoo_g04",
+  "evaluations": 499,
+  "status": "completed_early",
+  "run_note": "",
+  "agent_regret": 1.2126911315135658e-06,
+  "baseline_mean_regrets": {
+    "random_search": 720.2919915728355,
+    "sobol": 756.7911809205204,
+    "cma_es": 0.024340411452430998,
+    "de": 106.09669104479508,
+    "turbo": 646.2840718238673,
+    "gp_bo": 835.7002450265351,
+    "bobyqa": 1845.0138779619738,
+    "nelder_mead": 0.012928697840834502,
+    "lbfgsb": 2590.549841645865
+  },
+  "baseline_feasible_seed_counts": {
+    "random_search": [
+      10,
+      10
+    ],
+    "sobol": [
+      10,
+      10
+    ],
+    "cma_es": [
+      10,
+      10
+    ],
+    "de": [
+      10,
+      10
+    ],
+    "turbo": [
+      10,
+      10
+    ],
+    "gp_bo": [
+      10,
+      10
+    ],
+    "bobyqa": [
+      1,
+      1
+    ],
+    "nelder_mead": [
+      1,
+      1
+    ],
+    "lbfgsb": [
+      1,
+      1
+    ]
+  },
+  "decision_blocks": 5,
+  "noisy": false,
+  "n_constraints": 6,
+  "source_commit": "591e3de6a553c026976e3f785eceb8cac8b6690b",
+  "model": "gpt-6-astra",
+  "effort": "max",
+  "campaign_id": "run-4ad40254080b",
+  "provenance_dir": "provenance/pymoo_g04"
+}

@@ -9,6 +9,8 @@ experiments. [CLAUDE.md](CLAUDE.md) imports it; there is only one maintained pro
 The automated isolated runner below drives either Codex CLI or Claude Code CLI
 (`--agent codex|claude`); both use Codex's native sandbox for every agent command.
 
+[Published Astra max results: 30 mathematical tasks, 2,000-evaluation allowance](main/agent_runs/astra_max_2000_20261022/README.md).
+
 ## Install once
 
 Use Python 3.11+ and an installed `codex` CLI, authenticated for `--agent codex`.
@@ -186,7 +188,7 @@ agent's workspace, using the private optimum from baseline metadata.
 - `main/src/blind_runner/`: native execution, private evaluator and orchestration.
 - `main/scripts/`: agent runner, baseline runner and plotting entry points.
 - `archive_results/`: preserved historical agent artifacts; old source is in Git history.
-- `task_005_baseline/`, `poly_results/`: polymer data/model utilities and existing figures.
+- `task_005_baseline/`, `task_006_baseline/`, `poly_results/`: polymer data/model utilities and existing figures.
 - `runs/`: ignored generated workspaces, logs and new results.
 
 The numbered local harnesses, copied sandbox implementations and old planning

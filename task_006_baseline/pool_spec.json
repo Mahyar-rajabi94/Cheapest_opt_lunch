@@ -1,0 +1,102 @@
+{
+  "target": {
+    "name": "PCE",
+    "source_column": "calculated PCE (%)",
+    "unit": "%",
+    "direction": "maximize"
+  },
+  "n_candidates": 526,
+  "features": [
+    "HOMO_D",
+    "LUMO_D",
+    "Eg_D",
+    "HOMO_A",
+    "LUMO_A",
+    "Eg_A",
+    "DA_ratio",
+    "additive_conc",
+    "anneal_temp",
+    "HTL_energy",
+    "ETL_energy"
+  ],
+  "scaling": {
+    "HOMO_D": {
+      "min": -5.68,
+      "max": -5.01,
+      "source": "pool_minmax"
+    },
+    "LUMO_D": {
+      "min": -3.75,
+      "max": -2.78,
+      "source": "pool_minmax"
+    },
+    "Eg_D": {
+      "min": 1.48,
+      "max": 2.12,
+      "source": "pool_minmax"
+    },
+    "HOMO_A": {
+      "min": -6.38,
+      "max": -5.0183,
+      "source": "pool_minmax"
+    },
+    "LUMO_A": {
+      "min": -4.23,
+      "max": -2.83,
+      "source": "pool_minmax"
+    },
+    "Eg_A": {
+      "min": 1.1,
+      "max": 2.43,
+      "source": "pool_minmax"
+    },
+    "DA_ratio": {
+      "min": 0.3333333333333333,
+      "max": 3.333333333333333,
+      "source": "pool_minmax"
+    },
+    "additive_conc": {
+      "min": 0.0,
+      "max": 6.0,
+      "source": "pool_minmax"
+    },
+    "anneal_temp": {
+      "min": 25.0,
+      "max": 175.0,
+      "source": "pool_minmax"
+    },
+    "HTL_energy": {
+      "min": -5.3,
+      "max": -4.7,
+      "source": "pool_minmax"
+    },
+    "ETL_energy": {
+      "min": -4.65,
+      "max": -2.14,
+      "source": "pool_minmax"
+    }
+  },
+  "distance": {
+    "metric": "euclidean",
+    "space": "unit_scaled",
+    "tie_break": "lowest_candidate_id"
+  },
+  "files": {
+    "features": "pool_features.csv",
+    "labels": "pool_labels.csv",
+    "initial_sets": "initial_sets.json"
+  },
+  "reference": {
+    "median_pce": 8.93648743,
+    "top5_threshold": 12.73948176,
+    "top5_count": 27,
+    "top5_distinct_pairs": 23,
+    "best_pce": 15.707252,
+    "random_expected_to_first_top5": 18.821428571428573,
+    "random_expected_to_best": 263.5
+  },
+  "noise": {
+    "replicate_pce_std_median": 0.3766632311927101,
+    "replicate_pce_std_max": 2.0850540545728826
+  }
+}

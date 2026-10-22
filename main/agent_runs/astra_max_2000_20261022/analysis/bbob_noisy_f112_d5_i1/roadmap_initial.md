@@ -1,0 +1,11 @@
+# Initial decision: replicated space-filling exploration
+
+Minimize a noisy scalar black box on [-5,5]^5, without additional constraints or prior observations. The hard budget is 2,000 objective calls, including repetitions. The campaign is scored by the hidden noise-free value at the point attaining the lowest observed y. That value cannot be measured directly. I will reason only from actual observations and keep the same harness throughout. Noise magnitude, distribution, independence and spatial variation are unknown; repeated measurements provide an initial diagnostic, with sample means and standard deviations treated as provisional rather than guarantees.
+
+The first step is `sobol_replicated`: 64 distinct scrambled Sobol points using the supplied SobolSearch wrapper and SciPy 1.17.1, scramble=True, seed=7351, dimension=5, scaled to the full bounds. Other Sobol defaults are inherited from SciPy 1.17.1 (bits=None, optimization=None). Then evaluate the box center eight times. Rank the 65 distinct points by their observed sample means and repeat each of the four leading points twice more. Rank once before those eight final calls. All measurements, including repeats, go through harness.evaluate; grouped means are diagnostics only and never replace trace observations.
+
+This balances broad coverage with direct noise checks without assuming smoothness or a particular objective identity. The center repetitions estimate noise away from a selected low outlier, and leading-point repetitions assess selection stability. No observations are available yet.
+
+Maximum additional calls: 80. Pause at cumulative evaluation 80. The 64-point power-of-two Sobol design gives balanced five-dimensional coverage; 16 further calls support elementary noise and ranking checks. This is a bounded information-gathering step, not a commitment to any later method.
+
+At the checkpoint inspect the observed range and quantiles, best coordinates, means and standard deviations at repeated points, stability of the leading ranking, and whether value differences are large relative to within-point variability. Pause immediately on an evaluator error (do not retry), invalid/nonfinite observation, or budget inconsistency. All execution scripts live in work/. The persistent runner enforces the block and total limits and returns control after saving the harness outputs.

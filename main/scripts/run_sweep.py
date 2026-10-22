@@ -5,7 +5,8 @@ Writes the same per-campaign files as run_campaign.py:
 
 Seeds 0..seeds-1 are run for each optimizer, except deterministic ones
 (class attribute `deterministic = True`), which run seed 0 only. Optimizers
-in BUDGET_CAPS run at min(budget, cap).
+in BUDGET_CAPS run at min(budget, cap). Pool-only optimizers (class
+attribute `pool_only = True`) run on pool tasks only.
 
 Reruns are safe: a campaign whose meta.json already exists with the same
 requested_budget is skipped. If an existing campaign used a different
@@ -52,10 +53,13 @@ def _timed_campaign(task_name, optimizer_name, seed, budget, outdir):
 
 def _sweep(task_name, budget, seeds, outdir, workers):
     """Return (completed campaign dirs, failed (optimizer, seed) pairs)."""
-    task_dir = Path(outdir) / TASKS[task_name]().name
+    task = TASKS[task_name]()
+    if task.pool and budget > task.n_candidates:
+        raise ValueError(f"{task.name} has {task.n_candidates} candidates; budget {budget} exceeds that.")
+    task_dir = Path(outdir) / task.name
 
     names = sorted(
-        OPTIMIZERS,
+        (n for n in OPTIMIZERS if task.pool or not getattr(OPTIMIZERS[n], "pool_only", False)),
         key=lambda n: SLOWEST_FIRST.index(n) if n in SLOWEST_FIRST else len(SLOWEST_FIRST),
     )
     jobs = []

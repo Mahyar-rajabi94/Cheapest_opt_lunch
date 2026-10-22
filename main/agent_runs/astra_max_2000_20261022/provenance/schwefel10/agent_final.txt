@@ -1,0 +1,3 @@
+Best observed objective: **−546.2631232060291**, using **2,000/2,000 evaluations**. Stopped at the hard budget.
+
+Saved and verified exactly four required files in [results/agent_run](/Users/iamthomaspruyn/Documents/PhD/Projects/OSI_Hackathon/Cheapest_opt_lunch/runs/paper-2000-20261022/campaigns/run-b6f40dfd13c4/workspace/results/agent_run): `roadmap_initial.md`, `changelog.md`, `trace.csv`, and `meta.json`. The best input vector is recorded in `meta.json`.

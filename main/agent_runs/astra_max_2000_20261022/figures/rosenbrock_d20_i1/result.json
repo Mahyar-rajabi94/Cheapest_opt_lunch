@@ -1,0 +1,65 @@
+{
+  "task": "rosenbrock20",
+  "task_name": "rosenbrock_d20_i1",
+  "evaluations": 2000,
+  "status": "complete",
+  "run_note": "",
+  "agent_regret": 23.63787352809379,
+  "baseline_mean_regrets": {
+    "random_search": 48940.52592020067,
+    "sobol": 47816.76978388229,
+    "cma_es": 33.69337824742265,
+    "de": 69770.52254399359,
+    "turbo": 449.84304879095924,
+    "gp_bo": 570.4870580067869,
+    "bobyqa": 14.907699047468952,
+    "nelder_mead": 5953.902041280532,
+    "lbfgsb": 71.48985147813309
+  },
+  "baseline_feasible_seed_counts": {
+    "random_search": [
+      10,
+      10
+    ],
+    "sobol": [
+      10,
+      10
+    ],
+    "cma_es": [
+      10,
+      10
+    ],
+    "de": [
+      10,
+      10
+    ],
+    "turbo": [
+      10,
+      10
+    ],
+    "gp_bo": [
+      10,
+      10
+    ],
+    "bobyqa": [
+      1,
+      1
+    ],
+    "nelder_mead": [
+      1,
+      1
+    ],
+    "lbfgsb": [
+      1,
+      1
+    ]
+  },
+  "decision_blocks": 14,
+  "noisy": false,
+  "n_constraints": 0,
+  "source_commit": "591e3de6a553c026976e3f785eceb8cac8b6690b",
+  "model": "gpt-6-astra",
+  "effort": "max",
+  "campaign_id": "run-9530edbf75eb",
+  "provenance_dir": "provenance/rosenbrock20"
+}

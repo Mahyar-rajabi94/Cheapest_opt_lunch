@@ -1,0 +1,5 @@
+Best feasible objective: **1078.5489627813465**, using **735/2000 evaluations**.
+
+Stopped early because my checkpoint adapter deadlocked when starting a second COBYQA instance; the environment denied interruption. The saved trace contains all completed evaluations and passes consistency checks.
+
+All four required files are verified in [results/agent_run](/Users/iamthomaspruyn/Documents/PhD/Projects/OSI_Hackathon/Cheapest_opt_lunch/runs/paper-2000-20261022/campaigns/run-0bab130d3362/workspace/results/agent_run), including the documented early-stop reason.

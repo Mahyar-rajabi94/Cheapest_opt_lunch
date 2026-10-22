@@ -1,0 +1,8 @@
+{
+  "task": "schwefel10",
+  "task_name": "schwefel_d10_i1",
+  "f_opt": -546.5,
+  "noisy": false,
+  "n_constraints": 0,
+  "seed": 0
+}

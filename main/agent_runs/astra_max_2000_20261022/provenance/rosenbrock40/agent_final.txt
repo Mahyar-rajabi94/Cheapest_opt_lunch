@@ -1,0 +1,3 @@
+Completed **2,000/2,000 evaluations**. Best observed objective: **223.2266067866975**, a **99.81% reduction** from the initial value. Stopped at the budget limit.
+
+All four required files were saved and validated: [initial decision](results/agent_run/roadmap_initial.md), [decision log](results/agent_run/changelog.md), [trace](results/agent_run/trace.csv), and [metadata with best vector](results/agent_run/meta.json).

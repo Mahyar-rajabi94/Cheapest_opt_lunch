@@ -1,0 +1,8 @@
+{
+  "task": "constrained_ellipsoid10",
+  "task_name": "bbob_constrained_f20_d10_i1",
+  "f_opt": 1072.3569958546302,
+  "noisy": false,
+  "n_constraints": 3,
+  "seed": 0
+}

@@ -1,0 +1,55 @@
+{
+  "dim": 10,
+  "bounds": [
+    [
+      -10.0,
+      10.0
+    ],
+    [
+      -10.0,
+      10.0
+    ],
+    [
+      -10.0,
+      10.0
+    ],
+    [
+      -10.0,
+      10.0
+    ],
+    [
+      -10.0,
+      10.0
+    ],
+    [
+      -10.0,
+      10.0
+    ],
+    [
+      -10.0,
+      10.0
+    ],
+    [
+      -10.0,
+      10.0
+    ],
+    [
+      -10.0,
+      10.0
+    ],
+    [
+      -10.0,
+      10.0
+    ]
+  ],
+  "direction": "min",
+  "noisy": false,
+  "n_constraints": 8,
+  "budget": 2000,
+  "evaluations_used": 556,
+  "evaluations_remaining": 1444,
+  "unknown_evaluations": 0,
+  "artifacts_match_journal": true,
+  "only_workspace_execution_tools": true,
+  "tool_calls": 32
+}

@@ -1,0 +1,9 @@
+# Initial decision: constrained space-filling survey
+
+The public task is deterministic minimization in 10 dimensions on [-5,5]^10 with three black-box inequalities. Feasibility requires every returned g <= 0 with tolerance 1e-10. The result is the best feasible actual observation. The total hard budget is 2000 calls, including infeasible and repeated points. No observations are available; no smoothness, convexity, feasible volume, or objective identity is assumed.
+
+The first block uses the provided `src.optimizers.sobol_search.SobolSearch` wrapper, backed by SciPy 1.17.1 `scipy.stats.qmc.Sobol`, with dimension 10, scrambling enabled, seed 4226, no post-sampling optimization, and its inherited 30-bit sequence default. Evaluate the box center once, then a complete 64-point Sobol design mapped to the stated bounds. The center provides a neutral reference; the power-of-two design provides broad reproducible coverage without choosing an unsupported objective model. All calls use optimizer label `sobol_survey`. Constraint values are retained separately; only feasible observations qualify as the incumbent.
+
+Maximum additional calls: 65. Pause at cumulative evaluation 65. This uses 3.25% of the budget and gives a modest broad sample for estimating feasibility prevalence and response scales in 10 dimensions, without delaying reconsideration for a large survey.
+
+At the checkpoint inspect feasible count, best feasible objective and location, objective quantiles, individual constraint ranges, and least-violation observations. Assess whether the data support focused optimization and what scales and constraint handling would be appropriate. Stop sooner on an evaluator error or nonfinite returned values and report without retrying an unknown call. No later method or budget allocation is selected here.

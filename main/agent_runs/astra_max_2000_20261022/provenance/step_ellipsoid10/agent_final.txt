@@ -1,0 +1,3 @@
+Completed **2,000/2,000 evaluations**. Best observed objective: **92.95270136842831**, found at evaluation **1,937**. Stopped at the hard budget.
+
+Verified exactly the four required files in `results/agent_run`: `roadmap_initial.md`, `changelog.md`, `trace.csv`, and `meta.json`. The metadata includes the best input vector; the changelog records every block decision.

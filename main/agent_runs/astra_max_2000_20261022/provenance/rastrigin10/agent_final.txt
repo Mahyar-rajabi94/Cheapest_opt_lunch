@@ -1,0 +1,8 @@
+Completed **2,000 / 2,000 evaluations**. Best observed value: **1015.9193308493706**, found through CMA-ES exploration and BOBYQA refinement.
+
+Stopped at the hard budget limit. Verified the trace and metadata agree, and exactly four files exist in [results/agent_run](/Users/iamthomaspruyn/Documents/PhD/Projects/OSI_Hackathon/Cheapest_opt_lunch/runs/paper-2000-20261022/campaigns/run-dd2942ec07f5/workspace/results/agent_run):
+
+- `roadmap_initial.md`
+- `changelog.md`
+- `trace.csv`
+- `meta.json` — includes the best input vector.
