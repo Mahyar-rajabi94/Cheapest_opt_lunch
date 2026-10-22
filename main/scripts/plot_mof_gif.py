@@ -10,9 +10,8 @@ Data sources
 ------------
 - Regret-per-evaluation for every method (already computed, wide format):
   slide_figures/MOF_process/plot2_regret_vs_eval_data.csv
-- The agent's own per-evaluation method tag (not in the file above):
-  main/data/mof/task_060_trace.csv (pulled from origin/mof's
-  task_060_sandbox_openai/results/agent_task_060/trace.csv)
+- The agent's own per-evaluation method segments (start_eval/end_eval/method):
+  slide_figures/MOF_process/plot3_agent_method_timeline_data.csv
 
 Usage
 -----
@@ -59,13 +58,16 @@ def column_curve(rows, column: str):
     return evals, vals
 
 
-def agent_method_segments(trace_path: Path):
-    rows = load_rows(trace_path)
-    segments, cur = [], None
-    for r in rows:
-        if r["optimizer"] != cur:
-            segments.append((int(r["eval_idx"]), r["optimizer"]))
-            cur = r["optimizer"]
+def agent_method_segments(timeline_path: Path):
+    """[(start_eval, method_name), ...], from the Agent lane's 'segment'
+    rows of the method-timeline CSV, sorted by start_eval."""
+    rows = load_rows(timeline_path)
+    segments = [
+        (int(r["start_eval"]), r["method"])
+        for r in rows
+        if r["lane"] == "Agent" and r["row_type"] == "segment"
+    ]
+    segments.sort(key=lambda s: s[0])
     return segments
 
 
@@ -83,30 +85,47 @@ _FRIENDLY_OVERRIDES = {
 
 
 def friendly_method_name(name: str) -> str:
-    return _FRIENDLY_OVERRIDES.get(name, name.replace("_", " ").capitalize())
+    if name in _FRIENDLY_OVERRIDES:
+        return _FRIENDLY_OVERRIDES[name]
+    if "_" in name:
+        return name.replace("_", " ").capitalize()
+    return name  # already a clean display label, e.g. "CMA-ES", "Sobol"
 
 
 def main():
     data_path = ROOT.parent / "slide_figures" / "MOF_process" / "plot2_regret_vs_eval_data.csv"
-    trace_path = ROOT / "data" / "mof" / "task_060_trace.csv"
+    timeline_path = ROOT.parent / "slide_figures" / "MOF_process" / "plot3_agent_method_timeline_data.csv"
     agent_label = "Agent"
     baseline_label = "SOTA (feasibility BO, mean of 10 seeds)"
-    max_budget = 100
-    step = 1
-    fps = 8
+    max_budget = None  # full budget
+    step = 10
+    fps = 12
     outdir = ROOT.parent / "slide_figures" / "MOF_process"
 
     rows = load_rows(data_path)
     agent_x, agent_y = column_curve(rows, "Agent regret")
     base_x, base_y = column_curve(rows, "SOTA (feasibility BO, mean of 10 seeds) regret")
-    method_segments = agent_method_segments(trace_path)
+    method_segments = agent_method_segments(timeline_path)
 
     n_frames_total = max(agent_x[-1], base_x[-1])
-    n_frames_total = min(n_frames_total, max_budget)
-    a_keep = agent_x <= n_frames_total
-    b_keep = base_x <= n_frames_total
-    agent_x, agent_y = agent_x[a_keep], agent_y[a_keep]
-    base_x, base_y = base_x[b_keep], base_y[b_keep]
+    if max_budget is not None:
+        n_frames_total = min(n_frames_total, max_budget)
+
+    def densify(x, y, n):
+        """A curve that stops before the shared cutoff (e.g. SOTA here:
+        only 133 real evaluations) made no further progress; forward-fill
+        it to every integer evaluation up to n so each animation frame can
+        just slice by budget, instead of the line going static at its last
+        real point until the cutoff is finally reached."""
+        x = x[x <= n]
+        y = y[: len(x)]
+        dense_x = np.arange(1, n + 1)
+        idx = np.searchsorted(x, dense_x, side="right") - 1
+        idx = np.clip(idx, 0, len(y) - 1)
+        return dense_x, y[idx]
+
+    agent_x, agent_y = densify(agent_x, agent_y, n_frames_total)
+    base_x, base_y = densify(base_x, base_y, n_frames_total)
     method_segments = [(s, m) for s, m in method_segments if s <= n_frames_total]
     frame_budgets = list(range(1, n_frames_total + 1, step))
     if frame_budgets[-1] != n_frames_total:

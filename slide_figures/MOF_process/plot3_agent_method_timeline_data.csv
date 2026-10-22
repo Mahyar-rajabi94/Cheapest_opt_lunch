@@ -1,0 +1,29 @@
+lane,row_type,block,optimizer_label,method,start_eval,end_eval,n_evals,color
+Agent,segment,1,sobol,Sobol,1,256,256,#1baf7a
+Agent,segment,2,cma_es_r0,CMA-ES,257,336,80,#eda100
+Agent,segment,3,cma_es_r1,CMA-ES,337,397,61,#eda100
+Agent,segment,4,sobol_explore,Sobol,398,497,100,#1baf7a
+Agent,segment,5,de_seeded,Differential evolution,498,690,193,#eda100
+Agent,segment,6,sobol_explore,Sobol,691,790,100,#1baf7a
+Agent,segment,7,local_search,local_search,791,890,100,#898781
+Agent,segment,8,sobol_explore,Sobol,891,990,100,#1baf7a
+Agent,segment,9,local_search,local_search,991,1090,100,#898781
+Agent,segment,10,sobol_explore,Sobol,1091,1190,100,#1baf7a
+Agent,segment,11,local_search,local_search,1191,1290,100,#898781
+Agent,segment,12,sobol_explore,Sobol,1291,1390,100,#1baf7a
+Agent,segment,13,local_search,local_search,1391,1490,100,#898781
+Agent,segment,14,sobol_explore,Sobol,1491,1590,100,#1baf7a
+Agent,segment,15,local_search,local_search,1591,1690,100,#898781
+Agent,segment,16,sobol_explore,Sobol,1691,1790,100,#1baf7a
+Agent,segment,17,local_search,local_search,1791,1890,100,#898781
+Agent,segment,18,sobol_explore,Sobol,1891,1990,100,#1baf7a
+Agent,segment,19,local_search,local_search,1991,2000,10,#898781
+Agent,checkpoint,,,,397,397,,#fab219
+Agent,checkpoint,,,,690,690,,#fab219
+Agent,checkpoint,,,,890,890,,#fab219
+Agent,checkpoint,,,,1090,1090,,#fab219
+Agent,checkpoint,,,,1290,1290,,#fab219
+Agent,checkpoint,,,,1490,1490,,#fab219
+Agent,checkpoint,,,,1690,1690,,#fab219
+Agent,checkpoint,,,,1890,1890,,#fab219
+"SOTA (feasibility BO, mean of 10 seeds)",segment,1,feasibility_bo,feasibility_bo,1,133,133,#898781
