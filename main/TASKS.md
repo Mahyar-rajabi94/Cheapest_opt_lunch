@@ -12,16 +12,17 @@ This file names task identities. Keep it in `main/`; never copy it into a sandbo
 | Ill-conditioning | `bent_cigar10`, `rosenbrock*`, `constrained_ellipsoid10` |
 | Dimension scaling (10/20/40) | `rosenbrock10`, `rosenbrock20`, `rosenbrock40` |
 | Multimodality | `rastrigin10`, `cec_rastrigin30`, `weierstrass10`, `constrained_rastrigin10` |
-| Plateaus / zero gradient | `step_ellipsoid10`, `noncont_rastrigin30` |
+| Plateaus / zero gradient | `step_ellipsoid10`, `noncont_rastrigin30`, `opv_pce` |
 | Nondifferentiability | `sharp_ridge10` |
 | Wide box ([-100, 100]), D = 30 | `cec_rastrigin30`, `noncont_rastrigin30` |
 | High dimension (D = 30, 50), nonseparable | `schaffer30`, `schaffer50` |
-| Inequality constraints | `pymoo_g04`, `pymoo_g07`, `constrained_*` |
+| Inequality constraints | `pymoo_g04`, `pymoo_g07`, `constrained_*`, `opv_pce` |
 | Finding any feasible point | `pymoo_g07` |
 | Non-uniform box | `pymoo_g04`, `pymoo_g07` |
 | Observation noise | `noisy_rosenbrock_*`, `ng_noisy_*` |
 | Integer / mixed variables | `mixint_*` |
 | Categorical + conditional (real HPO) | `yahpo_svm`, `yahpo_xgboost` |
+| Emulator of experimental data | `opv_pce` |
 
 ## Per Task
 
@@ -47,7 +48,7 @@ Folder: `results_linux/<folder>/`. "Random" is the median random-search regret o
 
 ### Constrained
 
-Feasibility rate is the fraction of 500 uniform points that satisfy every constraint. The box center is infeasible on every constrained task.
+Feasibility rate is the fraction of 500 uniform points that satisfy every constraint. The box center is infeasible on every constrained task except `opv_pce`.
 
 | Key | Folder | Source | D | Constraints | Feasible | Tests | Winner @100 | Winner @2000 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -56,6 +57,7 @@ Feasibility rate is the fraction of 500 uniform points that satisfy every constr
 | `constrained_ellipsoid10` | `bbob_constrained_f20_d10_i1` | bbob-constrained f20 | 10 | 3 linear | 18% | Ill-conditioned objective with linear constraints. | TuRBO (1.0e3) | CMA-ES (44) |
 | `constrained_diffpowers10` | `bbob_constrained_f38_d10_i1` | bbob-constrained f38 | 10 | 3 linear | 8% | Flat objective near the optimum. | CMA-ES (1.2e3) | CMA-ES (0.13) |
 | `constrained_rastrigin10` | `bbob_constrained_f44_d10_i1` | bbob-constrained f44 | 10 | 3 linear | 17% | Multimodal objective with linear constraints. | CMA-ES (1.6e3) | CMA-ES (266) |
+| `opv_pce` | `opv_pce_d11` | Random-forest emulator of 526 OPV devices (Seifrid et al. 2024), −PCE (%) | 11 | 6 linear | 53% | Real-data emulator: piecewise constant along every coordinate, two coordinates snap to observed levels; best-known `f_opt`. L-BFGS-B never leaves the feasible center (12 evaluations, regret 6.1); GP-BO ≈ random at 100. | CMA-ES (2.0) | CMA-ES (0.29); next DE (1.6) |
 
 ### Noisy
 
@@ -97,7 +99,7 @@ Tasks that add little beyond the set as it stands, at the 100/2000 budgets:
 | `mixint_*` (3 tasks) | Same pattern on all three (BO or CMA-ES at 100, CMA-ES at 2000, L-BFGS-B stalled). |
 | `yahpo_xgboost` | Surrogate artifact: the best-known point is dart with `rate_drop` = 0 and `skip_drop` = 1, i.e. no dropout, which is algorithmically gbtree, yet the surrogate predicts 0.083 for it vs 0.282 for gbtree with the same settings (0.112 vs 0.302 at `nrounds` = 1000). The low dart corner is extrapolation, not a real logloss, and the best baselines (GP-BO 0.090, DE 0.123) find it too. Kept as is: the task rewards finding the surrogate's corner, and regret is measured against an unrealistic floor. |
 
-Tasks that each add a distinct behavior: `step_ellipsoid10` and `noncont_rastrigin30` (gradient methods stall), `weierstrass10` (start point worse than random), `pymoo_g07` (feasibility search), `pymoo_g04` (boundary optimum, Nelder–Mead competitive), `noisy_rosenbrock_unif5` (severe noise flips the B=100 winner to BOBYQA), `ng_noisy_*` (noise that stalls finite-difference and simplex methods), `schaffer50` (finite-difference cost at D=50 flips L-BFGS-B from worst to best between 100 and 2000), `yahpo_svm` (BOBYQA wins at 100), `yahpo_xgboost` (conditional space, large gap to best-known at 2000), the `rosenbrock*` scaling series, and BO-favoring early budgets on `rastrigin10` and `step_ellipsoid10`.
+Tasks that each add a distinct behavior: `step_ellipsoid10` and `noncont_rastrigin30` (gradient methods stall), `weierstrass10` (start point worse than random), `pymoo_g07` (feasibility search), `pymoo_g04` (boundary optimum, Nelder–Mead competitive), `noisy_rosenbrock_unif5` (severe noise flips the B=100 winner to BOBYQA), `ng_noisy_*` (noise that stalls finite-difference and simplex methods), `schaffer50` (finite-difference cost at D=50 flips L-BFGS-B from worst to best between 100 and 2000), `yahpo_svm` (BOBYQA wins at 100), `yahpo_xgboost` (conditional space, large gap to best-known at 2000), `opv_pce` (plateaus under linear constraints from real data; BO no better than random at 100), the `rosenbrock*` scaling series, and BO-favoring early budgets on `rastrigin10` and `step_ellipsoid10`.
 
 ## Superseded Versions
 

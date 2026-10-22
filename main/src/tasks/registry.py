@@ -12,6 +12,7 @@ from src.tasks.coco_constrained import COCOConstrainedTask
 from src.tasks.coco_mixint import COCOMixintTask
 from src.tasks.coco_noisy import COCONoisyTask
 from src.tasks.nevergrad_noisy import NevergradNoisyTask
+from src.tasks.opv import OPVTask
 from src.tasks.pymoo_g import PymooGTask
 from src.tasks.yahpo import YAHPOTask
 
@@ -70,4 +71,6 @@ TASKS = {
     "yahpo_svm": lambda: YAHPOTask("rbv2_svm"),
     # YAHPO rbv2_xgboost (V05): XGBoost logloss on OpenML 40981; 14 dims, 2 categorical, 8 conditional on the booster.
     "yahpo_xgboost": lambda: YAHPOTask("rbv2_xgboost"),
+    # OPV device PCE from a random-forest emulator of 526 devices; 11 dims, 6 linear constraints, piecewise constant.
+    "opv_pce": lambda: OPVTask(),
 }
