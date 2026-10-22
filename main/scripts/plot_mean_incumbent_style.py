@@ -1,9 +1,8 @@
 """Animated regret-vs-evaluation GIF replicating the exact visual style of
-a reference "mean incumbent regret" chart: light background, bold
-headline + subtitle + meta line, a live "Evaluation N / Budget" counter,
-a dashed vertical cursor at the current evaluation, thick step-style
-lines with a leading dot, top-right legend with "(n=...)" sample counts,
-and three small italic-gray footnotes.
+a reference "mean incumbent regret" chart: transparent background, bold
+headline, a live "Evaluation N / Budget" counter, a dashed vertical
+cursor at the current evaluation, thick step-style lines with a leading
+dot, and a top-right legend.
 
 Usage
 -----
@@ -22,12 +21,30 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation, PillowWriter
 import numpy as np
+from io import BytesIO
+from PIL import Image
+
+
+def _grab_frame_fixed(self, **savefig_kwargs):
+    """matplotlib 3.10.0's PillowWriter.grab_frame appends a transparent
+    frame to a nonexistent self._frame (typo for self._frames), raising
+    AttributeError and silently dropping every transparent frame. Fixed
+    here so transparent-background GIFs actually work."""
+    buf = BytesIO()
+    self.fig.savefig(buf, **{**savefig_kwargs, "format": "rgba", "dpi": self.dpi})
+    im = Image.frombuffer("RGBA", self.frame_size, buf.getbuffer(), "raw", "RGBA", 0, 1)
+    if im.getextrema()[3][0] < 255:
+        self._frames.append(im)
+    else:
+        self._frames.append(im.convert("RGB"))
+
+
+PillowWriter.grab_frame = _grab_frame_fixed
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 from plot_dionysus_vs_agents import baseline_trajectory  # noqa: E402
 
-BG = "#fcfcfc"
 INK = "#172334"       # title + agent line
 GRIDLINE = "#eceef1"
 CURSOR_GRAY = "#b8bfc8"
@@ -68,9 +85,9 @@ def main():
 
     y_max = max(ay_curve.max(), max(c[1].max() for c in baseline_curves)) * 1.08
 
-    fig = plt.figure(figsize=(12.8, 7.6), dpi=100, facecolor=BG)
+    fig = plt.figure(figsize=(12.8, 7.6), dpi=100, facecolor="white")
     ax = fig.add_axes([0.085, 0.12, 0.856, 0.74])
-    ax.set_facecolor(BG)
+    ax.set_facecolor("white")
 
     fig.text(0.085, 0.934, "Low-solubility molecule discovery",
               fontsize=22, fontweight="bold", color=INK, ha="left", va="top")
