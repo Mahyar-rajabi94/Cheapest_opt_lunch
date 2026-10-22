@@ -170,7 +170,6 @@ def plot_task(task: str, out_path: Path, agent_traces_dir: Path | None = None,
             ax.plot(x, y, color=AGENT_LINE_COLOR, linewidth=LINEWIDTH + 0.4, label="Astra max agent (1 run)")
 
     ax.set_yscale("log")
-    ax.set_title(FRIENDLY_TITLE.get(task, task), fontsize=18, pad=14)
     ax.set_xlabel("Evaluation", fontsize=13)
     ax.set_ylabel("Regret", fontsize=13)
     ax.tick_params(labelsize=11)
