@@ -43,7 +43,9 @@ git-ignored, so results stay local unless you commit them.
 
 3. Baselines at budget 100: every optimizer, including the pool-only
    `pool_random` (uniform picks without replacement). Ten seeds, one for the
-   deterministic BOBYQA, Nelder–Mead and L-BFGS-B, so 73 campaigns.
+   deterministic BOBYQA, Nelder–Mead and L-BFGS-B, so 73 campaigns. They are
+   committed, with their plots, in `main/results_linux/opv_pool_pce_d11/`. To
+   rerun them (TuRBO traces vary slightly from run to run, on every task):
 
    ```bash
    .venv/bin/python main/scripts/run_sweep.py --task opv_pool \
@@ -62,11 +64,12 @@ git-ignored, so results stay local unless you commit them.
    budget and that the objective is not repeatable. It never sees the pool,
    the devices or `pool_random.py`.
 
-5. Plots, with the run ID the runner printed:
+5. Plots, with the run ID the runner printed (against the committed
+   baselines; use `--results runs/baselines-100` for your own rerun):
 
    ```bash
    .agent-venv/bin/python main/scripts/make_comparison_plots.py \
-     --results runs/baselines-100 --task opv_pool_pce_d11 \
+     --results main/results_linux --task opv_pool_pce_d11 \
      --agent-run runs/run-<id>/workspace/results/agent_run \
      --outdir runs/run-<id>/figures
    ```

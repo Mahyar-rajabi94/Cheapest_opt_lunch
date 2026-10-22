@@ -1,0 +1,7 @@
+task,seed,status,evaluations,budget,best_raw_score,pool_maximum,regret,best_candidate_id,best_descending_rank,first_best_evaluation,decision_blocks,run_id,source_commit
+mof_pool,0,complete,100,100,9.2928301557,9.2928301557,0.0,SEHTEF,1,65,13,run-7f4e6c5fae25,cbe3886f40e2eeffa002d353188d8ca57a9143cf
+mof_pool,1,complete,100,100,9.2928301557,9.2928301557,0.0,SEHTEF,1,54,11,run-95f22ce8f896,cbe3886f40e2eeffa002d353188d8ca57a9143cf
+mof_pool,2,complete,100,100,8.8133131168,9.2928301557,0.47951703890000097,AJOTEY,3,24,11,run-dea382553e99,cbe3886f40e2eeffa002d353188d8ca57a9143cf
+opv_pool,0,complete,100,100,15.707252,15.707252,0.0,221,1,52,8,run-d5440f1d1d93,cbe3886f40e2eeffa002d353188d8ca57a9143cf
+opv_pool,1,complete,100,100,15.707252,15.707252,0.0,221,1,98,9,run-ebc7b55b5828,cbe3886f40e2eeffa002d353188d8ca57a9143cf
+opv_pool,2,complete,100,100,15.707252,15.707252,0.0,221,1,77,10,run-3cb5742bf177,cbe3886f40e2eeffa002d353188d8ca57a9143cf

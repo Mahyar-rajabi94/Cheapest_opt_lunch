@@ -1,0 +1,8 @@
+{
+  "opv_branch_commit": "ef1be572e038487dc37a5bd098e5d5d25fab8fb3",
+  "opv_source_path": "main/results_linux/opv_pool_pce_d11",
+  "mof_archive_sha256": "59b454cae6fd426692ce766d585ee5e7ba5146d1241bbe8be6a8a542164b3685",
+  "comparison_budget": 100,
+  "mof_budget_policy": "Compare first 100 of supplied 110 evaluations, including 10 initialization calls.",
+  "std": "sample standard deviation, ddof=1; no band for deterministic single-seed methods"
+}

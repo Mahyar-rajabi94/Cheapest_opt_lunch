@@ -1,0 +1,210 @@
+[
+  {
+    "block": 1,
+    "first_eval": 1,
+    "last_eval": 12,
+    "calls": 12,
+    "method": "balanced_pool_design",
+    "method_segments": [
+      {
+        "method": "balanced_pool_design",
+        "first_eval": 1,
+        "last_eval": 12
+      }
+    ],
+    "decision_text": "# Initial decision: balanced finite-pool design\n\nMinimize the deterministic scalar objective over exactly 1,000 public candidate rows, each with 193 real-valued features. Only unused row indices are legal purchases. There are no additional constraints and no prior objective observations. The hard total budget is 100 evaluations. Campaign seed is 0. The bounding box is descriptive; no generated continuous points will be evaluated. The objective remains sealed, and only returned objective values will be treated as observations.\n\nPublic feature inspection finds 165 nonconstant columns, 1,000 distinct rows, and finite values throughout. After range normalization, the first 10 and 20 principal components explain about 84.66% and 95.43% of feature variance. These are feature-only facts, not evidence of objective smoothness or relevance.\n\n## First step only\n\nUse `balanced_pool_design`, a campaign-local NumPy adapter in `work/`. Normalize each nonconstant column by its public bound range; omit the 28 constant columns from distance calculations. Use NumPy 2.4.6 `default_rng(0)` (PCG64) to sample six distinct indices uniformly without replacement. Then add six rows sequentially by maximum minimum squared Euclidean distance to the rows already selected. Break exact distance ties by the smallest row index. Every selected row is evaluated using `h.evaluate_index(index)` and labelled with the current method. There are no learned hyperparameters in this first step.\n\nThe mixture includes representative random rows and broader coverage without letting a purely farthest-point design devote all its calls to feature outliers. Normalized Euclidean distance assumes comparable feature ranges for coverage only; it does not assert that all features influence the target equally. No model is fit or selected from nonexistent labels.\n\n**Step limit:** at most 12 additional objective calls; pause at cumulative evaluation 12. Twelve labels provide an initial view of objective variation while leaving 88 evaluations for decisions based on evidence. This choice is not a commitment to any later method or block length.\n\n**Checkpoint review:** inspect all returned values, the best row, distribution and spread, feature distances among better rows, and whether the observations support any learnable feature-to-objective structure. Assess the suitability of a surrogate and its uncertainty only after seeing these observations. Stop earlier on any evaluator error or nonfinite return; do not retry an evaluation of unknown status. Save the harness output at the checkpoint and return control for a new decision.\n",
+    "boundary_source": "prospective evaluator document snapshot"
+  },
+  {
+    "block": 2,
+    "first_eval": 13,
+    "last_eval": 20,
+    "calls": 8,
+    "method": "pool_gp_logei",
+    "method_segments": [
+      {
+        "method": "pool_gp_logei",
+        "first_eval": 13,
+        "last_eval": 20
+      }
+    ],
+    "decision_text": "## Decision after evaluation 12\n**Budget:** 12 used / 100 total; 88 remaining.\n**Evidence:** All 12 calls succeeded with finite deterministic values. Best is -3.713491298 at row 634; second-best is -2.6991971121 at row 509; the median is -1.22577022415 and maximum -0.1406692115. None of the six farthest-point additions beat the best random row. These observations show substantial objective variation but do not yet establish smoothness or predictive accuracy.\n**Decision:** Switch from the initial design to sequential global finite-pool GP Bayesian optimization, labelled `pool_gp_logei`. Initialize with all 12 actual observations and retain the same harness and counter. Refit after each new observation and rank every unused candidate; no continuous points or proxy objective values are purchased.\n**Hyperparameters:** Use the local `work/pool_gp.py` adapter built from the supplied pool GPBO's modeling/acquisition pattern through public BoTorch APIs. Remove constant columns and normalize the 165 remaining features by their public bound ranges. Use BoTorch 0.18.1 SingleTaskGP defaults (constant mean, dimension-scaled RBF ARD prior, learned Gaussian likelihood), Standardize(m=1), and analytic LogExpectedImprovement with maximize=False. GPyTorch 1.15.2 and Torch 2.14.1; double precision; torch seed 0; one CPU thread; score chunks of 256; marginal-likelihood fit optimizer maxiter=150 with other fit_gpytorch_mll defaults inherited from BoTorch 0.18.1. The likelihood regularization is a surrogate modeling choice despite the objective being deterministic. There is no additional initial design and no trust-region restriction.\n**Reason:** A global GP can exploit structure around good observed rows while allowing uncertain candidates elsewhere to compete. Removing constant features avoids wasting ARD parameters. Regularized defaults are a reasonable first model with only 12 labels and 165 correlated features; predictive quality remains uncertain. The adapter exposes predictive diagnostics absent from the wrapper and requires no new dependencies.\n**Next step limit:** 8 additional objective calls; pause at cumulative evaluation 20.\n**Why this length:** Eight sequential updates are enough to see whether model-guided proposals improve or consistently miss, while exposing only a small part of the remaining budget to an unvalidated surrogate.\n**Review:** Inspect best-value changes, acquired-value distribution, predictive residuals relative to standard deviations, learned lengthscales/noise, and distances from observed rows. Pause early on any evaluator error/nonfinite return, or after three consecutive predictive residuals larger than four posterior standard deviations; an early pause triggers reconsideration only.\n",
+    "boundary_source": "prospective evaluator document snapshot"
+  },
+  {
+    "block": 3,
+    "first_eval": 21,
+    "last_eval": 27,
+    "calls": 7,
+    "method": "pool_gp_logei",
+    "method_segments": [
+      {
+        "method": "pool_gp_logei",
+        "first_eval": 21,
+        "last_eval": 27
+      }
+    ],
+    "decision_text": "## Decision after evaluation 20\n**Budget:** 20 used / 100 total; 80 remaining.\n**Evidence:** The GP block made two incumbent improvements: row 222 gave -5.8401610827 and row 117 gave -5.9877680529, compared with -3.713491298 before the block. Seven of eight sequential predictions missed by more than two posterior standard deviations (RMS standardized residual 4.0835), although the latest residual was -0.798 standard deviations. No three consecutive residuals exceeded four standard deviations, so the block reached its limit. An exploratory five-fold shuffled CV check (seed 0) on all 20 actual observations gave GP RMSE 1.6196 and Spearman 0.2301, versus ExtraTrees RMSE 2.0288, RandomForest 2.1335, ridge alpha=1 RMSE 2.2192, and ridge alpha=10 RMSE 1.7319; their Spearman correlations were negative. GP held-out coverage was 16/20 within two standard deviations. This is a small, adaptively sampled dataset, so these comparisons are uncertain and do not constitute pool-wide validation. Diagnostics used no new objective calls. Scikit-learn 1.9.1 was already installed.\n**Decision:** Continue `pool_gp_logei` with all 20 observations and the same live optimizer object and harness. All feedback remains available; each fit is rebuilt by the method's existing fitting procedure, with no discarded data or extra initialization.\n**Hyperparameters:** Retain the configuration recorded after evaluation 12. Reconsidered the RBF kernel, learned likelihood and fit cap in view of miscalibration; retain them because the GP has the strongest observed CV performance, found two substantially better rows, and its most recent prediction was better calibrated. No changes to feature scaling, seed, LogEI, or fitting limits.\n**Reason:** Switching solely because of early overconfidence would discard a currently productive model without evidence that the tested alternatives are better. Continued sequential feedback can improve its relevance estimates; a bounded block preserves the opportunity to reconsider persistent errors.\n**Next step limit:** 10 additional objective calls; pause at cumulative evaluation 30.\n**Why this length:** Ten calls provide a larger sample of acquisition outcomes and likelihood adaptation after the new low values, while leaving 70 evaluations available for subsequent evidence-driven decisions.\n**Review:** Inspect incumbent improvement, concentration around the low-valued rows, sequential calibration and lengthscales. Retain the early pause condition of three consecutive absolute predictive residuals greater than four posterior standard deviations; stop on evaluator error/nonfinite return.\n",
+    "boundary_source": "prospective evaluator document snapshot"
+  },
+  {
+    "block": 4,
+    "first_eval": 28,
+    "last_eval": 35,
+    "calls": 8,
+    "method": "pool_matern_logei",
+    "method_segments": [
+      {
+        "method": "pool_matern_logei",
+        "first_eval": 28,
+        "last_eval": 35
+      }
+    ],
+    "decision_text": "## Decision after evaluation 27\n**Budget:** 27 used / 100 total; 73 remaining.\n**Evidence:** The previous block paused after seven of its maximum ten calls because evaluations 25\u201327 each had absolute residuals above four predicted standard deviations. None improved the best -5.9877680529 at row 117; their range was -2.836173131 to -0.3909331279. The GP repeatedly predicted substantially lower values than observed. Five-fold shuffled CV (seed 0) using the 27 purchased labels gave: current RBF ARD RMSE 2.0170, Spearman 0.1105, coverage 18/27 within two latent SD; stronger-noise RBF ARD 1.9445, 0.3059, 16/27; isotropic Mat\u00e9rn-3/2 1.4466, 0.3492, 23/27; PCA10 RBF ARD 1.5182, 0.3004, 20/27; ExtraTrees 1.6804, 0.1190, 23/27. Validation remains exploratory because labels are few and adaptively selected. No objective evaluations were used in these model comparisons.\n**Decision:** Adjust the GP covariance and likelihood, switching to `pool_matern_logei` through the campaign-local RegularizedPoolGP adapter. Initialize the new optimizer with all 27 returned observations. Preserve the same harness, full observation history and budget; reset fitted covariance parameters because this is a different model family. Continue sequential global LogEI over unused actual rows.\n**Hyperparameters:** Use normalized 165-column features as before. Mat\u00e9rn kernel nu=1.5 with a single shared lengthscale (initial 1.0; LogNormalPrior(0,1)), multiplied by a learned output scale (initial 1.0; LogNormalPrior(0,0.75)). Gaussian likelihood noise is initialized to 0.15 in standardized target units, lower-bounded by 0.01, with LogNormalPrior(-2,1). This nugget regularizes an imperfect surrogate; the evaluator remains deterministic. Constant mean and Standardize(m=1), double precision, seed 0, one CPU thread, chunk size 256 and fit maxiter=150 remain. Other defaults come from BoTorch 0.18.1, GPyTorch 1.15.2 and Torch 2.14.1. LogEI still minimizes and uses the latent posterior.\n**Reason:** The early stop was driven by repeated predictive failures, not merely a plateau. Reducing 165 fitted relevance lengthscales to one and allowing a rougher kernel has better observed validation error and coverage. The noise prior permits model discrepancy instead of forcing interpolation. The evidence supports testing this simpler model while retaining global access to the pool.\n**Next step limit:** 8 additional objective calls; pause at cumulative evaluation 35.\n**Why this length:** Eight sequential updates give a useful first acquisition trial of the revised model without committing a large budget before its out-of-sample behavior is observed.\n**Review:** Check improvement, calibrated sequential residuals, learned noise/lengthscale, and diversity of acquired rows. Pause sooner after three consecutive residuals above four latent SD, or on evaluator error/nonfinite return.\n",
+    "boundary_source": "prospective evaluator document snapshot"
+  },
+  {
+    "block": 5,
+    "first_eval": 36,
+    "last_eval": 45,
+    "calls": 10,
+    "method": "pool_extratrees_lcb",
+    "method_segments": [
+      {
+        "method": "pool_extratrees_lcb",
+        "first_eval": 36,
+        "last_eval": 45
+      }
+    ],
+    "decision_text": "## Decision after evaluation 35\n**Budget:** 35 used / 100 total; 65 remaining.\n**Evidence:** The eight Mat\u00e9rn proposals ranged from -3.3326810003 to -0.2318948226 and did not improve the incumbent -5.9877680529 at row 117. Their predictive errors were much less extreme than the prior RBF block, but learned shared lengthscale contracted to about 0.345 and final predictions clustered near -2.1 with SD about 1.3. Every proposal was within normalized Euclidean distance 0.49\u20130.84 of an observed row, suggesting acquisition remained concentrated despite the global candidate scoring. Five-fold shuffled CV on the 35 purchased rows (seed 0) gave raw Mat\u00e9rn RMSE 1.3164/Spearman 0.3420, rank Mat\u00e9rn 1.3844/0.0905, rank RBF 1.4972/0.2571, raw ExtraTrees 1.3731/0.3885, rank ExtraTrees 1.4720/0.2384, RandomForest 1.5795/-0.1880, PLS2 1.6727/0.0922, and PLS4 2.1288/0.0297. Rank scaling did not improve these diagnostics. These are exploratory comparisons on selected data, not guarantees of performance on unobserved candidates.\n**Decision:** Switch to `pool_extratrees_lcb`, a finite-pool ExtraTrees adapter initialized with all 35 observations. Preserve the live harness and every observation. Keep the previous GP objects available but do not use their proposals in this block. Refit the tree ensemble after each observation and score all unused rows.\n**Hyperparameters:** Scikit-learn 1.9.1 ExtraTreesRegressor, 512 trees, max_features=0.5, min_samples_leaf=2, min_samples_split=2, bootstrap=False, max_depth=None, squared-error criterion, random_state=0, n_jobs=1; remaining defaults inherited from that version. Use the same range-normalized 165 nonconstant features. Minimize mean prediction minus 1.5 times the population SD of predictions across trees (beta=1.5). Tree spread is an acquisition heuristic, not a calibrated Bayesian posterior. Rebuilding uses fixed seed 0 and all observations; it does not reset the budget or discard data.\n**Reason:** Raw-feature trees now have the best measured ranking correlation, with RMSE close to the Mat\u00e9rn model. Their nonlinear splits offer a different form of generalization when the isotropic kernel treats most rows as nearly independent. A moderate uncertainty weight balances predicted low values and disagreement without adopting unsupported feature transformations. The small validation differences justify a bounded trial, not a claim of superiority.\n**Next step limit:** 10 additional objective calls; pause at cumulative evaluation 45.\n**Why this length:** Ten adaptive selections provide enough outcomes to compare the new acquisition's yield and diversity against the preceding eight-call GP block, while preserving 55 evaluations for later decisions.\n**Review:** Assess improvements, selected-value distribution, nearest-observation distances, and residuals relative to heuristic tree spread. Pause early on three consecutive absolute residuals above four spread units or evaluator error/nonfinite return.\n",
+    "boundary_source": "prospective evaluator document snapshot"
+  },
+  {
+    "block": 6,
+    "first_eval": 46,
+    "last_eval": 57,
+    "calls": 12,
+    "method": "pool_extratrees_lcb",
+    "method_segments": [
+      {
+        "method": "pool_extratrees_lcb",
+        "first_eval": 46,
+        "last_eval": 57
+      }
+    ],
+    "decision_text": "## Decision after evaluation 45\n**Budget:** 45 used / 100 total; 55 remaining.\n**Evidence:** The ten ExtraTrees selections did not beat -5.9877680529, but found three new values below -5 (rows 605: -5.415052452, 627: -5.674557144, 970: -5.1114491587), plus row 296 at -4.6570744915. This is a stronger low-tail yield than the previous eight Mat\u00e9rn calls, whose best was -3.3326810003. Selected nearest-observation distances ranged from 0.0677 to 2.1786, so proposals covered both close neighbors and more distant rows. The nearly adjacent row 627 had a value similar to row 605, providing evidence that very local feature relationships can sometimes be useful. Other uncertain selections remained poor, including row 603 at -0.6737364354. Tree spread is still only heuristic uncertainty.\n**Decision:** Continue `pool_extratrees_lcb` using the same optimizer object, all 45 observed labels and the same harness. Retain the existing fit/refit procedure and full feature representation.\n**Hyperparameters:** Keep the configuration recorded after evaluation 35: 512 trees, max_features=0.5, min_samples_leaf=2, seed 0 and beta=1.5, with the same remaining settings and library version. Reconsidered lowering beta after some poor high-spread selections, but retain it because uncertain selections also led to the newly found low-valued cluster. Do not modify model complexity based on this short block alone.\n**Reason:** A lack of incumbent improvement does not imply failure when the method is discovering several near-incumbent rows in new parts of the pool. Its observed low-tail yield and mix of local/distant proposals justify further sampling before another change.\n**Next step limit:** 12 additional objective calls; pause at cumulative evaluation 57.\n**Why this length:** Twelve calls permit several feedback-driven updates around the new low-valued examples and enough additional selections to assess whether their yield persists, while preserving 43 calls for later decisions.\n**Review:** Inspect incumbent changes, number of values below -5, prediction errors, and whether acquisition is repeatedly revisiting disappointing regions. Preserve the earlier stop on three consecutive residuals above four tree-spread units and stop on evaluator error/nonfinite return.\n",
+    "boundary_source": "prospective evaluator document snapshot"
+  },
+  {
+    "block": 7,
+    "first_eval": 58,
+    "last_eval": 67,
+    "calls": 10,
+    "method": "pool_extratrees_lcb",
+    "method_segments": [
+      {
+        "method": "pool_extratrees_lcb",
+        "first_eval": 58,
+        "last_eval": 67
+      }
+    ],
+    "decision_text": "## Decision after evaluation 57\n**Budget:** 57 used / 100 total; 43 remaining.\n**Evidence:** The 12-call ExtraTrees block improved the incumbent twice: row 616 at evaluation 48 gave -6.1054444328, then row 86 at evaluation 49 gave -9.0999790722. Row 618 later gave -6.4117946824. Four block values were below -5, and the block median was approximately -4.0384. Strong predictions were not uniformly reliable: row 528 returned -2.0871434822 against mean -7.2007 and tree SD 1.0479, while other close neighbors returned -4.0710, -5.5448 and -6.4118. The incumbent is clearly separated from the second-best, so its neighborhood cannot be assumed uniformly favorable. No early-stop condition occurred.\n**Decision:** Continue `pool_extratrees_lcb` with the same live optimizer, all 57 purchased observations, and the same harness. Preserve all configuration and state except the model's ordinary refitting after each observation.\n**Hyperparameters:** Unchanged from the decision after evaluation 35 (512 trees, feature fraction 0.5, leaf minimum 2, beta=1.5, seed 0, Scikit-learn 1.9.1 and the recorded defaults). Reconsidered exploration strength in light of the isolated incumbent; retain beta because it produced both the exploratory row 616 and subsequent row 86, while still scoring the entire pool. No additional initialization or target transformation.\n**Reason:** This block improved both the incumbent and the distribution of acquired values. That is stronger evidence to continue than the noise in individual close-neighbor outcomes is to abandon the model. The extreme incumbent does warrant another relatively short review interval.\n**Next step limit:** 10 additional objective calls; pause at cumulative evaluation 67.\n**Why this length:** Ten updates test whether useful candidates remain after sampling several neighbors of the new best. A shorter block than the preceding 12 leaves 33 calls for reconsideration if that region is depleted.\n**Review:** Inspect whether the model finds further low-valued regions or only repeats optimistic misses, and compare the new block's low-tail yield with four of twelve below -5. Pause after three consecutive residuals above four spread units or evaluator error/nonfinite return.\n",
+    "boundary_source": "prospective evaluator document snapshot"
+  },
+  {
+    "block": 8,
+    "first_eval": 68,
+    "last_eval": 75,
+    "calls": 8,
+    "method": "pool_extratrees_lcb",
+    "method_segments": [
+      {
+        "method": "pool_extratrees_lcb",
+        "first_eval": 68,
+        "last_eval": 75
+      }
+    ],
+    "decision_text": "## Decision after evaluation 67\n**Budget:** 67 used / 100 total; 33 remaining.\n**Evidence:** The ten-call block found row 899 at -8.5532416635 and improved the incumbent to -9.2928301557 at row 561 (evaluation 65). Their nearest-observation distances at selection were 1.8260 and 1.1227, respectively: the search reached strong values beyond the immediate neighborhood of row 86. Two calls were below -8; the other values ranged from -4.9722039886 to -0.5041689338. New examples produced optimistic proposals that sometimes failed (row 938: -0.7167361138 versus mean -4.6320), but residuals did not meet the early-stop condition. The observed best is not a certified pool optimum.\n**Decision:** Continue `pool_extratrees_lcb`, retaining the same optimizer object, all 67 observations and the same harness. Allow its standard sequential refitting to incorporate the two newly found low-valued rows.\n**Hyperparameters:** Keep all settings from the evaluation-35 decision, especially beta=1.5, min_samples_leaf=2 and max_features=0.5. The exploration weight remains justified because both new strong rows were selected despite mean predictions near -2.6 and -3.5, respectively. Increasing model complexity or reducing uncertainty weight is not supported by the observed mixture of successful distant proposals and failed confident neighbors.\n**Reason:** The current acquisition continues to improve the incumbent and find low values in new portions of the feature pool. There is no current evidence that a different method would spend the remaining 33 calls more effectively.\n**Next step limit:** 8 additional objective calls; pause at cumulative evaluation 75.\n**Why this length:** Eight updates are enough to inspect the model's response to the two new low examples while leaving 25 calls for reconsideration. The shorter interval reflects the smaller remaining budget and variable neighbor outcomes.\n**Review:** Inspect incumbent improvements, whether newly favored rows have comparably low values, and ongoing tree-spread errors. Pause after three consecutive residuals above four spread units or evaluator error/nonfinite return.\n",
+    "boundary_source": "prospective evaluator document snapshot"
+  },
+  {
+    "block": 9,
+    "first_eval": 76,
+    "last_eval": 81,
+    "calls": 6,
+    "method": "pool_gp_logei",
+    "method_segments": [
+      {
+        "method": "pool_gp_logei",
+        "first_eval": 76,
+        "last_eval": 81
+      }
+    ],
+    "decision_text": "## Decision after evaluation 75\n**Budget:** 75 used / 100 total; 25 remaining.\n**Evidence:** The eight-call block left the incumbent unchanged at -9.2928301557 (row 561). Only row 13 was below -5 (-5.7640891541). Several high-spread selections were poor: row 685 returned -0.1106313867, row 430 -0.7581375337, and row 878 -0.0519492736. A refreshed five-fold shuffled CV comparison (seed 0) on all 75 purchased observations gave current ExtraTrees RMSE 1.7428/Spearman 0.5928/top-10 overlap 5; leaf-minimum-1 ExtraTrees 1.7457/0.5510/6; all-feature ExtraTrees 1.7706/0.5661/6; regularized RandomForest 1.8819/0.4405/5; depth-2 gradient boosting 1.8696/0.5442/4; RBF ARD GP 1.6779/0.6490/6; isotropic Mat\u00e9rn GP 1.7976/0.5783/6. All are exploratory held-out predictions on adaptively selected data. The RBF model's measured ranking is now appreciably better than in the small early dataset. Correction to the arithmetic in the evaluation-57 entry: the median of evaluations 46\u201357 is -4.28030912385, not -4.0384; the recorded evaluations and incumbent improvements were correct and remain unchanged.\n**Decision:** Switch back to `pool_gp_logei` for a bounded trial. Resume the original RBF GP adapter, appending all observations since it last ran (evaluations 28\u201375) exactly once, for 75 total labels. Preserve the harness, counters and complete observation history. Refit from all observations; retain the tree optimizer state for possible future decisions without committing to using it.\n**Hyperparameters:** Retain the RBF ARD, learned Gaussian likelihood, target standardization, normalized 165-feature representation, seed 0, double precision and global LogEI settings from evaluation 12. Increase the marginal-likelihood optimizer maxiter from 150 to 200, matching the present validation run and allowing more fitting iterations with the larger training set. Same BoTorch 0.18.1/GPyTorch 1.15.2/Torch 2.14.1 defaults otherwise. Reset only the consecutive-large-error checkpoint counter after this method change; no data reset.\n**Reason:** The earlier RBF failure occurred with fewer than 30 labels. The now larger dataset supports a more complex relevance model, and the refreshed comparison favors it in both overall ranking and error. The recent tree block also showed reduced low-tail yield. These observations justify revisiting the GP, with a short trial because its earlier acquisition calibration was poor.\n**Next step limit:** 6 additional objective calls; pause at cumulative evaluation 81.\n**Why this length:** Six fresh predictions test whether the improved validation transfers to acquisition without spending a large share of the final 25 calls on the revisited model.\n**Review:** Check actual predictive residuals and improvements, with particular attention to overconfident extrapolation near the three best rows. Pause sooner after three consecutive residuals above four posterior SD or evaluator error/nonfinite return.\n",
+    "boundary_source": "prospective evaluator document snapshot"
+  },
+  {
+    "block": 10,
+    "first_eval": 82,
+    "last_eval": 88,
+    "calls": 7,
+    "method": "pool_gp_lcb",
+    "method_segments": [
+      {
+        "method": "pool_gp_lcb",
+        "first_eval": 82,
+        "last_eval": 88
+      }
+    ],
+    "decision_text": "## Decision after evaluation 81\n**Budget:** 81 used / 100 total; 19 remaining.\n**Evidence:** The six revisited RBF GP proposals did not improve the incumbent -9.2928301557. Their best was -3.6946941514 and worst -0.1753596783. Unlike the early GP blocks, calibration was mostly reasonable: the model learned standardized noise near 0.29 and predicted several acquired outcomes accurately. However, LogEI chose three rows with means around -0.18 to -0.39 and SD around 2.1; their returned values were also close to zero. These distant proposals were selected despite weak means because their variance permitted an extreme-tail chance of exceeding the unusually low incumbent. The six selections had LogEI values about -7.88 to -12.82. This is evidence of an acquisition mismatch with the remaining budget, rather than repeated model overconfidence.\n**Decision:** Adjust acquisition to `pool_gp_lcb`, retaining the current GP object, all 81 observations and the same harness. Use a campaign-local acquisition function that calls the existing GP fit and its public posterior API; no new model initialization or feature transformation.\n**Hyperparameters:** Preserve the RBF GP configuration from evaluation 75, including fit maxiter=200. Replace LogEI with minimization of posterior mean minus 1.0 times latent posterior SD over every unused row. Here beta=1.0 directly multiplies SD; it is not a squared BoTorch UCB beta. This smaller uncertainty emphasis favors low predicted means over the very uncertain, weak-mean points selected in the last block. All library versions, priors, seed, numerical precision and normalization remain unchanged.\n**Reason:** The refreshed CV still supports the GP's ranking, and recent prospective predictions were informative. The poor acquisition outcomes arose from selecting predicted weak rows for rare-tail possibilities. A lower-confidence criterion provides a direct, controlled tradeoff and is less dependent on the gap to the isolated incumbent.\n**Next step limit:** 7 additional objective calls; pause at cumulative evaluation 88.\n**Why this length:** Seven calls test the acquisition change on several feedback updates while retaining 12 calls for another evidence-based decision. There is no commitment about how those calls will be used.\n**Review:** Compare the acquired-value distribution with the last six LogEI calls, check whether predictions concentrate on genuinely low rows, and monitor improvements and calibration. Pause after three consecutive residuals above four posterior SD or evaluator error/nonfinite return.\n",
+    "boundary_source": "prospective evaluator document snapshot"
+  },
+  {
+    "block": 11,
+    "first_eval": 89,
+    "last_eval": 94,
+    "calls": 6,
+    "method": "pool_gp_tree_lcb",
+    "method_segments": [
+      {
+        "method": "pool_gp_tree_lcb",
+        "first_eval": 89,
+        "last_eval": 94
+      }
+    ],
+    "decision_text": "## Decision after evaluation 88\n**Budget:** 88 used / 100 total; 12 remaining.\n**Evidence:** The seven GP-LCB selections all returned between -5.091969491 and -3.0852334872, with median -4.58363124, markedly better than the preceding LogEI block. All seven residuals were within two latent posterior SD. The incumbent remains -9.2928301557 at row 561. The GP has now demonstrated good local ranking/calibration, but its recent selections concentrated on moderate low values. Earlier tree-disagreement acquisition found the three observed values below -8, while its later block sometimes selected near-zero values. These complementary behaviors motivate a small combined-model trial; they do not prove that an ensemble will improve the best.\n**Decision:** Hybridize as `pool_gp_tree_lcb` for this block. Retain the GP and tree optimizer objects, synchronize the tree's history with evaluations 76\u201388, and use all 88 actual observations in both. Continue using the same harness and budget. Fit both models and score every unused candidate after each new label.\n**Hyperparameters:** Retain each model's previously recorded configuration: GP RBF ARD, maxiter=200 and library defaults from evaluation 75; ExtraTrees 512 trees/max_features=0.5/min_samples_leaf=2/seed 0 from evaluation 35. Use equal weights for their means. Define mixture variance as 0.5*(GP latent variance + variance across trees) + 0.25*(GP mean - tree mean)^2. Minimize mixture mean minus 1.5 times mixture SD. This is an explicit acquisition heuristic with both within-model uncertainty and disagreement; it is not asserted to be a calibrated posterior. No new package, seed, normalization or fitted weighting parameters.\n**Reason:** Equal weighting avoids fitting another model to a small adaptively collected dataset. It gives the GP's more reliable low-mean ranking a role while retaining the tree uncertainty that previously discovered extreme lows. The moderate exploration weight is higher than the most recent GP-only setting but no higher than the successful tree setting.\n**Next step limit:** 6 additional objective calls; pause at cumulative evaluation 94.\n**Why this length:** Six calls provide an immediate check of the hybrid's selected values without consuming the remaining budget at once; six evaluations will remain for a fresh decision.\n**Review:** Check whether the mixture improves the incumbent or identifies a stronger tail than GP-only LCB, inspect component means and spreads, and retain the early pause on three residuals above four mixture SD or evaluator error/nonfinite return.\n",
+    "boundary_source": "prospective evaluator document snapshot"
+  },
+  {
+    "block": 12,
+    "first_eval": 95,
+    "last_eval": 97,
+    "calls": 3,
+    "method": "pool_gp_tree_lcb",
+    "method_segments": [
+      {
+        "method": "pool_gp_tree_lcb",
+        "first_eval": 95,
+        "last_eval": 97
+      }
+    ],
+    "decision_text": "## Decision after evaluation 94\n**Budget:** 94 used / 100 total; 6 remaining.\n**Evidence:** The six combined-model selections returned -5.8890830902, -4.7632054407, -3.9037074541, -0.6337626636, -4.1401607986 and -0.05681792. The incumbent remains -9.2928301557. One selection improved on the preceding GP-only block's best, but two uncertainty-favored proposals were near zero. Several low-mean choices were informative and reasonably predicted (for example row 218: mixture mean -4.0637, outcome -4.1402). The small sample does not establish superiority of either acquisition.\n**Decision:** Adjust the existing `pool_gp_tree_lcb` acquisition, retaining both live model histories, all 94 observations and the same harness. No model restart or additional validation fit family is introduced.\n**Hyperparameters:** Keep equal model weights and all model settings from evaluation 88. Reduce the mixture-SD multiplier from 1.5 to 0.75. This deliberately favors low model means more strongly because high-disagreement acquisition has recently produced several poor values and only six calls remain. The mixture uncertainty remains a heuristic rather than a calibrated probability.\n**Reason:** The GP-only LCB block showed that lower uncertainty weight could improve acquired values substantially, while the mixture still produced one additional value below -5. Retaining both models but reducing uncertainty emphasis is a limited adjustment supported by those observations.\n**Next step limit:** 3 additional objective calls; pause at cumulative evaluation 97.\n**Why this length:** Only six calls remain, and the changed weight has not yet produced prospective data. A three-call checkpoint allows one final reconsideration instead of allocating the entire remainder automatically. Conclusions from such a short block will necessarily be tentative.\n**Review:** Check the actual values and component predictions, whether lower-mean selections avoid the recent weak outcomes, and incumbent improvement. Preserve the three-consecutive-four-SD early pause and stop on evaluator error/nonfinite return.\n",
+    "boundary_source": "prospective evaluator document snapshot"
+  },
+  {
+    "block": 13,
+    "first_eval": 98,
+    "last_eval": 100,
+    "calls": 3,
+    "method": "pool_gp_tree_lcb",
+    "method_segments": [
+      {
+        "method": "pool_gp_tree_lcb",
+        "first_eval": 98,
+        "last_eval": 100
+      }
+    ],
+    "decision_text": "## Decision after evaluation 97\n**Budget:** 97 used / 100 total; 3 remaining.\n**Evidence:** The three lower-uncertainty-weight selections returned -4.5307216988, -1.776972194 and -3.8389305664. They did not beat -9.2928301557. Two outcomes were reasonably close to their mixture means, and none triggered the four-SD condition. This short trial is insufficient to establish a superior weight, but it does not support restarting or introducing another model with only three calls remaining.\n**Decision:** Continue `pool_gp_tree_lcb` unchanged with both model histories containing all 97 observations, retaining the same harness. Refit and select sequentially for the remaining purchases.\n**Hyperparameters:** Unchanged from evaluation 94: equal GP/tree mixture, SD multiplier 0.75, and all underlying settings previously recorded. Retain this configuration because the final observations provide no reliable basis for another adjustment.\n**Reason:** Remaining candidate rankings use all collected feedback, the objective optimum is not known, and unused valid candidates remain. Spending the last three authorized calls offers some chance of improvement; stopping early or making an unsupported late model change has no demonstrated advantage.\n**Next step limit:** 3 additional objective calls; pause at cumulative evaluation 100 or sooner on the existing error condition.\n**Why this length:** Three is the entire remaining hard budget, deliberately chosen after inspecting the preceding three-call trial. It permits three sequential updates of the current ranking and requires no speculative further phase. The usual early checkpoint remains active.\n**Review:** Record the final best observed row/value and stop at budget exhaustion. Save through the harness and verify exactly the four required campaign files, 100 genuine evaluation records if all calls succeed, and no duplicate purchases. Stop immediately on evaluator error/nonfinite return; retain the existing predictive-error pause.\n",
+    "boundary_source": "prospective evaluator document snapshot"
+  }
+]

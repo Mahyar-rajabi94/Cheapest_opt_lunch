@@ -1,0 +1,100 @@
+[
+  {
+    "task": "mof_pool",
+    "method": "agent",
+    "seeds": 3,
+    "mean_regret": 0.159839012966667,
+    "sample_std": 0.27684929148992776
+  },
+  {
+    "task": "mof_pool",
+    "method": "gp_bo",
+    "seeds": 10,
+    "mean_regret": 0.3430729113100003,
+    "sample_std": 0.7922291381592486
+  },
+  {
+    "task": "mof_pool",
+    "method": "turbo",
+    "seeds": 10,
+    "mean_regret": 0.6339553225300005,
+    "sample_std": 0.9008328580576631
+  },
+  {
+    "task": "opv_pool",
+    "method": "agent",
+    "seeds": 3,
+    "mean_regret": 0.0,
+    "sample_std": 0.0
+  },
+  {
+    "task": "opv_pool",
+    "method": "bobyqa",
+    "seeds": 1,
+    "mean_regret": 0.0,
+    "sample_std": null
+  },
+  {
+    "task": "opv_pool",
+    "method": "cma_es",
+    "seeds": 10,
+    "mean_regret": 0.6004430940000003,
+    "sample_std": 1.0017237746539758
+  },
+  {
+    "task": "opv_pool",
+    "method": "de",
+    "seeds": 10,
+    "mean_regret": 0.41266594500000037,
+    "sample_std": 0.6694506676291871
+  },
+  {
+    "task": "opv_pool",
+    "method": "gp_bo",
+    "seeds": 10,
+    "mean_regret": 0.8968170000000006,
+    "sample_std": 0.8016069042695849
+  },
+  {
+    "task": "opv_pool",
+    "method": "lbfgsb",
+    "seeds": 1,
+    "mean_regret": 2.534054000000001,
+    "sample_std": null
+  },
+  {
+    "task": "opv_pool",
+    "method": "nelder_mead",
+    "seeds": 1,
+    "mean_regret": 2.534054000000001,
+    "sample_std": null
+  },
+  {
+    "task": "opv_pool",
+    "method": "pool_random",
+    "seeds": 10,
+    "mean_regret": 1.8744452980000013,
+    "sample_std": 0.5184711695953089
+  },
+  {
+    "task": "opv_pool",
+    "method": "random_search",
+    "seeds": 10,
+    "mean_regret": 0.41266594500000037,
+    "sample_std": 0.6694506676291871
+  },
+  {
+    "task": "opv_pool",
+    "method": "sobol",
+    "seeds": 10,
+    "mean_regret": 0.2796670000000002,
+    "sample_std": 0.5924228780241736
+  },
+  {
+    "task": "opv_pool",
+    "method": "turbo",
+    "seeds": 10,
+    "mean_regret": 0.7144836000000006,
+    "sample_std": 0.9714329668218328
+  }
+]

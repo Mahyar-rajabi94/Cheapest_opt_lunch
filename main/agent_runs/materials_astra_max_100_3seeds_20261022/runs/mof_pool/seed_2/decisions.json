@@ -1,0 +1,178 @@
+[
+  {
+    "block": 1,
+    "first_eval": 1,
+    "last_eval": 16,
+    "calls": 16,
+    "method": "cluster_design",
+    "method_segments": [
+      {
+        "method": "cluster_design",
+        "first_eval": 1,
+        "last_eval": 16
+      }
+    ],
+    "decision_text": "# First optimization block\n\n## Problem and assumptions\nMinimize the deterministic black-box response over exactly 1,000 public candidate rows, each with 193 features. Only unused row indices are valid; no continuous proposals or repeat purchases. The total hard budget is 100 objective evaluations. Campaign seed is 2. There are no prior observations or additional constraints, and no known objective lower bound. The objective identity and all unobserved labels remain sealed.\n\nPublic feature inspection found 165 varying columns and 1,000 unique feature rows. After bound normalization, 14, 20, and 42 principal components explain 90%, 95%, and 99% of feature variance. This is feature geometry only, not evidence about the objective. All public features may be used for experimental design; only purchased labels may train a response model.\n\n## Method, initialization, and hyperparameters\nUse a representative cluster design, tagged `cluster_design`. Remove the 28 constant columns from distance calculations and scale each varying feature by its public bound range. Fit KMeans with 16 clusters, k-means++ initialization, 10 initializations, max_iter=300, tol=1e-4, algorithm=lloyd, random_state=2. In each cluster select the actual member closest to its centroid, breaking ties by the first row index. Purchase the 16 representatives in a permutation from NumPy default_rng(2). No objective labels inform this selection.\n\nImplementation: scikit-learn 1.9.1 KMeans; NumPy 2.4.6; SciPy 1.17.1. KMeans copy_x=True and other unspecified behavior use this installed version's defaults. The representative design gives coverage of populated feature regions while keeping initialization modest relative to the budget. Bound scaling prevents large-unit features from dominating the distance; correlations remain and their relevance to the target is unknown.\n\n## This block only\nMaximum 16 additional objective calls; pause at cumulative evaluation 16. Sixteen representatives provide an initial view of response variation across the pool's main feature structure. They are not intended to identify all 165 feature effects. This block leaves the next method and its budget undecided until the observed data have been inspected.\n\nAt the checkpoint inspect every purchased value, the best row, response range and quantiles, cluster sizes, and whether low-valued rows occupy related feature regions. Save the harness trace and metadata. Stop immediately on an evaluator error, a nonfinite result, or an invalid selection; never retry an unknown evaluation. There is no value-based early stopping threshold without prior response knowledge.\n\n## Execution integrity\nOne persistent harness owns the budget and all labels. A separate per-block guard bounds calls, and each selection must belong to h.available_indices. Scripts are kept in work/. The harness alone writes trace.csv and meta.json. This initial decision is immutable; all subsequent decisions will be appended to changelog.md before further evaluations.\n",
+    "boundary_source": "prospective evaluator document snapshot"
+  },
+  {
+    "block": 2,
+    "first_eval": 17,
+    "last_eval": 26,
+    "calls": 10,
+    "method": "pool_gp_ei",
+    "method_segments": [
+      {
+        "method": "pool_gp_ei",
+        "first_eval": 17,
+        "last_eval": 26
+      }
+    ],
+    "decision_text": "## Decision after evaluation 16\n**Budget:** 16 used / 100 total; 84 remaining.\n**Evidence:** All 16 representative rows were evaluated successfully. Best is row 442 at -5.6182484507; next best are 720 at -5.1944973338 and 816 at -4.8459473318. Responses span -5.6182484507 to -0.687448968, median -2.8743864405. Cluster sizes range from 8 to 145. One label per cluster is insufficient to establish local smoothness or a reliable feature-response relationship. The objective is deterministic; predictive uncertainty is model uncertainty, not measurement noise.\n**Decision:** Switch from the initial design to sequential pool GP Bayesian optimization (`pool_gp_ei`). Initialize the supplied GPBO with all 16 purchased raw rows and labels, retaining the same harness and observations. Each selection scores only available rows and receives feedback before the next.\n**Hyperparameters:** src.optimizers.pool_gp_bo.GPBO with candidates=h.candidates, bounds=h.bounds, direction=min, seed=2, n_init=16, pool_chunk_size=512. Use its BoTorch 0.18.1 SingleTaskGP defaults: bound-normalized features, standardized response, default dimension-scaled RBF ARD prior and Gaussian likelihood, and exact marginal likelihood fitting via fit_gpytorch_mll (GPyTorch 1.15.2, Torch 2.14.1). Analytic LogExpectedImprovement has no added exploration offset. Continuous acquisition restarts/raw samples do not apply to pool enumeration. The likelihood's fitted nugget can absorb model mismatch even though evaluations are deterministic. One Torch CPU thread is a runtime setting, not a model change.\n**Reason:** There is substantial response variation across the initial coverage. GP expected improvement offers a data-informed balance between low predicted response and uncertainty while examining the entire unused pool. Sixteen labels do not justify an aggressive local restriction or fitting an unconstrained separate model for each feature.\n**Next step limit:** 10 additional objective calls; pause at cumulative evaluation 26.\n**Why this length:** Ten sequential feedback updates can reveal whether the surrogate identifies improvements, while preserving 74 evaluations for decisions informed by those results.\n**Review:** Assess best-value improvement, selected-value distribution, cluster coverage and nearest-observation distances. Inspect the final GP's length scales, fitted nugget, and leave-one-out prediction diagnostics, recognizing small-sample and adaptive-selection uncertainty. Pause early on an evaluator error, invalid index, nonfinite result or optimizer failure; never retry an unknown evaluation. No next method is preselected.\n\n",
+    "boundary_source": "prospective evaluator document snapshot"
+  },
+  {
+    "block": 3,
+    "first_eval": 27,
+    "last_eval": 38,
+    "calls": 12,
+    "method": "pool_gp_ei",
+    "method_segments": [
+      {
+        "method": "pool_gp_ei",
+        "first_eval": 27,
+        "last_eval": 38
+      }
+    ],
+    "decision_text": "## Decision after evaluation 26\n**Budget:** 26 used / 100 total; 74 remaining.\n**Evidence:** The 10 GP selections improved the incumbent from -5.6182484507 to -8.8133131168 (row 399, evaluation 24), an absolute reduction of 3.1950646661. Row 917 subsequently returned -6.2893123035; both belong to initial feature cluster 11. Other selected responses ranged from -3.1201543795 to -0.1106313867, so success is uneven. A diagnostic GP refit gives approximate leave-one-out RMSE 1.75077 versus 2.19575 for a constant predictor, Spearman 0.4523, and 92.3% of standardized residuals within two predicted standard deviations. Hyperparameters used all observed labels, making this diagnostic optimistic. Standardized fitted noise variance is 0.24926 and length-scale range 0.2303 to 3.5032; the noise is model mismatch, not objective randomness. The best row's approximate LOO prediction is only -4.93853, showing the low tail is underpredicted.\n**Decision:** Continue `pool_gp_ei` using the existing GPBO instance, all 26 observations, and the same harness. No restart or discarded observations.\n**Hyperparameters:** Unchanged from the decision after evaluation 16: n_init=16, full public-feature bound normalization, BoTorch 0.18.1/GPyTorch 1.15.2 default GP model and fitted likelihood, LogExpectedImprovement over all available rows in chunks of 512, seed=2. Retain fitted-nugget behavior because the diagnostics show model mismatch; do not force exact interpolation of a poorly resolved response surface. Ordinary per-query model refitting remains the wrapper's behavior.\n**Reason:** A sizeable improvement, a second good response in the same feature cluster, and positive predictive diagnostics support continuing. Ten variable outcomes are not evidence that GPBO is unsuitable. The low-tail underprediction and sparse data argue for retaining uncertainty-driven acquisition rather than imposing a narrow local region.\n**Next step limit:** 12 additional objective calls; pause at cumulative evaluation 38.\n**Why this length:** Twelve more sequential observations provide a substantial update to a 26-row model and enough opportunities to test the newly discovered region, without deferring review for most of the remaining budget.\n**Review:** Inspect incumbent improvement, repeated success around the best rows, selection distances and fitted GP diagnostics. Pause early on evaluator error, nonfinite output, invalid row or optimizer failure. Future methods remain undecided.\n\n",
+    "boundary_source": "prospective evaluator document snapshot"
+  },
+  {
+    "block": 4,
+    "first_eval": 39,
+    "last_eval": 46,
+    "calls": 8,
+    "method": "pool_gp_lcb",
+    "method_segments": [
+      {
+        "method": "pool_gp_lcb",
+        "first_eval": 39,
+        "last_eval": 46
+      }
+    ],
+    "decision_text": "## Decision after evaluation 38\n**Budget:** 38 used / 100 total; 62 remaining.\n**Evidence:** The last 12 GP-EI calls did not improve -8.8133131168. Their best value was -4.3388968697 and six were in feature cluster 11, so this was not solely a failure to revisit the promising cluster. Approximate GP LOO RMSE improved to 1.56530 (constant baseline 2.04839), Spearman 0.58048, and fitted standardized noise variance is 0.22351. However, the best observed response is still underpredicted in LOO (-5.14433). Several unused rows have model means around -5.94 to -5.96 with latent SD 0.74 to 0.83; EI against the unusually low observed incumbent has repeatedly preferred more uncertain alternatives. These are predictions, not objective observations. LOO uses globally fitted hyperparameters and remains optimistic.\n**Decision:** Adjust acquisition to `pool_gp_lcb`, minimizing mean minus one latent posterior SD over all unused rows. Keep the same response model and all 38 observations. A campaign-local adapter uses supported BoTorch APIs to expose this acquisition; GP fitting remains fresh per selection as in the original wrapper. The existing GPBO observation store remains synchronized for diagnostics. No harness reset and no data discarded.\n**Hyperparameters:** kappa=1.0 in LCB=mean-kappa*SD. All model settings are unchanged from evaluation 16: full 193-column input with constant-column-safe bound normalization; BoTorch 0.18.1 SingleTaskGP defaults, Standardize(m=1), fit_gpytorch_mll, learned nugget, double precision, posterior chunks of 512. Candidate enumeration and fitting are deterministic for this block; retain Torch/NumPy campaign seed state from seed 2 without reseeding. work/gp_lcb.py implements the adapter. Predictive residual diagnostics include the fitted nugget, while acquisition uses latent uncertainty.\n**Reason:** The GP has measurable predictive signal but EI against the current extreme incumbent gives little attention to its lowest predicted means. LCB with moderate kappa tests whether stronger emphasis on predicted value is more productive. This adjustment follows the acquisition pattern and diagnostics, not the plateau alone.\n**Next step limit:** 8 additional objective calls; pause at cumulative evaluation 46.\n**Why this length:** Eight purchases are enough to test the low-mean group and obtain prospective prediction errors without committing much of the 62-call remainder to the changed acquisition.\n**Review:** Inspect actual improvement and pre-purchase predictive residuals. Pause sooner if two consecutive absolute residuals exceed three predictive SDs, or on an evaluator error, invalid row, nonfinite result or fitting failure. An early pause triggers reconsideration only.\n\n",
+    "boundary_source": "prospective evaluator document snapshot"
+  },
+  {
+    "block": 5,
+    "first_eval": 47,
+    "last_eval": 56,
+    "calls": 10,
+    "method": "forest_lcb",
+    "method_segments": [
+      {
+        "method": "forest_lcb",
+        "first_eval": 47,
+        "last_eval": 56
+      }
+    ],
+    "decision_text": "## Decision after evaluation 46\n**Budget:** 46 used / 100 total; 54 remaining.\n**Evidence:** GP-LCB produced three strong rows: 518 at -6.3391650458, 388 at -6.9514815426 and 251 at -7.0400773211. The incumbent remains row 399 at -8.8133131168. The other five values ranged from -3.36916 to -0.270389. Four of eight prospective residuals exceeded +2 predictive SDs; none triggered the predeclared consecutive-three-SD stopping rule. Final approximate GP LOO RMSE was 1.70532, but a more stringent five-fold refitting comparison on all 46 purchased labels (KFold shuffle=True, seed=2) exposed instability: GP RMSE 2.45795/Spearman 0.08196; ridge 2.00587/0.33222; ExtraTrees 2.15935/0.08480; random forest 1.95298/0.17755. Lowest-10 response recall was 0.4 for GP and 0.5 for all three alternatives. All fold models used only training-fold labels. Feature scaling was public and label-independent. These small, adaptively collected samples give uncertain model rankings; this is not a claim about unseen ground truth.\n**Decision:** Switch to `forest_lcb` for a bounded trial, retaining all 46 observations and the same harness. Fit a fresh forest after each feedback update; no prior fitted-tree state exists to preserve. Continue synchronizing the GP observation store for optional diagnostics, without using its acquisition in this block.\n**Hyperparameters:** scikit-learn 1.9.1 RandomForestRegressor, n_estimators=512, max_features=0.5, min_samples_leaf=1, min_samples_split=2, max_depth=None, bootstrap=True, max_samples=None, criterion=squared_error, random_state=2, n_jobs=1. Other behavior uses this version's defaults. Use the 165 varying bound-scaled features. Select the unused row minimizing tree-prediction mean minus 0.75 times sample SD across trees. Tree spread is a heuristic exploration signal, not calibrated posterior or measurement uncertainty. Kappa=0.75 gives moderate exploration without letting disagreement dominate. Refit with seed 2 on each enlarged observed dataset. Adapter: work/forest_lcb.py. Diagnostic comparison settings were ExtraTrees: 512 trees, max_features=1, leaf=1, no bootstrap; ridge: RidgeCV with 17 log-spaced alphas from 1e-4 to 1e4; other forest settings matched this block.\n**Reason:** Prospective GP overprediction and poor fully refitted cross-validation provide evidence to reconsider its model, beyond the plateau alone. The forest had the lowest held-out RMSE, handles nonlinear splits with correlated features, and offers a different inductive bias. Ridge's better rank correlation remains evidence of model uncertainty, so keep this test bounded.\n**Next step limit:** 10 additional objective calls; pause at cumulative evaluation 56.\n**Why this length:** Ten sequential choices allow a meaningful check of selected-value quality and prospective errors with 44 calls still available afterward, rather than trusting a small cross-validation difference for the remainder.\n**Review:** Assess best-value improvement, selected response distribution, prospective predictions and diversity. Do not interpret tree SD as a confidence interval. Pause early on evaluator error, invalid selection, nonfinite output or optimizer failure. No later method is committed.\n\n",
+    "boundary_source": "prospective evaluator document snapshot"
+  },
+  {
+    "block": 6,
+    "first_eval": 57,
+    "last_eval": 64,
+    "calls": 8,
+    "method": "sparse_gp_lcb",
+    "method_segments": [
+      {
+        "method": "sparse_gp_lcb",
+        "first_eval": 57,
+        "last_eval": 64
+      }
+    ],
+    "decision_text": "## Decision after evaluation 56\n**Budget:** 56 used / 100 total; 44 remaining.\n**Evidence:** Forest-LCB found row 792 at -6.648329128 but did not improve row 399 at -8.8133131168. Its other nine values ranged from -3.1419339268 to -0.0602296135; predictions were generally too low. With only 56 labels for 165 varying features, feature relevance remains weakly resolved. An objective-free diagnostic fitted MAP-SAAS sparse GPs through BoTorch's public API. Five-fold refitting on the same 56 rows (KFold shuffle=True, seed=2) gave raw-target sparse GP with tau=0.1 RMSE 2.28512, Spearman 0.27006, low-10 recall 0.5; ridge 2.20988/0.22789/0.3; random forest 1.92486/0.20478/0.4. Thus sparse GP is not the best overall predictor but has slightly better rank/tail recovery. Additional asinh(y) sparse variants at tau=0.1 and 0.01 gave RMSE 2.47268 and 2.34212, Spearman 0.18004 and 0.14880; these do not support transforming the target. All comparisons use only purchased labels and identical folds. Multiple model checks and adaptive sampling make these estimates tentative. The full raw sparse model puts most length scales very large (median 250.27), with minimum 0.2322, and proposes a different low-mean candidate set; these unpurchased predictions are not observed outcomes.\n**Decision:** Switch to a bounded `sparse_gp_lcb` trial. Use MAP-SAAS with raw labels and all 56 observations; retain the same harness and full observed history. The prior GP and forest have no fitted optimizer state needed by this different model. Fresh MAP fitting per proposal is part of the chosen method. Keep the original GPBO observation store synchronized.\n**Hyperparameters:** BoTorch 0.18.1 get_fitted_map_saas_model with tau=0.1, train_Yvar=None (learned nugget), Standardize(m=1), and optimizer_kwargs options maxiter=500. Use all 165 varying columns scaled by public bound ranges; no PCA truncation or target transformation. Installed default MAP-SAAS scaled Matern-5/2 kernel, mean, priors, parameter bounds and fitting behavior are inherited from BoTorch 0.18.1/GPyTorch 1.15.2. Fixed global sparsity tau=0.1 favors dependence on relatively few features while permitting data-adapted ARD length scales. Select the minimum mean minus 1.0 latent posterior SD over all unused rows in chunks of 512. Double precision, one Torch thread, and unchanged campaign seed state from 2. No new stochastic seed or dependency. Adapter: work/sparse_lcb.py.\n**Reason:** The forest trial did not deliver a new incumbent and its pre-purchase means were repeatedly optimistic. A sparse GP directly addresses the many-features/few-labels imbalance and offers a different candidate ranking with slightly stronger held-out low-tail signal. This is a limited hypothesis test, not a claim that the model is validated.\n**Next step limit:** 8 additional objective calls; pause at cumulative evaluation 64.\n**Why this length:** Eight sequential predictions can establish whether the new sparse metric identifies a productive region while retaining 36 calls for subsequent evidence-based choices.\n**Review:** Inspect improvements, prospective residuals and nugget stability. Pause earlier after two consecutive absolute residuals greater than three predictive SDs, or on evaluator error, invalid selection, nonfinite output or optimizer failure. No next method is selected in advance.\n\n",
+    "boundary_source": "prospective evaluator document snapshot"
+  },
+  {
+    "block": 7,
+    "first_eval": 65,
+    "last_eval": 74,
+    "calls": 10,
+    "method": "sparse_gp_lcb",
+    "method_segments": [
+      {
+        "method": "sparse_gp_lcb",
+        "first_eval": 65,
+        "last_eval": 74
+      }
+    ],
+    "decision_text": "## Decision after evaluation 64\n**Budget:** 64 used / 100 total; 36 remaining.\n**Evidence:** Sparse-GP LCB did not improve row 399 at -8.8133131168, but found row 618 at -6.4117946824, row 627 at -5.674557144, row 970 at -5.1114491587 and row 637 at -5.091969491. Four of the last five purchases were below -5. Block median was -4.31845, compared with -2.16700 for the preceding forest block. The first and third sparse predictions had large positive errors (5.02 and 4.83 predictive SDs), but they were separated and did not trigger the consecutive-error checkpoint. The final five residuals were within 1.43 predictive SDs. Fitted standardized nugget stayed about 0.00038 to 0.00041; it does not establish reliable calibration despite deterministic evaluations.\n**Decision:** Continue `sparse_gp_lcb` on all 64 observations with the same harness, adapter and ordinary per-selection refits. No restart or observation removal.\n**Hyperparameters:** Unchanged from evaluation 56: MAP-SAAS tau=0.1, raw targets with Standardize(m=1), all 165 bound-scaled varying features, inferred nugget, maxiter=500, LCB kappa=1.0, pool chunks=512, installed BoTorch 0.18.1 and GPyTorch 1.15.2 defaults, same seed state from 2. The recent selected-value yield supports retaining the sparse metric and moderate exploration. Do not increase confidence by forcing the nugget smaller, and do not change tau solely to chase isolated errors.\n**Reason:** The last five purchases provide evidence that the model is learning a productive region after its initial misses. A short plateau in the incumbent does not negate the improved response distribution. Continuing is warranted, while residual failures and the still-unbeaten incumbent justify another bounded review.\n**Next step limit:** 10 additional objective calls; pause at cumulative evaluation 74.\n**Why this length:** Ten observations give the promising recent pattern time to produce an extreme improvement, while leaving 26 calls and another decision opportunity rather than consuming the 36-call remainder automatically.\n**Review:** Assess new incumbent discoveries, whether the below--5 yield persists, and prospective residual calibration. Pause sooner after two consecutive absolute residuals greater than three predictive SDs, or evaluator error, invalid selection, nonfinite result or fitting failure. No next method is preselected.\n\n",
+    "boundary_source": "prospective evaluator document snapshot"
+  },
+  {
+    "block": 8,
+    "first_eval": 75,
+    "last_eval": 80,
+    "calls": 6,
+    "method": "nearest_incumbent",
+    "method_segments": [
+      {
+        "method": "nearest_incumbent",
+        "first_eval": 75,
+        "last_eval": 80
+      }
+    ],
+    "decision_text": "## Decision after evaluation 74\n**Budget:** 74 used / 100 total; 26 remaining.\n**Evidence:** The last 10 sparse-GP calls had best -6.1054444328 (row 616), with two below -5 and no improvement over -8.8133131168. The last two responses were -0.8647342772 and -0.0485094534 despite predicted means near -4.3. A very close candidate at evaluation 67 had a 6.30-SD residual; subsequent fits increased the standardized nugget from about 0.0004 to 0.066-0.145, indicating recognized model mismatch. A fresh fitted sparse model now favors rows with means near -5 to -4, mostly far from incumbent 399. A public-feature neighborhood audit found unused rows 522 and 285 at bound-scaled Euclidean distances 0.89930 and 0.97062 from row 399, closer than any other purchased row. Nearby purchased rows 518, 917, 388, 251 and 792 returned -6.33917, -6.28931, -6.95148, -7.04008 and -6.64833 at distances 1.0006-1.0559, but other neighbors were much worse. This is promising local evidence, not a smoothness guarantee. A diagnostic-only script initially had a syntax error, fixed before execution; no evaluator call or budget was affected.\n**Decision:** Switch to a short `nearest_incumbent` audit of the incumbent neighborhood. Initialize the center at best observed row 399. At each purchase select the nearest available actual row under the same public bound-normalized Euclidean metric. Retain every observation, the original GP data store and the same harness. Pause immediately if a new incumbent is discovered.\n**Hyperparameters:** Euclidean distance over the 165 varying features scaled by their public bound spans, equal coordinate weights, nearest one unused row per call; stable ties by available row order. No response surrogate, learned metric, noise setting or additional stochastic draw. The incumbent is computed from real purchased values. Implementation uses NumPy 2.4.6. Six is the block cap, not a fitted neighborhood-size parameter.\n**Reason:** The surrogate acquisitions have left the nearest two incumbent neighbors untouched while several slightly more distant rows have strong observed values. Testing this specific gap can exploit direct local evidence without relying on unstable extrapolations. A short audit is warranted because the neighborhood also contains poor values.\n**Next step limit:** 6 additional objective calls; pause no later than cumulative evaluation 80.\n**Why this length:** Six calls cover the immediate remaining neighbors and resolve whether this local evidence is useful, while preserving 20 evaluations if no early improvement occurs.\n**Review:** Inspect actual responses versus distance. Pause immediately after any strict incumbent improvement for a fresh decision, or on evaluator error, invalid selection or nonfinite result. No subsequent method is preselected.\n\n",
+    "boundary_source": "prospective evaluator document snapshot"
+  },
+  {
+    "block": 9,
+    "first_eval": 81,
+    "last_eval": 88,
+    "calls": 8,
+    "method": "sparse_ensemble_ei",
+    "method_segments": [
+      {
+        "method": "sparse_ensemble_ei",
+        "first_eval": 81,
+        "last_eval": 88
+      }
+    ],
+    "decision_text": "## Decision after evaluation 80\n**Budget:** 80 used / 100 total; 20 remaining.\n**Evidence:** All six nearest-incumbent purchases were weak relative to the incumbent: -3.5720311694, -2.4998430194, -0.3447695799, -0.8421513303, -1.5838467004 and -0.8514313095. This fails the specific hypothesis that the untested immediate neighbors are productive under the equal-weight feature metric. Best remains row 399 at -8.8133131168. An objective-free diagnostic compared MAP-SAAS models at fixed tau values 0.01, 0.1 and 1.0 using all 80 labels. Their candidate predictions differ; model-specific highest-EI choices were 764, 898 and 898. The mixture's highest-EI row is 898, with means -1.7043/-1.5613/-1.0564 and latent SDs 1.8567/2.2202/2.5125. Mixture log EI there is -7.9558. Thus these acquisitions favor uncertain regions, not a prediction of a near-certain improvement. Given previous calibration failures, the low predicted improvement cannot certify exhaustion.\n**Decision:** Switch to `sparse_ensemble_ei`, an equal mixture of three sparse GP models with broader and narrower sparsity assumptions. Refit all components sequentially after each real observation, retaining all 80 observations and the same harness. No source identity, unobserved label or row-order response signal is used. Continue synchronizing the original GPBO store.\n**Hyperparameters:** Three BoTorch 0.18.1 get_fitted_map_saas_model components with fixed taus [0.01, 0.1, 1.0], equal mixture weights 1/3. The log-spaced sparsity levels bracket the previous 0.1 setting to represent uncertainty about how many features matter. Each component retains the raw-target Standardize(m=1), 165 varying bound-scaled inputs, inferred nugget, maxiter=500, double precision and installed model defaults specified after evaluation 56. Score all available rows by logsumexp(component analytic LogExpectedImprovement against the actual best observed raw y)-log(3); maximize=False, posterior chunks=512. No extra exploration offset. This averages EI, not log EI. Work adapter: work/sparse_ensemble.py. No random hyperparameter samples or new seeds; retain seed state from 2.\n**Reason:** Immediate-neighbor testing and recent moderate-value exploitation have not improved the extreme incumbent. A broader acquisition is now justified. Averaging over several sparsity assumptions addresses model uncertainty more directly than continuing one unreliable fitted metric. The decision does not assume that all remaining rows are poor simply because their fitted means are unpromising.\n**Next step limit:** 8 additional objective calls; pause no later than cumulative evaluation 88.\n**Why this length:** Eight proposals provide a bounded test of the changed exploratory acquisition and leave 12 calls for a decision informed by its outcomes. The remaining budget is not allocated beyond this block.\n**Review:** Inspect actual response distribution, component disagreement and any new best. Pause immediately after a strict incumbent improvement, or on evaluator error, invalid selection, nonfinite result or optimizer failure. Future method and block length remain undecided.\n\n",
+    "boundary_source": "prospective evaluator document snapshot"
+  },
+  {
+    "block": 10,
+    "first_eval": 89,
+    "last_eval": 94,
+    "calls": 6,
+    "method": "sparse_ensemble_lcb",
+    "method_segments": [
+      {
+        "method": "sparse_ensemble_lcb",
+        "first_eval": 89,
+        "last_eval": 94
+      }
+    ],
+    "decision_text": "## Decision after evaluation 88\n**Budget:** 88 used / 100 total; 12 remaining.\n**Evidence:** Ensemble EI's eight responses ranged from -5.486125218 (row 569) to -0.4366338857; row 837 returned -4.5607927591. None improved the incumbent -8.8133131168. The initially uncertain row 898 returned -1.3443331932, consistent with its weak predicted means. Further selected rows 883, 101 and 108 returned -0.48674, -0.96946 and -0.43663. Broader exploration obtained new labels, but no evidence of an extreme better region. Model means and uncertainties disagree materially for several selected rows, so a single component remains an uncertain guide.\n**Decision:** Adjust acquisition to `sparse_ensemble_lcb`, preserving all 88 observations and the same three-model family and harness. Refit components as before, then select by an equal-weight mixture lower confidence bound with reduced uncertainty weight. No model observation history is reset.\n**Hyperparameters:** Keep all MAP-SAAS component settings and taus [0.01, 0.1, 1.0] from evaluation 80. Replace mixture EI with score = mixture_mean - 0.5 * mixture_SD. The equal-weight mixture variance is mean(component_variance + component_mean^2) - mixture_mean^2, thus accounting for both each component's latent uncertainty and differences between component means. Kappa=0.5 favors low consensus means while preserving some allowance for model uncertainty. Do not interpret this mixture as a validated posterior. Other fitting, scaling, chunks and seed settings are unchanged. Adapter: work/sparse_ensemble_lcb.py uses the same supported BoTorch APIs.\n**Reason:** Exploration selected mostly mediocre responses. With 12 evaluations left, the potential value of collecting labels purely to improve a model is smaller; directly testing lower predicted responses is now more useful. Retaining a mixture avoids committing to a sparsity level that has not been reliably validated.\n**Next step limit:** 6 additional objective calls; pause no later than cumulative evaluation 94.\n**Why this length:** Six sequential choices allow the changed acquisition to be judged on actual outcomes before deciding how to use the remaining budget. This is not an automatic allocation of the last 12 calls.\n**Review:** Assess actual value versus mixture mean, any incumbent improvement, and whether the predicted low-value region is productive. Pause immediately on a strict incumbent improvement, or on evaluator error, invalid selection, nonfinite result or fitting failure. No subsequent block is preselected.\n\n",
+    "boundary_source": "prospective evaluator document snapshot"
+  },
+  {
+    "block": 11,
+    "first_eval": 95,
+    "last_eval": 100,
+    "calls": 6,
+    "method": "sparse_ensemble_lcb",
+    "method_segments": [
+      {
+        "method": "sparse_ensemble_lcb",
+        "first_eval": 95,
+        "last_eval": 100
+      }
+    ],
+    "decision_text": "## Decision after evaluation 94\n**Budget:** 94 used / 100 total; 6 remaining.\n**Evidence:** The six ensemble-LCB purchases produced -5.415052452, -3.954432795, -5.7640891541, -2.0871434822, -2.0137359208 and -6.7094193046. Three were below -5; block median was -4.6847426235. Row 475 is now fourth best observed, though row 399 at -8.8133131168 remains the incumbent. This response yield is stronger than the preceding ensemble-EI block (one of eight below -5). Predictions still miss in both directions: row 528 was much worse than its roughly -5.09 mixture mean, and row 475 was better than its -4.55 mixture mean. There is no evidence of calibrated mixture intervals or global optimality.\n**Decision:** Continue `sparse_ensemble_lcb` with all 94 observations, the existing acquisition implementation, and the same harness. Keep ordinary component refits; do not reset data or stochastic state.\n**Hyperparameters:** Unchanged from evaluation 88: equal mixture of MAP-SAAS taus [0.01, 0.1, 1.0], mixture LCB kappa=0.5, raw-label standardization, 165 bound-scaled varying features, learned nugget, maxiter=500, chunks=512 and installed BoTorch/GPyTorch defaults from evaluation 80. Retain moderate uncertainty weight because errors occur in both directions; the small new sample does not justify another sparsity search or confidence increase.\n**Reason:** Three strong responses, including a new fourth-best row at the latest call, support continuing the current selection rule. No tested alternative has established a better route to the extreme incumbent. Six remaining real purchases can still test the updated model; surrogate confidence is not sufficient grounds to stop early.\n**Next step limit:** 6 additional objective calls; pause no later than cumulative evaluation 100.\n**Why this length:** The full remainder is only six calls, the same short experimental window that just yielded useful responses. Spending these six is specifically justified by that evidence, with an earlier checkpoint on improvement; it is not an automatic decision to consume a large remainder without review.\n**Review:** Pause immediately after a strict incumbent improvement for reconsideration, or on evaluator error, invalid selection, nonfinite result or fitting failure. Otherwise inspect the final six outcomes at budget exhaustion, record the stopping decision, save via the harness and verify all four required artifacts.\n\n",
+    "boundary_source": "prospective evaluator document snapshot"
+  }
+]

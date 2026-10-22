@@ -52,9 +52,19 @@ training target.
   --seeds 10 --workers 4 --outdir runs/mof-baselines-100
 ```
 
-These are reproduction commands, not a claim that the baseline sweep has run.
-The user will supply baseline results separately. Before comparison, verify the
-dataset hash, row order, sign convention, seed, and total evaluation budget.
+These are reproduction commands; the published comparison uses the supplied
+`results_linux.zip` GP-BO and TuRBO traces (10 seeds each), preserved in the
+[materials result package](../../agent_runs/materials_astra_max_100_3seeds_20261022/README.md).
+The supplied traces contain 110 evaluations. The comparison uses calls 1–100,
+including their ten random initialization calls, and discards calls 101–110.
+Every recorded candidate ID, feature vector, label, rank and incumbent was
+checked against this registered pool. Raw supplied traces maximize positive y;
+the report converts them to regret using the same pool maximum as the agent.
+Archive provenance, verification code and sample standard deviations are in
+the result package. No new baseline sweep was run here.
+
+Before comparing any future rerun, verify the dataset hash, row order, sign
+convention, seed, and total evaluation budget.
 The previous sandbox exposed the entire label CSV to the agent process and
 relied on instructions; new runs use the repository's native filesystem
 isolation and separate durable evaluator instead.

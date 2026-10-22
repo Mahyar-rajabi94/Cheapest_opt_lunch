@@ -1,0 +1,16 @@
+{
+  "task": "mof_pool",
+  "seed": 0,
+  "status": "complete",
+  "evaluations": 100,
+  "budget": 100,
+  "best_raw_score": 9.2928301557,
+  "pool_maximum": 9.2928301557,
+  "regret": 0.0,
+  "best_candidate_id": "SEHTEF",
+  "best_descending_rank": 1,
+  "first_best_evaluation": 65,
+  "decision_blocks": 13,
+  "run_id": "run-7f4e6c5fae25",
+  "source_commit": "cbe3886f40e2eeffa002d353188d8ca57a9143cf"
+}

@@ -1,0 +1,27 @@
+{
+  "source_commit": "cbe3886f40e2eeffa002d353188d8ca57a9143cf",
+  "created_at": "2026-10-22T20:02:26.784626+00:00",
+  "model": "gpt-6-astra",
+  "effort": "max",
+  "budget_per_campaign": 100,
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "tasks": [
+    "opv_pool",
+    "mof_pool"
+  ],
+  "agent_prompt_sha256": "2b9d7d24d7b4aa7c601323bc73fe45ec1f4d63bf2d50384f1aea4587c4b02ad2",
+  "private_data_sha256": {
+    "main/data/mof_pool/data.csv": "02e7b417b5004f60bc24cd6bd1b4eb2b64a746befc876d98b13c754a57de70ee",
+    "task_006_baseline/pool_features.csv": "19652d5d994d90b3f89fdc8e0c597412e2ae8d19a1e1e2c5b1adfd456ef16eda",
+    "task_006_baseline/pool_labels.csv": "024d3a1f903b93297d066d9e29b6d50d49369ad6f7ecca89adc52f795bdaa268",
+    "task_006_baseline/pool_spec.json": "b8416e986bf3c22335bfafb666aadc38240ad782e9df17c69b9499341a539195"
+  },
+  "baseline_comparisons": "pending user-supplied baselines; no sweep run",
+  "mof_protocol": "1000 exact public feature rows; names and labels private; minimize -raw_y; canonical autonomous agent",
+  "opv_protocol": "hidden 526-device nearest-untested pool; minimize -PCE",
+  "seed_note": "Public campaign seeds guide stochastic choices; model generation is not deterministic."
+}

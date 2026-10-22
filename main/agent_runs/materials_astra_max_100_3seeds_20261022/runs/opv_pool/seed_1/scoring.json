@@ -1,0 +1,8 @@
+{
+  "task": "opv_pool",
+  "task_name": "opv_pool_pce_d11",
+  "f_opt": -15.707252,
+  "noisy": false,
+  "n_constraints": 0,
+  "seed": 1
+}

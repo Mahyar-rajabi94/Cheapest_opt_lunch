@@ -1,0 +1,23 @@
+[
+  {
+    "task": "mof_pool",
+    "method": "agent",
+    "seeds": 3,
+    "mean_regret": 0.159839012966667,
+    "sample_std": 0.27684929148992776
+  },
+  {
+    "task": "mof_pool",
+    "method": "gp_bo",
+    "seeds": 10,
+    "mean_regret": 0.3430729113100003,
+    "sample_std": 0.7922291381592486
+  },
+  {
+    "task": "mof_pool",
+    "method": "turbo",
+    "seeds": 10,
+    "mean_regret": 0.6339553225300005,
+    "sample_std": 0.9008328580576631
+  }
+]
