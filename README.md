@@ -56,12 +56,12 @@ For the other two recent experiments, use `--task sharp_ridge10` or
 there is no resume/reset option. Runs may be launched from separate terminals in
 parallel. `--runs-dir`, `--agent-python` and `--codex` override local paths.
 
-The native runner currently accepts **continuous deterministic BBOB tasks** from
-[the task registry](main/src/tasks/registry.py), including the three above.
-The broader library also contains noisy, constrained, mixed-integer, conditional
-and polymer tasks. Their baselines remain available, but this isolated runner
-rejects them until their public variable/constraint contracts are implemented.
-See [TASKS.md](main/TASKS.md) and [ADDING_TASKS.md](main/ADDING_TASKS.md).
+The native runner accepts every task in [the task registry](main/src/tasks/registry.py).
+The agent sees the same box as the baselines: discrete, categorical and conditional
+structure stays hidden inside the objective. Constrained tasks return `(y, g)`,
+feasible iff every `g <= 0`. Noisy tasks set `noisy` and are reseeded with `--seed`
+(default 0); the agent sees only observations, and the private journal keeps the
+noise-free values. See [TASKS.md](main/TASKS.md) and [ADDING_TASKS.md](main/ADDING_TASKS.md).
 
 ## What the agent can access
 
@@ -119,6 +119,7 @@ runs/run-<id>/
     agent_final.txt                 final agent response
     integrity_audit.json            journal/artifact consistency checks
     scoring.json                   task identity and optimum, for offline analysis
+    scored_trace.csv               y_best_so_far in the baseline convention (noise-free, feasible)
 ```
 
 The historical filename `roadmap_initial.md` remains for compatibility; it is not

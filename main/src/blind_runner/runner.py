@@ -5,6 +5,7 @@ are exposed to agent commands. No VM, socket API, or shared campaign state.
 """
 import argparse
 import hashlib
+import inspect
 import json
 import os
 from pathlib import Path
@@ -138,11 +139,22 @@ def prepare(args, task, runtime):
     # Scripts in work/ can import the public src package without modifying it.
     (workspace / 'work/src').symlink_to('../src', target_is_directory=True)
     bounds = [[float(v) for v in pair] for pair in task.bounds]
+    kind = 'noisy' if task.noisy else 'deterministic'
+    if task.n_constraints:
+        constraints = (f'There are {task.n_constraints} black-box inequality constraints: a point is '
+                       'feasible iff every constraint value is <= 0 (tolerance 1e-10). Infeasible points '
+                       'are still evaluated and charged. The result is the best feasible observation.')
+        returns = 'y, g = h.evaluate(x)  # g: list of constraint values'
+    else:
+        constraints, returns = 'There are no additional constraints.', 'y = h.evaluate(x)'
+    noise = (' Each evaluation returns a noisy observation of the objective; the campaign is '
+             'scored by the noise-free value at the point with the lowest observed y.'
+             if task.noisy else '')
     public = f'''# Public evaluation interface
 
-Minimize a deterministic scalar black-box objective over {task.dim} continuous
-coordinates with bounds {json.dumps(bounds)}. There are no additional constraints
-and no prior observations. The hard budget is {args.budget} objective evaluations,
+Minimize a {kind} scalar black-box objective over {task.dim} real-valued
+coordinates with bounds {json.dumps(bounds)}.{noise} {constraints}
+There are no prior observations. The hard budget is {args.budget} objective evaluations,
 including repeated points, initialization, line searches and finite differences.
 The objective identity, implementation and optimum are private.
 
@@ -152,11 +164,12 @@ Use `.venv/bin/python` from the workspace root. Put scripts in `work/`.
 from src.agent_harness.harness import AgentTaskHarness, BudgetExhausted
 h = AgentTaskHarness(budget={args.budget}, outdir="results/agent_run")
 h.set_active_optimizer("your_method")
-# y = h.evaluate(x)
+# {returns}
 h.save()
 ```
 
-Public metadata: dim, bounds, direction (min), noisy (False), budget.
+Public metadata: dim, bounds, direction (min), noisy ({task.noisy}),
+n_constraints ({task.n_constraints}), budget.
 Live counters: evaluations_used and evaluations_remaining.
 The client is inspectable transport code; evaluation runs in a separate process.
 Reconnecting or creating another client cannot reset the campaign budget.
@@ -182,7 +195,7 @@ On an evaluator error, stop and report; do not retry an unknown evaluation.
               'workspace': str(workspace), 'permissions': permissions(workspace, roots)}
     write_json(private / 'execution.json', policy)
     manifest = {
-        'task': args.task, 'budget': args.budget, 'model': args.model, 'reasoning_effort': args.effort,
+        'task': args.task, 'budget': args.budget, 'seed': args.seed, 'model': args.model, 'reasoning_effort': args.effort,
         'source_commit': subprocess.check_output(['git', '-C', str(REPO), 'rev-parse', 'HEAD'], text=True).strip(),
         'source_status': subprocess.check_output(['git', '-C', str(REPO), 'status', '--short'], text=True),
         'codex_version': subprocess.check_output([str(args.codex), '--version'], text=True).strip(),
@@ -274,8 +287,9 @@ def audit(evaluator, workspace, private):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description='Run the canonical agent with native filesystem isolation.')
-    parser.add_argument('--task', required=True, help='A registered deterministic continuous BBOB task, e.g. step_ellipsoid10')
+    parser.add_argument('--task', required=True, help='A key of main/src/tasks/registry.py, e.g. step_ellipsoid10')
     parser.add_argument('--budget', required=True, type=int)
+    parser.add_argument('--seed', type=int, default=0, help='Observation-noise seed for noisy tasks')
     parser.add_argument('--model', default='gpt-6-astra')
     parser.add_argument('--effort', default='xhigh', choices=['low', 'medium', 'high', 'xhigh'])
     parser.add_argument('--agent-python', type=Path, default=REPO / '.agent-venv/bin/python')
@@ -291,25 +305,24 @@ def main(argv=None):
     args.agent_python = args.agent_python.expanduser().absolute()
     args.codex = args.codex.expanduser().absolute()
     from src.tasks.registry import TASKS
-    from src.tasks.bbob import BBOBTask
     if args.task not in TASKS:
         parser.error('Unknown task. See main/src/tasks/registry.py.')
     task = TASKS[args.task]()
-    if not isinstance(task, BBOBTask):
-        parser.error('This isolated runner currently supports continuous deterministic BBOB tasks. '
-                     'Other families require their public variable/constraint contracts first.')
+    task.reseed(args.seed)
     runtime = runtime_info(args.agent_python)
     root, workspace, private, policy = prepare(args, task, runtime)
     print('Run directory: ' + str(root), flush=True)
     suite = {'budget': args.budget, 'campaigns': [{'id': 'run', 'task': args.task}]}
     evaluator = Evaluator(suite, private / 'evaluations.sqlite', lambda _: task)
-    write_json(private / 'scoring.json', {'task': args.task, 'f_opt': float(task.f_opt)})
+    write_json(private / 'scoring.json', {'task': args.task, 'task_name': task.name, 'f_opt': float(task.f_opt),
+                                          'noisy': task.noisy, 'n_constraints': task.n_constraints,
+                                          'seed': args.seed})
     bridge = Bridge(evaluator, workspace)
     bridge.start()
     exit_code = 0
     try:
         forbidden = [private / 'canary.txt', root / 'sibling_canary.txt', REPO / 'README.md',
-                     MAIN / 'src/tasks/bbob.py', private / 'evaluations.sqlite',
+                     Path(inspect.getfile(type(task))), private / 'evaluations.sqlite',
                      Path.home() / '.codex/auth.json', Path(__file__)]
         report = check(policy, forbidden, private)
         print(f"Isolation passed: {len(report['checks'])} checks, 0/{args.budget} evaluations.", flush=True)
@@ -321,6 +334,7 @@ def main(argv=None):
         # public artifacts before comparing them with that journal.
         if sys.exc_info()[0] is None:
             report = audit(evaluator, workspace, private)
+            (private / 'scored_trace.csv').write_text(evaluator.scored_trace('run'))
         evaluator.db.close()
     print(f"Finished: {report['evaluations_used']}/{args.budget} evaluations. Results: {workspace / 'results/agent_run'}")
     return exit_code

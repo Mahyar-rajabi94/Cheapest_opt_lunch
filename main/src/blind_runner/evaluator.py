@@ -15,6 +15,8 @@ import threading
 import time
 import traceback
 
+from ..tasks.base import FEASIBILITY_TOL
+
 
 class BudgetExhausted(Exception):
     pass
@@ -35,7 +37,7 @@ class Evaluator:
               PRIMARY KEY(campaign,id));
             CREATE TABLE IF NOT EXISTS evaluations(campaign TEXT, idx INTEGER, request_id TEXT,
               x TEXT, y REAL, label TEXT, elapsed REAL, wall_ns INTEGER,
-              PRIMARY KEY(campaign,idx));
+              g TEXT, y_true REAL, PRIMARY KEY(campaign,idx));
             CREATE TABLE IF NOT EXISTS labels(campaign TEXT PRIMARY KEY, label TEXT);
             CREATE TABLE IF NOT EXISTS documents(campaign TEXT, name TEXT, content TEXT,
               PRIMARY KEY(campaign,name));
@@ -59,7 +61,8 @@ class Evaluator:
         used = self.count(campaign)
         task = self.tasks[campaign]
         return {'dim': int(task.dim), 'bounds': [[float(v) for v in pair] for pair in task.bounds],
-                'direction': 'min', 'noisy': False,
+                'direction': 'min', 'noisy': bool(getattr(task, 'noisy', False)),
+                'n_constraints': int(getattr(task, 'n_constraints', 0)),
                 'budget': self.suite['budget'], 'evaluations_used': used,
                 'evaluations_remaining': self.suite['budget'] - used}
 
@@ -81,20 +84,44 @@ class Evaluator:
                 self.db.execute('INSERT INTO snapshots VALUES(?,?,?,?,?)',
                                 (campaign, self.count(campaign), name, content, time.time_ns()))
 
-    def artifacts(self, campaign):
-        rows = self.db.execute('SELECT idx,x,y,label,elapsed,wall_ns FROM evaluations '
+    def incumbents(self, campaign):
+        """Each completed evaluation with its feasibility and the incumbent so far:
+        the feasible point with the lowest observed y, and its noise-free value."""
+        rows = self.db.execute('SELECT idx,x,y,g,y_true,label,elapsed,wall_ns FROM evaluations '
                                'WHERE campaign=? AND y IS NOT NULL ORDER BY idx', (campaign,)).fetchall()
+        best, best_x, best_true = math.inf, None, None
+        for row in rows:
+            x, y, g, y_true = row[1:5]
+            feasible = sum(max(v, 0.) for v in json.loads(g or '[]')) <= FEASIBILITY_TOL
+            if feasible and y < best:
+                best, best_x, best_true = y, json.loads(x), y_true
+            yield row, feasible, (None if best_x is None else best), best_x, best_true
+
+    def artifacts(self, campaign):
+        status = self.status(campaign)
+        constrained = status['n_constraints'] > 0
         output = io.StringIO()
         writer = csv.writer(output)
-        writer.writerow(['eval_idx', 'x', 'y', 'best_y', 'optimizer', 'eval_seconds', 'wall_ns'])
-        best, best_x = math.inf, None
-        for idx, x, y, label, elapsed, wall_ns in rows:
-            if y < best:
-                best, best_x = y, json.loads(x)
-            writer.writerow([idx, x, y, best, label, elapsed, wall_ns])
-        meta = {**self.status(campaign), 'best_y': best if rows else None, 'best_x': best_x}
+        writer.writerow(['eval_idx', 'x', 'y', *(['g', 'feasible'] if constrained else []),
+                         'best_y', 'optimizer', 'eval_seconds', 'wall_ns'])
+        best, best_x = None, None
+        for (idx, x, y, g, _, label, elapsed, wall_ns), feasible, best, best_x, _ in self.incumbents(campaign):
+            writer.writerow([idx, x, y, *([g, feasible] if constrained else []),
+                             '' if best is None else best, label, elapsed, wall_ns])
+        meta = {**status, 'best_y': best, 'best_x': best_x}
         artifacts = {'trace.csv': output.getvalue(), 'meta.json': json.dumps(meta, indent=2)}
         return artifacts
+
+    def scored_trace(self, campaign):
+        """Private scoring trace in the baseline convention: y_best_so_far is the
+        incumbent's noise-free value for noisy tasks, blank before the first feasible point."""
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow(['eval_idx', 'y', 'y_true', 'feasible', 'y_best_so_far'])
+        for (idx, _, y, _, y_true, *_), feasible, best, _, best_true in self.incumbents(campaign):
+            best = best_true if best_true is not None else best
+            writer.writerow([idx, y, '' if y_true is None else y_true, feasible, '' if best is None else best])
+        return output.getvalue()
 
     def handle(self, campaign, request):
         with self.lock:
@@ -148,7 +175,8 @@ class Evaluator:
                 if not label or not initial or not initial[0].strip():
                     raise ValueError('Record the first decision and optimizer label before evaluating.')
                 # Reserve a charged slot durably before calling the objective. A crash cannot reset it.
-                self.db.execute('INSERT INTO evaluations VALUES(?,?,?,?,NULL,?,NULL,?)',
+                self.db.execute('INSERT INTO evaluations(campaign,idx,request_id,x,label,wall_ns) '
+                                'VALUES(?,?,?,?,?,?)',
                                 (campaign, n + 1, key, json.dumps(x), label[0], time.time_ns()))
                 self.db.commit()
                 try:
@@ -158,10 +186,16 @@ class Evaluator:
                     # chained exception privately and expose only a generic error.
                     raise RuntimeError('Objective evaluation failed.') from exc
                 result = float(ev.y)
-                if not math.isfinite(result):
+                g = [float(v) for v in getattr(ev, 'g', ())]
+                y_true = getattr(ev, 'y_true', None)
+                if (not math.isfinite(result) or len(g) != self.status(campaign)['n_constraints']
+                        or not all(math.isfinite(v) for v in g)):
                     raise RuntimeError('Nonfinite backend result')
-                self.db.execute('UPDATE evaluations SET y=?,elapsed=? WHERE campaign=? AND idx=?',
-                                (result, ev.elapsed, campaign, n + 1))
+                self.db.execute('UPDATE evaluations SET y=?,g=?,y_true=?,elapsed=? WHERE campaign=? AND idx=?',
+                                (result, json.dumps(g), None if y_true is None else float(y_true),
+                                 ev.elapsed, campaign, n + 1))
+                if g:
+                    result = {'y': result, 'g': g}
                 if n + 1 == self.suite['budget']:
                     artifacts = self.artifacts(campaign)
             elif op == 'save':
