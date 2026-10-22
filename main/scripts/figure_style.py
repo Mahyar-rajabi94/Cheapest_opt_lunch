@@ -23,13 +23,13 @@ import numpy as np
 # ---- color ----
 # Series hues in fixed order: series i always gets SERIES_COLORS[i]. The pair
 # passes the dataviz skill's validate_palette.py (--mode light --surface
-# #fcfcfb) on every check. A figure with more series must extend this list and
+# #ffffff) on every check. A figure with more series must extend this list and
 # re-run the validator on the full ordered list first.
 SERIES_COLORS = ["#2a78d6", "#e34948"]  # blue, red
 BAND_ALPHA = 0.18
 TEXT = "#000000"       # every piece of text
 AXIS = "#52514e"       # spines and tick marks
-SURFACE = "#fcfcfb"
+SURFACE = "#ffffff"  # white: figure, axes and saved file
 
 # ---- sizes (points) ----
 TITLE_SIZE = 20

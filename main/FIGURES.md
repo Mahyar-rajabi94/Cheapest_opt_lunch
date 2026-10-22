@@ -42,8 +42,16 @@ Reference figure: `results_linux/crossover_rosenbrock_vs_mixint.png`, produced b
 ## Color
 
 - Series colors in fixed order: series 1 `#2a78d6` (blue), series 2 `#e34948` (red). The same method keeps the same color across every panel of a figure.
-- This pair passes every check of the dataviz palette validator (`validate_palette.py --mode light --surface #fcfcfb`). A figure with more series must extend `SERIES_COLORS` and re-run the validator on the full ordered list before use.
-- Background `#fcfcfb`.
+- This pair passes every check of the dataviz palette validator (`validate_palette.py --mode light --surface #ffffff`). A figure with more series must extend `SERIES_COLORS` and re-run the validator on the full ordered list before use.
+- Background pure white (`#ffffff`) everywhere: figure, axes and the saved file. No off-white or transparent backgrounds.
+
+## Schematics
+
+Illustrations of a task's shape (e.g. `results_linux/landscape_both.png`, from `scripts/make_landscape_plot.py`) are the one exception to the committed-data rule: they may draw a known formula. They follow every rule above that applies, plus:
+
+- Say in the script docstring and the caption that the graphic is schematic, and what was simplified (dimension, grid spacing).
+- No axes, ticks or colorbar: a schematic's coordinates carry no meaning. The caption states what color means (e.g. "lighter = lower loss").
+- Color magnitude with one light-to-dark ramp of `SERIES_COLORS[0]`, on one scale shared by every panel.
 
 ## Output
 
