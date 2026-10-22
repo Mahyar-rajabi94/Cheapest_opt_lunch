@@ -1,0 +1,11 @@
+{
+  "source_archive": "task_061_sandbox_openai.zip",
+  "archive_sha256": "b60d198c3490227f58eb571b20260a313cbf02e03b2d0d17866031f4bf6fe969",
+  "source_member": "task_061_sandbox_openai/src/agent_harness/data_.csv",
+  "data_sha256": "02e7b417b5004f60bc24cd6bd1b4eb2b64a746befc876d98b13c754a57de70ee",
+  "rows": 1000,
+  "features": 193,
+  "constant_features": 28,
+  "objective": "maximize raw y; registered objective is -y",
+  "note": "The supplied README describes 5882 rows; this supplied CSV contains 1000. No rows were removed or reordered."
+}

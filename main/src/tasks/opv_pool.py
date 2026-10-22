@@ -44,6 +44,8 @@ class OPVPoolTask(Task):
     pool = True
 
     def __init__(self):
+        self.private_data_paths = tuple(DATA_ROOT / name for name in
+                                        ('pool_spec.json', 'pool_features.csv', 'pool_labels.csv'))
         spec = json.loads((DATA_ROOT / "pool_spec.json").read_text())
         names = spec["features"]
         with open(DATA_ROOT / spec["files"]["features"], newline="") as f:

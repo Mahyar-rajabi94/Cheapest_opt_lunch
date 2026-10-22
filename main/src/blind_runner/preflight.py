@@ -58,6 +58,12 @@ from src.agent_harness.harness import AgentTaskHarness
 h = AgentTaskHarness()
 assert h.evaluations_used == 0
 assert h.evaluations_remaining == h.budget
+if getattr(h, 'indexed_pool', False):
+    assert h.candidates.shape == (h.n_candidates, h.dim)
+    assert not h.candidates.flags.writeable
+    assert h.available_indices == list(range(h.n_candidates))
+    denied('candidate features protected', lambda: (root/'candidates.npy').open('a'))
+    checks.append('public candidate features have the expected shape')
 try:
     AgentTaskHarness(budget=h.budget+1)
 except ValueError:

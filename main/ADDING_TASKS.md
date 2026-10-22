@@ -46,6 +46,18 @@ Pool family: `OPVPoolTask()` (`src/tasks/opv_pool.py`), the 526 OPV devices behi
 
 A new non-BBOB function subclasses `Task` (`src/tasks/base.py`) in a new `src/tasks/<family>.py`: set `name`, `dim`, `bounds` (`np.ndarray`, shape `(dim, 2)`), `f_opt`, and implement `_f(x)`. `Task.evaluate(x)` adds timing and returns an `Evaluation` with `y`, `g` (constraint values, empty if unconstrained) and `elapsed`. Minimize only (negate a maximization inside `_f`). `f_opt` is for offline regret only; if no exact optimum is known, use a best-known reference value and document it as such.
 
+Exact public candidate pools additionally set `indexed_pool = True` and expose
+`candidates`, `n_candidates`, `validate_index(index)` (no side effects), and
+`evaluate_index(index)`. `mof_pool` is the reference implementation. The runner
+exports only the feature matrix as `candidates.npy`; the generic client exposes
+`h.candidates`, `h.available_indices`, and `h.evaluate_index(index)`. The private
+journal enforces distinct purchases and budget even when a client reconnects.
+The source table, material IDs, unobserved labels, and full-pool ranks stay private.
+List label-bearing input files in `private_data_paths` for hashes and preflight
+denial checks. Exact-pool baseline dispatch uses pool-aware GPBO/TuRBO and uniform
+row selection; it never projects continuous proposals onto rows. See
+[`data/mof_pool/README.md`](data/mof_pool/README.md) for data provenance and commands.
+
 ## 2. Smoke Test
 
 From `main/`, smoke-test into a temporary directory first:

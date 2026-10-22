@@ -26,9 +26,8 @@ REPO = MAIN.parent
 # MCP server name per agent CLI; Claude Code reserves "workspace".
 SERVER = {'codex': 'workspace', 'claude': 'isolated'}
 TOOLS = ['run_command', 'write_stdin']
-# Pool-only optimizers need a pool task's candidates, which agents never get,
-# and their docstrings describe pool tasks.
-POOL_ONLY_FILES = ['pool_random.py']
+# Expose pool wrappers only when the task explicitly exposes candidate features.
+POOL_ONLY_FILES = ['pool_random.py', 'pool_gp_bo.py', 'pool_turbo.py']
 
 
 def write_json(path, data):
@@ -129,8 +128,14 @@ def prepare(args, task, runtime):
     for name in ['src/__init__.py', 'src/agent_harness/__init__.py']:
         (workspace / name).write_text('')
     shutil.copyfile(MAIN / 'src/agent_harness/harness.py', workspace / 'src/agent_harness/harness.py')
+    indexed = getattr(task, 'indexed_pool', False)
+    excluded = [] if indexed else POOL_ONLY_FILES
     shutil.copytree(MAIN / 'src/optimizers', workspace / 'src/optimizers',
-                    ignore=shutil.ignore_patterns('__pycache__', *POOL_ONLY_FILES))
+                    ignore=shutil.ignore_patterns('__pycache__', *excluded))
+    if indexed:
+        import numpy as np
+        # Deliberately export only features, with anonymous row positions.
+        np.save(workspace / 'candidates.npy', task.candidates, allow_pickle=False)
     # A read-only venv view removes installation aliases (e.g. uv's versionless
     # symlink) without granting access to their parent directories on macOS.
     venv = workspace / '.venv'
@@ -145,7 +150,7 @@ def prepare(args, task, runtime):
     # Scripts in work/ can import the public src package without modifying it.
     (workspace / 'work/src').symlink_to('../src', target_is_directory=True)
     bounds = [[float(v) for v in pair] for pair in task.bounds]
-    kind = 'noisy' if task.noisy else 'noise-free' if task.pool else 'deterministic'
+    kind = 'noisy' if task.noisy else 'noise-free' if task.pool and not indexed else 'deterministic'
     if task.n_constraints:
         constraints = (f'There are {task.n_constraints} black-box inequality constraints: a point is '
                        'feasible iff every constraint value is <= 0 (tolerance 1e-10). Infeasible points '
@@ -160,7 +165,24 @@ def prepare(args, task, runtime):
              ' The objective is not repeatable: the value returned for x depends on which '
              'points were already evaluated, so evaluating the same x again generally '
              'returns a different value.'
-             if task.pool else '')
+             if task.pool and not indexed else '')
+    pool_interface = ''
+    if indexed:
+        returns = 'y = h.evaluate_index(index)  # index: one currently available row'
+        pool_interface = f'''This is an exact finite-candidate problem with {task.n_candidates} rows.
+Only these rows are valid choices; the bounding box is descriptive, not a continuous search space.
+Read h.candidates (shape {task.n_candidates} by {task.dim}) or candidates.npy for ALL public feature
+values, and h.available_indices for the unused row indices. Choose a row with
+h.evaluate_index(index). Each row may be purchased once. Generated points and duplicate purchases
+are rejected without consuming budget. Identical feature rows, if present, remain distinct indices.
+No labels, source identifiers, global ranks, or target-derived statistics accompany the feature table.
+Choose your own initial design, methods, hyperparameters, and bounded blocks under AGENTS.md.
+Pool-aware GPBO and TuRBO wrappers are in src.optimizers.pool_gp_bo and src.optimizers.pool_turbo:
+construct with candidates=h.candidates, bounds=h.bounds, seed=h.seed, direction="min";
+tell ONLY observed rows and returned y, then ask_pool(h.available_indices).
+Their default n_init=10 is configurable; it is not a task requirement. Other methods or adapters
+are allowed, provided their final selections are unused row indices. Constant features may exist.
+'''
     public = f'''# Public evaluation interface
 
 Minimize a {kind} scalar black-box objective over {task.dim} real-valued
@@ -168,6 +190,9 @@ coordinates with bounds {json.dumps(bounds)}.{noise} {constraints}
 There are no prior observations. The hard budget is {args.budget} objective evaluations,
 including repeated points, initialization, line searches and finite differences.
 The objective identity, implementation and optimum are private.
+Campaign seed: {args.seed}. Use this seed for stochastic initial designs and optimizer randomness;
+record any derived seeds or justified changes in your decision log.
+{pool_interface}
 
 Use `.venv/bin/python` from the workspace root. Put scripts in `work/`.
 
@@ -180,7 +205,7 @@ h.save()
 ```
 
 Public metadata: dim, bounds, direction (min), noisy ({task.noisy}),
-n_constraints ({task.n_constraints}), budget.
+n_constraints ({task.n_constraints}), budget, seed.
 Live counters: evaluations_used and evaluations_remaining.
 The client is inspectable transport code; evaluation runs in a separate process.
 Reconnecting or creating another client cannot reset the campaign budget.
@@ -214,6 +239,8 @@ On an evaluator error, stop and report; do not retry an unknown evaluation.
         **({'claude_version': subprocess.check_output([str(args.claude), '--version'], text=True).strip()}
            if args.agent == 'claude' else {}),
         'agent_runtime': runtime,
+        'private_data_sha256': {str(Path(p).relative_to(REPO)): hashlib.sha256(Path(p).read_bytes()).hexdigest()
+                                for p in getattr(task, 'private_data_paths', ())},
         'source_sha256': {str(p.relative_to(REPO)): hashlib.sha256(p.read_bytes()).hexdigest()
                           for folder in ['src/blind_runner', 'src/tasks']
                           for p in (MAIN / folder).glob('*.py')},
@@ -346,7 +373,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description='Run the canonical agent with native filesystem isolation.')
     parser.add_argument('--task', required=True, help='A key of main/src/tasks/registry.py, e.g. step_ellipsoid10')
     parser.add_argument('--budget', required=True, type=int)
-    parser.add_argument('--seed', type=int, default=0, help='Observation-noise seed for noisy tasks')
+    parser.add_argument('--seed', type=int, default=0, help='Public campaign seed and private observation-noise seed')
     parser.add_argument('--agent', default='codex', choices=['codex', 'claude'], help='CLI that drives the model')
     parser.add_argument('--model', help='Default: gpt-6-astra (codex), claude-opus-5-5 (claude)')
     parser.add_argument('--effort', default='max', choices=['low', 'medium', 'high', 'xhigh', 'max'],
@@ -360,8 +387,8 @@ def main(argv=None):
     args = parser.parse_args(argv)
     if sys.platform not in ('darwin', 'linux'):
         parser.error('The native executor currently supports macOS and Linux only.')
-    if args.budget < 1 or args.codex is None:
-        parser.error('Use a positive budget and install Codex CLI (signed in, for --agent codex).')
+    if args.budget < 1 or args.seed < 0 or args.codex is None:
+        parser.error('Use a positive budget, nonnegative seed, and install Codex CLI (signed in, for --agent codex).')
     if args.agent == 'claude' and args.claude is None:
         parser.error('Install and sign in to Claude Code CLI, or pass --claude.')
     args.model = args.model or {'codex': 'gpt-6-astra', 'claude': 'claude-opus-5-5'}[args.agent]
@@ -380,7 +407,7 @@ def main(argv=None):
     runtime = runtime_info(args.agent_python)
     root, workspace, private, policy = prepare(args, task, runtime)
     print('Run directory: ' + str(root), flush=True)
-    suite = {'budget': args.budget, 'campaigns': [{'id': 'run', 'task': args.task}]}
+    suite = {'budget': args.budget, 'seed': args.seed, 'campaigns': [{'id': 'run', 'task': args.task}]}
     evaluator = Evaluator(suite, private / 'evaluations.sqlite', lambda _: task)
     write_json(private / 'scoring.json', {'task': args.task, 'task_name': task.name, 'f_opt': float(task.f_opt),
                                           'noisy': task.noisy, 'n_constraints': task.n_constraints,
@@ -392,6 +419,7 @@ def main(argv=None):
         forbidden = [private / 'canary.txt', root / 'sibling_canary.txt', REPO / 'README.md',
                      Path(inspect.getfile(type(task))), private / 'evaluations.sqlite',
                      Path.home() / '.codex/auth.json', Path.home() / '.claude.json', Path(__file__)]
+        forbidden.extend(getattr(task, 'private_data_paths', ()))
         report = check(policy, forbidden, private)
         print(f"Isolation passed: {len(report['checks'])} checks, 0/{args.budget} evaluations.", flush=True)
         if not args.check_only:

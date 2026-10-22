@@ -37,13 +37,15 @@ class Evaluator:
               PRIMARY KEY(campaign,id));
             CREATE TABLE IF NOT EXISTS evaluations(campaign TEXT, idx INTEGER, request_id TEXT,
               x TEXT, y REAL, label TEXT, elapsed REAL, wall_ns INTEGER,
-              g TEXT, y_true REAL, PRIMARY KEY(campaign,idx));
+              g TEXT, y_true REAL, candidate_index INTEGER, PRIMARY KEY(campaign,idx));
             CREATE TABLE IF NOT EXISTS labels(campaign TEXT PRIMARY KEY, label TEXT);
             CREATE TABLE IF NOT EXISTS documents(campaign TEXT, name TEXT, content TEXT,
               PRIMARY KEY(campaign,name));
             CREATE TABLE IF NOT EXISTS snapshots(campaign TEXT, eval_idx INTEGER, name TEXT,
               content TEXT, wall_ns INTEGER);
         ''')
+        if 'candidate_index' not in {row[1] for row in self.db.execute('PRAGMA table_info(evaluations)')}:
+            self.db.execute('ALTER TABLE evaluations ADD COLUMN candidate_index INTEGER')
         self.db.execute('CREATE TABLE IF NOT EXISTS configuration(value TEXT NOT NULL)')
         config = json.dumps(suite, sort_keys=True)
         previous = self.db.execute('SELECT value FROM configuration').fetchone()
@@ -60,11 +62,18 @@ class Evaluator:
     def status(self, campaign):
         used = self.count(campaign)
         task = self.tasks[campaign]
-        return {'dim': int(task.dim), 'bounds': [[float(v) for v in pair] for pair in task.bounds],
+        state = {'dim': int(task.dim), 'bounds': [[float(v) for v in pair] for pair in task.bounds],
                 'direction': 'min', 'noisy': bool(getattr(task, 'noisy', False)),
                 'n_constraints': int(getattr(task, 'n_constraints', 0)),
+                'seed': self.suite.get('seed', 0),
                 'budget': self.suite['budget'], 'evaluations_used': used,
                 'evaluations_remaining': self.suite['budget'] - used}
+        if getattr(task, 'indexed_pool', False):
+            purchased = {row[0] for row in self.db.execute(
+                'SELECT candidate_index FROM evaluations WHERE campaign=?', (campaign,))}
+            state.update(indexed_pool=True, n_candidates=int(task.n_candidates),
+                         available_indices=[i for i in range(task.n_candidates) if i not in purchased])
+        return state
 
     def documents(self, campaign, docs):
         if not isinstance(docs, dict) or set(docs) != {'roadmap_initial.md', 'changelog.md'}:
@@ -100,15 +109,25 @@ class Evaluator:
     def artifacts(self, campaign):
         status = self.status(campaign)
         constrained = status['n_constraints'] > 0
+        indexed = status.get('indexed_pool', False)
+        indices = dict(self.db.execute('SELECT idx,candidate_index FROM evaluations WHERE campaign=?',
+                                       (campaign,))) if indexed else {}
         output = io.StringIO()
         writer = csv.writer(output)
-        writer.writerow(['eval_idx', 'x', 'y', *(['g', 'feasible'] if constrained else []),
+        writer.writerow(['eval_idx', 'x', *(['candidate_index'] if indexed else []),
+                         'y', *(['g', 'feasible'] if constrained else []),
                          'best_y', 'optimizer', 'eval_seconds', 'wall_ns'])
         best, best_x = None, None
+        best_index, best_index_y = None, math.inf
         for (idx, x, y, g, _, label, elapsed, wall_ns), feasible, best, best_x, _ in self.incumbents(campaign):
-            writer.writerow([idx, x, y, *([g, feasible] if constrained else []),
+            if indexed and feasible and y < best_index_y:
+                best_index, best_index_y = indices[idx], y
+            writer.writerow([idx, x, *([indices[idx]] if indexed else []),
+                             y, *([g, feasible] if constrained else []),
                              '' if best is None else best, label, elapsed, wall_ns])
         meta = {**status, 'best_y': best, 'best_x': best_x}
+        if indexed:
+            meta['best_candidate_index'] = best_index
         artifacts = {'trace.csv': output.getvalue(), 'meta.json': json.dumps(meta, indent=2)}
         return artifacts
 
@@ -163,7 +182,20 @@ class Evaluator:
                     raise BudgetExhausted('Evaluation budget exhausted.')
                 if self.db.execute('SELECT 1 FROM evaluations WHERE campaign=? AND y IS NULL', (campaign,)).fetchone():
                     raise ValueError('An evaluation has an unknown outcome; stop and report.')
-                x = request.get('x')
+                task = self.tasks[campaign]
+                indexed = getattr(task, 'indexed_pool', False)
+                candidate_index = None
+                if indexed:
+                    if 'x' in request:
+                        raise ValueError('Select an unused candidate by integer index.')
+                    candidate_index = request.get('candidate_index')
+                    task.validate_index(candidate_index)
+                    if self.db.execute('SELECT 1 FROM evaluations WHERE campaign=? AND candidate_index=?',
+                                       (campaign, candidate_index)).fetchone():
+                        raise ValueError('Candidate was already evaluated.')
+                    x = task.candidates[candidate_index].tolist()
+                else:
+                    x = request.get('x')
                 bounds = self.status(campaign)['bounds']
                 if not isinstance(x, list) or len(x) != len(bounds) or any(
                     isinstance(v, bool) or not isinstance(v, (int, float)) or not math.isfinite(v)
@@ -175,12 +207,12 @@ class Evaluator:
                 if not label or not initial or not initial[0].strip():
                     raise ValueError('Record the first decision and optimizer label before evaluating.')
                 # Reserve a charged slot durably before calling the objective. A crash cannot reset it.
-                self.db.execute('INSERT INTO evaluations(campaign,idx,request_id,x,label,wall_ns) '
-                                'VALUES(?,?,?,?,?,?)',
-                                (campaign, n + 1, key, json.dumps(x), label[0], time.time_ns()))
+                self.db.execute('INSERT INTO evaluations(campaign,idx,request_id,x,label,wall_ns,candidate_index) '
+                                'VALUES(?,?,?,?,?,?,?)',
+                                (campaign, n + 1, key, json.dumps(x), label[0], time.time_ns(), candidate_index))
                 self.db.commit()
                 try:
-                    ev = self.tasks[campaign].evaluate(x)
+                    ev = task.evaluate_index(candidate_index) if indexed else task.evaluate(x)
                 except Exception as exc:
                     # Backend exceptions may identify the objective. Log the
                     # chained exception privately and expose only a generic error.
