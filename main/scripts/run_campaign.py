@@ -126,6 +126,27 @@ class _YAHPOCompat(_TaskCompat):
         super().__init__(YAHPOTask(scenario, instance=instance))
 
 
+def _load_sdl_task_module(problem_dir: str):
+    """Load a task.py from SDL_Real_Problem/<problem_dir>/ by file path (not
+    sys.path), so its generic 'task' module name can't collide with anything
+    else. The module's own top-level code inserts both its own directory and
+    main/ onto sys.path, so its 'import model' and 'from src.tasks.base
+    import Task' resolve normally once loaded."""
+    import importlib.util
+
+    path = Path(__file__).resolve().parent.parent.parent / "SDL_Real_Problem" / problem_dir / "task.py"
+    spec = importlib.util.spec_from_file_location(f"sdl_{problem_dir}_task", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+class _RobotCellLayoutCompat(_TaskCompat):
+    def __init__(self):
+        module = _load_sdl_task_module("03_robot_cell_layout")
+        super().__init__(module.make_task())
+
+
 # Registries: add a new task or optimizer here; nothing else in this file
 # needs to change.
 TASKS = {
@@ -154,6 +175,7 @@ TASKS = {
     "constrained_f44": lambda: _CocoConstrainedCompat(44, dim=10, penalty_lambda=1.0),
     "yahpo_svm": lambda: _YAHPOCompat("rbv2_svm"),
     "yahpo_xgboost": lambda: _YAHPOCompat("rbv2_xgboost"),
+    "robot_cell_layout": lambda: _RobotCellLayoutCompat(),
 }
 
 OPTIMIZERS = {

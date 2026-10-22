@@ -1,0 +1,18 @@
+{
+  "task_name": "robot_cell_layout_d15",
+  "task_dim": 15,
+  "task_direction": "min",
+  "task_f_opt": 86.19207602521666,
+  "optimizer_name": "rule_based",
+  "optimizer_class": "src.optimizers.rule_based.RuleBased",
+  "seed": 1,
+  "requested_budget": 2000,
+  "evaluations_used": 1990,
+  "stopped_early": true,
+  "stop_reason": "RuleBased's controller thread has already returned (budget exhausted, or it chose to stop early) and will not propose further points. Final result: {'best_y': 909.6456679010892, 'best_x': [-0.08019569675758222, -0.18009064428804422, -3.1053215637194036, -0.024833682416812584, -0.6004537658172256, 0.990702789691283, -0.09464381023724154, 0.2951126603312498, 0.5450393448991323, 0.9061131775379181, 0.1708418456837535, 0.12503802124410868, 0.8003367530182004, 0.21474622935056686, 0.6898371614515781], 'evals_used': 1990, 'rounds': 3}",
+  "start_time_utc": "2026-10-22T19:43:26.079706+00:00",
+  "end_time_utc": "2026-10-22T19:43:34.320432+00:00",
+  "total_wall_seconds": 8.240746166993631,
+  "numpy_version": "2.4.6",
+  "scipy_version": "1.17.1"
+}

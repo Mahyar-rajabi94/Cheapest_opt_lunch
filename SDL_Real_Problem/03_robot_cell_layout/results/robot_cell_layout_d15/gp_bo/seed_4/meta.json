@@ -1,0 +1,18 @@
+{
+  "task_name": "robot_cell_layout_d15",
+  "task_dim": 15,
+  "task_direction": "min",
+  "task_f_opt": 86.19207602521666,
+  "optimizer_name": "gp_bo",
+  "optimizer_class": "src.optimizers.gp_bo.GPBO",
+  "seed": 4,
+  "requested_budget": 100,
+  "evaluations_used": 100,
+  "stopped_early": false,
+  "stop_reason": null,
+  "start_time_utc": "2026-10-22T19:45:55.588143+00:00",
+  "end_time_utc": "2026-10-22T19:46:51.494685+00:00",
+  "total_wall_seconds": 55.90659008399234,
+  "numpy_version": "2.4.6",
+  "scipy_version": "1.17.1"
+}

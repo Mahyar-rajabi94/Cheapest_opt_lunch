@@ -1,0 +1,18 @@
+{
+  "task_name": "robot_cell_layout_d15",
+  "task_dim": 15,
+  "task_direction": "min",
+  "task_f_opt": 86.19207602521666,
+  "optimizer_name": "cma_es",
+  "optimizer_class": "src.optimizers.cma_es.CMAES",
+  "seed": 4,
+  "requested_budget": 2000,
+  "evaluations_used": 2000,
+  "stopped_early": false,
+  "stop_reason": null,
+  "start_time_utc": "2026-10-22T19:40:58.559168+00:00",
+  "end_time_utc": "2026-10-22T19:41:03.823423+00:00",
+  "total_wall_seconds": 5.264264791010646,
+  "numpy_version": "2.4.6",
+  "scipy_version": "1.17.1"
+}

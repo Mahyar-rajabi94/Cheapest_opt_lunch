@@ -1,0 +1,30 @@
+{
+  "task_dim": 15,
+  "task_direction": "min",
+  "requested_budget": 100,
+  "evaluations_used": 100,
+  "stopped_early": false,
+  "start_time_utc": "2026-10-22T19:46:15.375705+00:00",
+  "end_time_utc": "2026-10-22T19:47:16.281527+00:00",
+  "total_wall_seconds": 60.90585683300742,
+  "numpy_version": "2.4.6",
+  "policy": "llm_openai",
+  "seed": 0,
+  "rounds": 3,
+  "round_size": 75,
+  "llm_provider": "openai",
+  "llm_model": "gpt-5",
+  "playbook": false,
+  "playbook_version": null,
+  "llm_usage": {
+    "calls": 3,
+    "input": 5439,
+    "output": 4232,
+    "cache_read": 2048,
+    "cache_write": 0,
+    "retries": 0,
+    "seconds": 60.76982395903906
+  },
+  "task_name": "robot_cell_layout_d15",
+  "task_f_opt": 86.19207602521666
+}
