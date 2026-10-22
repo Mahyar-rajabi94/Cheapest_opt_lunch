@@ -25,7 +25,8 @@ codex login
 ```
 
 The native runner has been checked on macOS with Codex CLI
-`0.162.0-alpha.17.2`. It also has a Linux execution path, which needs validation
+`0.162.0-alpha.17.2` and `0.163.0`; `--agent claude` with Claude Code CLI `2.1.308`
+(sandboxed by Codex `0.163.0`). It also has a Linux execution path, which needs validation
 on the target machine. It fails before inference if its isolation checks fail.
 Other CLI versions must support the named permission profiles used by the runner.
 
