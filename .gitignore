@@ -8,3 +8,4 @@ __pycache__/
 main/docs/
 main/tasks/MOF/
 external/
+video/*.mov
