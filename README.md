@@ -15,12 +15,25 @@ The automated isolated runner below drives either Codex CLI or Claude Code CLI
 
 [Updated OPV comparison with 10 random-start runs per local optimizer](main/agent_runs/opv_random_starts_100_20261022/README.md) · [Data ZIP](main/agent_runs/opv_random_starts_100_20261022.zip).
 
+## Requirements
+
+- macOS (checked) or Linux (has an execution path; validate it on the target machine).
+- Python 3.11+.
+- [Codex CLI](https://github.com/openai/codex), for **both** agents: it is the
+  per-command sandbox. Authenticate it (`codex login`) only for `--agent codex`.
+- [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code), only for
+  `--agent claude`; sign in with `claude auth login`.
+
+The native runner has been checked on macOS with Codex CLI
+`0.162.0-alpha.17.2` and `0.163.0`; `--agent claude` with Claude Code CLI `2.1.308`
+(sandboxed by Codex `0.163.0`). It fails before inference if its isolation checks fail.
+Other CLI versions must support the named permission profiles used by the runner.
+
 ## Install once
 
-Use Python 3.11+ and an installed `codex` CLI, authenticated for `--agent codex`.
-For `--agent claude`, also install Claude Code CLI and sign in (`claude auth login`).
-Run these commands from the repository root. Keep two Python environments: the agent gets optimizer
-libraries; only the private evaluator gets objective backends such as `ioh`.
+Run every command in this README from the repository root unless it says otherwise.
+Keep two Python environments: the agent gets optimizer libraries; only the private
+evaluator gets objective backends such as `ioh`.
 
 ```bash
 python3.11 -m venv .venv
@@ -30,23 +43,67 @@ python3.11 -m venv .agent-venv
 codex login
 ```
 
-The native runner has been checked on macOS with Codex CLI
-`0.162.0-alpha.17.2` and `0.163.0`; `--agent claude` with Claude Code CLI `2.1.308`
-(sandboxed by Codex `0.163.0`). It also has a Linux execution path, which needs validation
-on the target machine. It fails before inference if its isolation checks fail.
-Other CLI versions must support the named permission profiles used by the runner.
+This is enough for the BBOB tasks (`sphere10`, `rosenbrock*`, `rastrigin10`,
+`step_ellipsoid10`, …) and the data-backed `opv_pce`, `opv_pool` and `mof_pool`.
+
+### Optional task backends
+
+The other task families need packages that are deliberately kept out of
+`main/requirements.txt`, because agent sandboxes must not see them. Install them
+into the evaluator environment `.venv` only:
+
+| Tasks | Needs |
+| --- | --- |
+| `cec_rastrigin30`, `noncont_rastrigin30`, `schaffer30`, `schaffer50` | `opfunu==1.0.1`, `setuptools<81` |
+| `pymoo_g04`, `pymoo_g07` | `pymoo==0.6.1.6` |
+| `constrained_*`, `noisy_rosenbrock_*`, `mixint_*` | `coco-experiment==2.8.2` |
+| `ng_noisy_*` | `nevergrad==1.0.12` |
+| `yahpo_svm`, `yahpo_xgboost` | `onnxruntime==1.31.0` plus the surrogate files below |
+| `psa_v10` | A user-supplied evaluator at `external/psa_v10/psa_v10_blackbox.py`; not distributed |
+
+```bash
+.venv/bin/python -m pip install "opfunu==1.0.1" "setuptools<81" "pymoo==0.6.1.6" "coco-experiment==2.8.2" "nevergrad==1.0.12" "onnxruntime==1.31.0"
+```
+
+The YAHPO surrogates are git-ignored; download them into `external/yahpo_data/`:
+
+```bash
+for s in rbv2_svm rbv2_xgboost; do for f in config_space.json encoding.json model.onnx; do curl -sfL --create-dirs -o external/yahpo_data/$s/$f https://raw.githubusercontent.com/slds-lmu/yahpo_data/v1.0.2/$s/$f; done; done
+```
+
+Check that every public task now builds (takes a few seconds):
+
+```bash
+.venv/bin/python -W ignore -c "import sys; sys.path.insert(0, 'main'); from src.tasks.registry import TASKS; [TASKS[k]() for k in sorted(TASKS) if k != 'psa_v10']; print(len(TASKS) - 1, 'tasks load')"
+```
+
+## Quick start
+
+These three checks spend **no model calls**. Run them after installing:
+
+1. Unit tests (fake objectives; budget, crash-recovery and logging integrity):
+
+   ```bash
+   .venv/bin/python -m unittest discover -s main/tests -v
+   ```
+
+2. A 20-evaluation baseline campaign, no agent involved:
+
+   ```bash
+   .venv/bin/python main/scripts/run_campaign.py --task sphere10 --optimizer random_search --seed 0 --budget 20 --outdir runs/smoke
+   ```
+
+3. Agent setup and isolation preflight, **zero objective evaluations**:
+
+   ```bash
+   .venv/bin/python main/scripts/run_agent.py --task step_ellipsoid10 --budget 100 --check-only
+   ```
+
+   It should end with `Isolation passed: … checks, 0/100 evaluations.`
 
 ## Run the agent
 
-First check setup and isolation. This spends **zero objective evaluations** and
-makes **no model call**:
-
-```bash
-.venv/bin/python main/scripts/run_agent.py \
-  --task step_ellipsoid10 --budget 100 --check-only
-```
-
-Then start a fresh campaign:
+Start a fresh campaign:
 
 ```bash
 .venv/bin/python main/scripts/run_agent.py \
@@ -161,7 +218,19 @@ Reconstructing the client does not reset the evaluation counter. On a crash or a
 unknown evaluation outcome, preserve the run directory and inspect the private
 journal; do not retry that campaign as though it had zero evaluations.
 
-## Baselines and figures
+## Baselines
+
+One task, one optimizer, one seed:
+
+```bash
+.venv/bin/python main/scripts/run_campaign.py \
+  --task step_ellipsoid10 --optimizer cma_es --seed 0 --budget 100 \
+  --outdir runs/baselines-100
+```
+
+Optimizers: `bobyqa`, `cma_es`, `de`, `gp_bo`, `lbfgsb`, `nelder_mead`,
+`random_search`, `sobol`, `turbo`, and `pool_random` (pool tasks only). Each uses
+its own standard defaults; `run_campaign.py` exposes no hyperparameters by design.
 
 Run all standalone optimizers at the same budget into a **new** results directory:
 
@@ -171,13 +240,29 @@ Run all standalone optimizers at the same budget into a **new** results director
   --outdir runs/baselines-100
 ```
 
+Always pass `--outdir`: the defaults (`--budget 2000 --seeds 10 --outdir results_linux`)
+resolve relative to the current directory. Each campaign writes
+`<outdir>/<task_name>/<optimizer>/seed_<seed>/{trace.csv,meta.json}`. Reruns skip
+completed campaigns; a sweep whose existing campaigns used a different budget
+errors before running anything.
+
 Stochastic baselines use ten seeds; deterministic methods use one. Current sweeps
 use the requested budget for every method. Historical `main/results_linux/` runs
 may have GP-BO, TuRBO and BOBYQA capped at 100; inspect their metadata. The newest
 full-budget benchmark is also preserved under `main/`. Numerical results can
 vary by platform and library version; use matched environments for formal comparisons.
 
-After the agent finishes, replace `<id>` below with its printed run ID:
+On a SLURM cluster, [`main/scripts/slurm/sweep_all.sh`](main/scripts/slurm/sweep_all.sh)
+runs `run_sweep.py` for several tasks on one node. Submit it from `main/`:
+
+```bash
+sbatch -p debug scripts/slurm/sweep_all.sh sphere10 rastrigin10
+```
+
+## Figures
+
+After the agent finishes, compare it with the baselines. Replace `<id>` with the
+printed run ID:
 
 ```bash
 .agent-venv/bin/python main/scripts/make_comparison_plots.py \
@@ -186,6 +271,11 @@ After the agent finishes, replace `<id>` below with its printed run ID:
   --outdir runs/run-<id>/figures
 ```
 
+`--task` is the results folder name (`<task_name>`, listed per key in
+[TASKS.md](main/TASKS.md)), not the registry key. To compare against the
+committed baselines instead of your own sweep, pass `--results main/results_linux`.
+Figures go to `runs/run-<id>/figures/<task_name>/`.
+
 This produces baseline convergence, a final-regret comparison, and an agent
 method/decision timeline. The supplied agent's budget sets the comparison horizon;
 longer baseline traces are truncated and early-stopped incumbents are carried
@@ -193,7 +283,28 @@ forward within their allowed budget. Historical prefix comparisons are not fresh
 baseline reruns configured for the smaller budget. Scoring happens outside the
 agent's workspace, using the private optimum from baseline metadata.
 
-## Repository layout and checks
+The cross-task metric (regret relative to random search, averaged over tasks)
+reads a results folder under `main/` and writes `global_metric_vs_budget.png` into it:
+
+```bash
+.agent-venv/bin/python main/scripts/make_global_metric_plots.py --results results_linux
+```
+
+Figures that leave the repo follow [FIGURES.md](main/FIGURES.md). Their scripts
+(`make_crossover_plot.py`, `make_agent_switching_plot.py`,
+`make_agent_switching_gif.py`, `make_landscape_plot.py`) write into
+`main/results_linux/`; each docstring names its outputs and is run from `main/`.
+
+## Task-specific guides
+
+- [OPV device pool (`opv_pool`)](task_006_baseline/README.md): rebuild the pool,
+  baselines, agent runs and plots.
+- [MOF exact candidate pool (`mof_pool`)](main/data/mof_pool/README.md): data
+  provenance, agent campaigns and pool-aware baselines.
+- [Tasks](main/TASKS.md): what each registered task tests and its baseline winners.
+- [Adding a task](main/ADDING_TASKS.md): registration, backends and the public contract.
+
+## Repository layout
 
 - `AGENTS.md`, `CLAUDE.md`: one canonical agent and its Claude import.
 - `main/src/tasks/`: private objective implementations and registry.
@@ -201,8 +312,12 @@ agent's workspace, using the private optimum from baseline metadata.
 - `main/src/agent_harness/harness.py`: public evaluation client.
 - `main/src/blind_runner/`: native execution, private evaluator and orchestration.
 - `main/scripts/`: agent runner, baseline runner and plotting entry points.
+- `main/tests/`: integrity tests for the evaluator and pool tasks.
+- `main/results_linux/`: committed baseline traces and figures.
+- `main/agent_runs/`: published agent campaigns and comparison reports.
 - `archive_results/`: preserved historical agent artifacts; old source is in Git history.
 - `task_005_baseline/`, `task_006_baseline/`, `poly_results/`: polymer data/model utilities and existing figures.
+- `external/`: ignored third-party data (YAHPO surrogates, user-supplied evaluators).
 - `runs/`: ignored generated workspaces, logs and new results.
 
 The numbered local harnesses, copied sandbox implementations and old planning
@@ -211,10 +326,6 @@ briefs have been retired. A new supported task reuses the same public client.
 The historical PSA campaign in `main/scripts/campaign_psa_v10_run1.py` retains its
 original in-process harness in `_psa_v10_legacy_harness.py` for reproducibility.
 Use `run_agent.py` for new isolated agent campaigns on supported tasks.
-
-```bash
-.venv/bin/python -m unittest discover -s main/tests -v
-```
 
 The integrity tests use fake objectives to check budget exhaustion, duplicate
 request handling, crash recovery, configuration immutability and prospective logs.
