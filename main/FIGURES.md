@@ -41,8 +41,8 @@ Reference figure: `results_linux/crossover_rosenbrock_vs_mixint.png`, produced b
 
 ## Color
 
-- Series colors in fixed order: series 1 `#2a78d6` (blue), series 2 `#e34948` (red). The same method keeps the same color across every panel of a figure.
-- This pair passes every check of the dataviz palette validator (`validate_palette.py --mode light --surface #ffffff`). A figure with more series must extend `SERIES_COLORS` and re-run the validator on the full ordered list before use.
+- Series colors in fixed order: series 1 `#2a78d6` (blue), series 2 `#e34948` (red), series 3 `#1baf7a` (aqua), series 4 `#eda100` (yellow), series 5 `#008300` (green). The same method keeps the same color across every panel of a figure.
+- The first two pass every check of the dataviz palette validator (`validate_palette.py --mode light --surface #ffffff`). The full five pass with `--pairs all`, with warnings: aqua and yellow are below 3:1 contrast on white and aqua/red is in the deutan 6-8 band, so a figure using 3+ series must keep the legend. A figure with more series must extend `SERIES_COLORS` and re-run the validator on the full ordered list before use.
 - Background pure white (`#ffffff`) everywhere: figure, axes and the saved file. No off-white or transparent backgrounds.
 
 ## Schematics

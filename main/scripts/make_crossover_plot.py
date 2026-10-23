@@ -12,11 +12,13 @@ Legend: "Gradient Based" is L-BFGS-B (deterministic, one seed), "Evolutionary
 Based" is CMA-ES (10 seeds). Style follows FIGURES.md via figure_style.py.
 
 Usage (from main/):
-    python scripts/make_crossover_plot.py    # writes results_linux/crossover_rosenbrock_vs_mixint.png
+    python scripts/make_crossover_plot.py               # writes results_linux/crossover_rosenbrock_vs_mixint.png
+    python scripts/make_crossover_plot.py --no-titles   # same figure without panel titles, *_untitled.png
 """
 
 from __future__ import annotations
 
+import argparse
 import json
 import sys
 from pathlib import Path
@@ -28,6 +30,7 @@ import matplotlib.pyplot as plt  # noqa: E402
 
 RESULTS = MAIN_ROOT / "results_linux"
 OUT = RESULTS / "crossover_rosenbrock_vs_mixint.png"
+OUT_UNTITLED = RESULTS / "crossover_rosenbrock_vs_mixint_untitled.png"
 METHODS = [("lbfgsb", "Gradient Based"), ("cma_es", "Evolutionary Based")]
 PANELS = [  # (task, title)
     ("rosenbrock_d10_i1", "Smooth"),
@@ -42,14 +45,18 @@ def seed_trajectories(task, method):
 
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--no-titles", action="store_true", help="omit panel titles (e.g. when the caption names the panels)")
+    no_titles = parser.parse_args().no_titles
+    out = OUT_UNTITLED if no_titles else OUT
     fig, axes = plt.subplots(1, len(PANELS), figsize=fs.FIGSIZE_1x2)
     for i, (ax, (task, title)) in enumerate(zip(axes, PANELS)):
         for (method, label), color in zip(METHODS, fs.SERIES_COLORS):
             trajs, budget = seed_trajectories(task, method)
             fs.plot_series(ax, trajs, budget, color, label)
-        fs.style_axes(ax, title, budget, ylabel=i == 0)
-    fs.finish(fig, axes, OUT)
-    print("wrote", OUT)
+        fs.style_axes(ax, "" if no_titles else title, budget, ylabel=i == 0)
+    fs.finish(fig, axes, out)
+    print("wrote", out)
 
 
 if __name__ == "__main__":

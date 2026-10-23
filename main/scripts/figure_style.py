@@ -21,11 +21,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # ---- color ----
-# Series hues in fixed order: series i always gets SERIES_COLORS[i]. The pair
-# passes the dataviz skill's validate_palette.py (--mode light --surface
-# #ffffff) on every check. A figure with more series must extend this list and
+# Series hues in fixed order: series i always gets SERIES_COLORS[i]. The full
+# list passes the dataviz skill's validate_palette.py (--mode light --surface
+# #ffffff --pairs all); aqua and yellow WARN on contrast and aqua/red WARN on
+# deutan separation, so figures with 3+ series rely on the legend as the
+# secondary encoding. A figure with more series must extend this list and
 # re-run the validator on the full ordered list first.
-SERIES_COLORS = ["#2a78d6", "#e34948"]  # blue, red
+SERIES_COLORS = ["#2a78d6", "#e34948", "#1baf7a", "#eda100", "#008300"]  # blue, red, aqua, yellow, green
 BAND_ALPHA = 0.18
 TEXT = "#000000"       # every piece of text
 AXIS = "#52514e"       # spines and tick marks

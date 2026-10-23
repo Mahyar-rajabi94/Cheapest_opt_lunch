@@ -52,28 +52,33 @@ def to_shared_palette(frames, n_colors=128):
     return out
 
 
-def main():
-    X, regret, stage = sw.load_run()
-    f_opt = json.loads(sw.F_OPT_META.read_text())["task_f_opt"]
-    geo = sw.slice_geometry(X, regret, stage, f_opt)
-    n = len(regret)
-    uptos = sorted({max(1, round(n * (k + 1) / N_FRAMES)) for k in range(N_FRAMES)})
+def write_gif(geo, run, out, stages=sw.STAGES, ylim=sw.PROGRESS_YLIM, n_frames=N_FRAMES):
+    """Animate both panels of build_figure over `run` and save the GIF to `out`."""
+    n = len(run["regret"])
+    uptos = sorted({max(1, round(n * (k + 1) / n_frames)) for k in range(n_frames)})
     # Crop every frame to the full run's tight bounding box: one fixed crop keeps
     # all frames the same size and leaves room for the legend below the panels.
-    fig = sw.build_figure(geo, regret, stage, n, dpi=DPI)
+    fig = sw.build_figure(geo, run, n, stages, ylim, dpi=DPI)
     crop = fig.get_tightbbox(fig.canvas.get_renderer()).padded(0.1)
     plt.close(fig)
     frames = []
     for upto in uptos:
-        fig = sw.build_figure(geo, regret, stage, upto, dpi=DPI)
+        fig = sw.build_figure(geo, run, upto, stages, ylim, dpi=DPI)
         buf = io.BytesIO()
         fig.savefig(buf, format="png", dpi=DPI, bbox_inches=crop)
         plt.close(fig)
         frames.append(Image.open(buf).convert("RGB"))
     frames = to_shared_palette(frames)
     durations = [FRAME_MS] * (len(frames) - 1) + [HOLD_MS]
-    frames[0].save(OUT, save_all=True, append_images=frames[1:], duration=durations, loop=0, optimize=True)
-    print(f"wrote {OUT} ({len(frames)} frames, {OUT.stat().st_size / 1e6:.1f} MB)")
+    frames[0].save(out, save_all=True, append_images=frames[1:], duration=durations, loop=0, optimize=True)
+    print(f"wrote {out} ({len(frames)} frames, {out.stat().st_size / 1e6:.1f} MB)")
+
+
+def main():
+    X, regret, stage = sw.load_run()
+    f_opt = json.loads(sw.F_OPT_META.read_text())["task_f_opt"]
+    geo = sw.slice_geometry(X, regret, stage, f_opt)
+    write_gif(geo, sw.project_run(geo, X, regret, stage), OUT)
 
 
 if __name__ == "__main__":
